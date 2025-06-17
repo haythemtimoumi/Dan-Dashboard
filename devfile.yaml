@@ -1,0 +1,31 @@
+schemaVersion: 2.0.0
+metadata:
+  name: nextjs-app
+  version: 1.0.0
+  displayName: Next.js Application
+  description: Development environment for Next.js application with TypeScript
+components:
+  - name: dev
+    container:
+      image: public.ecr.aws/aws-mde/universal-image:latest
+      memoryLimit: 4Gi
+      mountSources: true
+      endpoints:
+        - name: web
+          targetPort: 3000
+commands:
+  - id: install
+    exec:
+      component: dev
+      commandLine: "npm install"
+      workingDir: ${PROJECT_SOURCE}
+  - id: build
+    exec:
+      component: dev
+      commandLine: "npm run build"
+      workingDir: ${PROJECT_SOURCE}
+  - id: test
+    exec:
+      component: dev
+      commandLine: "npm run test"
+      workingDir: ${PROJECT_SOURCE}

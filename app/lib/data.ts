@@ -16,15 +16,16 @@ import {
 // In production, use our proxy API to avoid mixed content issues
 const isProduction = process.env.NODE_ENV === 'production';
 const directApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://162.248.100.66:3000/api';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
 
 // In production, we'll use our proxy API route
 const API_URL = isProduction ? '/api/proxy' : directApiUrl;
 
 // Function to create API URLs based on environment
 function createApiUrl(path: string, params?: Record<string, string>) {
-  if (isProduction) {
-    // In production, use the proxy API
-    const url = new URL(`${API_URL}`, 'https://example.com'); // Base URL doesn't matter, we just need a valid URL object
+  if (isProduction || typeof window === 'undefined') {
+    // In production or on server-side, use absolute URLs with the base URL
+    const url = new URL(`${API_URL}`, baseUrl);
     url.searchParams.append('path', path.startsWith('/api') ? path : `/api${path}`);
     
     // Add any additional parameters
@@ -34,9 +35,9 @@ function createApiUrl(path: string, params?: Record<string, string>) {
       });
     }
     
-    return url.toString().replace('https://example.com', '');
+    return url.toString();
   } else {
-    // In development, use the direct API URL
+    // In development on client-side, use the direct API URL
     return `${API_URL}${path.startsWith('/') ? path : `/${path}`}`;
   }
 }
@@ -411,8 +412,8 @@ export async function fetchStocksByDateAndSource(
 export async function fetchStockById(id: string): Promise<Stock | null> {
   noStore();
   try {
-    // Use the configured API_URL instead of hardcoded URL
-    const response = await fetch(`${API_URL}/stocks/${id}`);
+    // Use the createApiUrl function for proper URL handling
+    const response = await fetch(createApiUrl(`/stocks/${id}`));
     
     if (response.status === 404) {
       console.warn(`Stock with ID ${id} not found`);
@@ -433,7 +434,7 @@ export async function fetchStockById(id: string): Promise<Stock | null> {
 export async function fetchStockByTicker(ticker: string): Promise<Stock[]> {
   noStore();
   try {
-    const response = await fetch(`${API_URL}/stocks/ticker/${ticker}`);
+    const response = await fetch(createApiUrl(`/stocks/ticker/${ticker}`));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch stock by ticker: ${response.statusText}`);
@@ -449,9 +450,8 @@ export async function fetchStockByTicker(ticker: string): Promise<Stock[]> {
 export async function fetchStocksForChart(): Promise<Stock[]> {
   noStore();
   try {
-    // Fetch all stocks directly from the API
-    // Use the correct API endpoint format with /api path
-    const response = await fetch(`${API_URL}/stocks`);
+    // Fetch all stocks using the createApiUrl function for proper URL handling
+    const response = await fetch(createApiUrl('/stocks'));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch stocks: ${response.statusText}`);
@@ -506,8 +506,13 @@ export async function fetchStocksByDateRange(
     const year = endDateObj.getFullYear();
     const formattedEndDate = `${month}/${day}/${year}`;
     
-    // Use the specific URL for the legacy API
-    const response = await fetch(`http://162.248.100.66:3000/api/stocks/date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`);
+    // Use createApiUrl with parameters
+    const params: Record<string, string> = {
+      'startDate': formattedStartDate,
+      'endDate': formattedEndDate
+    };
+    
+    const response = await fetch(createApiUrl('/stocks/date-range', params));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch stocks by date range: ${response.statusText}`);
@@ -578,26 +583,16 @@ export async function fetchStockHistory(
   noStore();
   try {
     // Build the URL with optional query parameters
-    // Use the API_URL constant for consistency
-    let url = `${API_URL}/stocks/${id}/history`;
-    
-    // Add date range parameters if provided
-    const params = new URLSearchParams();
+    // Use the createApiUrl function for proper URL handling
+    const params: Record<string, string> = {};
     if (fromDate) {
-      params.append('from', fromDate);
+      params['from'] = fromDate;
     }
     if (toDate) {
-      params.append('to', toDate);
+      params['to'] = toDate;
     }
     
-    // Append parameters to URL if any exist
-    const queryString = params.toString();
-    if (queryString) {
-      url = `${url}?${queryString}`;
-    }
-    
-    console.log(`Fetching stock history from: ${url}`);
-    const response = await fetch(url);
+    const response = await fetch(createApiUrl(`/stocks/${id}/history`, params));
     
     if (response.status === 404) {
       console.warn(`Stock history for ID ${id} not found`);

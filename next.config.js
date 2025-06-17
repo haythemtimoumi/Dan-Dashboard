@@ -16,6 +16,11 @@ const nextConfig = {
       },
     ],
   },
+  // Add environment variables
+  env: {
+    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://162.248.100.66:3000/api',
+  },
 };
 
 module.exports = nextConfig;
