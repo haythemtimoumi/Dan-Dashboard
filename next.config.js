@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable API routes
+  
   experimental: {
     serverComponentsExternalPackages: ['@vercel/postgres'],
   },

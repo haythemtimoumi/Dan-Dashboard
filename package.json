@@ -6,7 +6,10 @@
     "seed": "node -r dotenv/config ./scripts/seed.js",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest"
+    "test": "jest",
+
+    "deploy": "next build"
+    
   },
   "dependencies": {
     "@heroicons/react": "^2.0.18",

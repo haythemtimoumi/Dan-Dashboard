@@ -11,7 +11,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import '@/app/ui/datepicker-custom.css';
 
 // Get API URL from environment variable
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://162.248.100.66:3000/api';
 
 // Items per page for pagination
 const ITEMS_PER_PAGE = 5;

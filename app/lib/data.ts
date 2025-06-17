@@ -11,7 +11,7 @@ import {
 // For Next.js, we need to use relative URLs for API calls to ensure they work
 // regardless of which port the app is running on
 // We need to ensure the API URL is properly formatted for fetch calls
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://162.248.100.66:3000/api';
 
 // Log the API URL for debugging
 console.log(`Using API URL: ${API_URL}`);
@@ -357,7 +357,7 @@ export async function fetchStocksByDateAndSource(
     const formattedDate = `${year}-${month}-${day}`;
     
     const response = await fetch(
-      `http://localhost:3000/api/stocks/filter-by-date-source?date=${encodeURIComponent(date)}&source=${source}`
+      `http://162.248.100.66:3000/api/stocks/filter-by-date-source?date=${encodeURIComponent(date)}&source=${source}`
     );
     
     if (!response.ok) {
@@ -477,7 +477,7 @@ export async function fetchStocksByDateRange(
     const formattedEndDate = `${month}/${day}/${year}`;
     
     // Use the specific URL for the legacy API
-    const response = await fetch(`http://localhost:3001/api/stocks/date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`);
+    const response = await fetch(`http://162.248.100.66:3001/api/stocks/date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch stocks by date range: ${response.statusText}`);
