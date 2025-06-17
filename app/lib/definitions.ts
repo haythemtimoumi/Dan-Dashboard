@@ -1,0 +1,79 @@
+// This file contains type definitions for your data.
+// It describes the shape of the data, and what data type each property should accept.
+
+// Stock data model
+export type Stock = {
+  id: string;
+  ticker: string;
+  sentiment_score: number;
+  signal_score: number;
+  pe: number;
+  buy_price: number;
+  guru: string;
+  source: 'Rule1' | 'MagicFormula';
+  highlight: boolean;
+  created_at: string;
+  updated_at: string;
+  screenshot?: string; // Optional screenshot field for chart image
+  date?: string; // Optional date field for historical data
+  dividend?: string | null; // Optional dividend field
+  cash_per_share?: string; // Optional cash per share field
+  current_ratio?: number; // Optional current ratio field
+  rule1_score?: number | null; // Optional Rule 1 score
+  moat_score?: number | null; // Optional moat score
+  management_score?: number | null; // Optional management score
+};
+
+export type StocksTable = {
+  id: string;
+  ticker: string;
+  sentiment_score: number;
+  signal_score: number;
+  pe: number;
+  buy_price: number;
+  guru: string;
+  source: 'Rule1' | 'MagicFormula';
+  highlight: boolean;
+  created_at: string;
+  updated_at: string;
+  screenshot?: string; // Optional screenshot field for chart image
+  date?: string; // Optional date field for historical data
+  dividend?: string | null; // Optional dividend field
+  cash_per_share?: string; // Optional cash per share field
+  current_ratio?: number; // Optional current ratio field
+  rule1_score?: number | null; // Optional Rule 1 score
+  moat_score?: number | null; // Optional moat score
+  management_score?: number | null; // Optional management score
+};
+
+export type LatestStock = {
+  id: string;
+  ticker: string;
+  sentiment_score: number;
+  highlight: boolean;
+};
+
+export type StockForm = {
+  id?: string;
+  ticker: string;
+  sentiment_score: number;
+  signal_score: number;
+  pe: number;
+  buy_price: number;
+  guru: string;
+  source: 'Rule1' | 'MagicFormula';
+  highlight: boolean;
+};
+
+export type DailyChanges = {
+  current: Stock[];
+  new: Stock[];
+  removed: Stock[];
+};
+
+export type StockStats = {
+  totalStocks: number;
+  highlightedStocks: number;
+  rule1Stocks: number;
+  magicFormulaStocks: number;
+};

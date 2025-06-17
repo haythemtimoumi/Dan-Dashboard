@@ -1,0 +1,146 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/ui/tabs';
+import StocksTable from '@/app/ui/stocks/table';
+import { StocksTableSkeleton } from '@/app/ui/skeletons';
+import { fetchStocksByDateAndSource } from '@/app/lib/data';
+import { Stock } from '@/app/lib/definitions';
+import DatePickerWrapper from './date-picker-wrapper';
+
+export default function SourcesClient({ initialDate }: { initialDate?: string }) {
+  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentSource, setCurrentSource] = useState<'Rule1' | 'MagicFormula'>('Rule1');
+  const [currentDate, setCurrentDate] = useState<string>(
+    initialDate ? formatDateFromURL(initialDate) : getDefaultDate()
+  );
+  const router = useRouter();
+
+  function getDefaultDate(): string {
+    return '06/06/2025'; // Safe fallback for demo
+  }
+
+  function formatDateForAPI(date: Date): string {
+    return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear()}`;
+  }
+
+  function formatDateFromURL(date: string): string {
+    if (date.includes('-')) {
+      const [year, month, day] = date.split('-');
+      return `${month}/${day}/${year}`;
+    }
+    return date;
+  }
+
+  function formatDateForURL(date: string): string {
+    const [month, day, year] = date.split('/');
+    return `${year}-${month}-${day}`;
+  }
+
+  useEffect(() => {
+    fetchStocks(currentDate, currentSource);
+  }, [currentDate, currentSource]);
+
+  const fetchStocks = async (date: string, source: 'Rule1' | 'MagicFormula') => {
+    setLoading(true);
+    setStocks([]);
+    try {
+      console.log(`[DEBUG] Fetching stocks for ${date} from ${source}`);
+      const data = await fetchStocksByDateAndSource(date, source);
+      console.log(`[DEBUG] Got ${data.length} stocks`);
+      setStocks(data);
+    } catch (error) {
+      console.error(`[ERROR] Failed to fetch stocks:`, error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApplyDate = async (selectedDate: Date | null) => {
+    const dateStr = selectedDate ? formatDateForAPI(selectedDate) : getDefaultDate();
+    setCurrentDate(dateStr);
+
+    if (selectedDate) {
+      router.push(`/dashboard/sources?date=${formatDateForURL(dateStr)}`);
+    } else {
+      router.push('/dashboard/sources');
+    }
+  };
+
+  const handleSourceChange = (source: 'Rule1' | 'MagicFormula') => {
+    setCurrentSource(source);
+  };
+
+  return (
+    <>
+      <div className="mt-4">
+        <DatePickerWrapper 
+          onApply={handleApplyDate} 
+          initialDate={initialDate} 
+        />
+      </div>
+
+      {loading ? (
+        <StocksTableSkeleton />
+      ) : (
+        <div className="mt-6">
+          <Tabs defaultValue={currentSource}>
+            <TabsList>
+              <TabsTrigger value="Rule1" onClick={() => handleSourceChange('Rule1')}>
+                Rule 1
+              </TabsTrigger>
+              <TabsTrigger value="MagicFormula" onClick={() => handleSourceChange('MagicFormula')}>
+                Magic Formula
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="Rule1">
+              <StockTabContent 
+                stocks={stocks} 
+                source="Rule 1" 
+                date={currentDate} 
+              />
+            </TabsContent>
+
+            <TabsContent value="MagicFormula">
+              <StockTabContent 
+                stocks={stocks} 
+                source="Magic Formula" 
+                date={currentDate} 
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
+    </>
+  );
+}
+
+function StockTabContent({ stocks, source, date }: { stocks: Stock[]; source: string; date: string }) {
+  if (stocks.length === 0) {
+    return (
+      <div className="mt-6 text-center p-4 border rounded-lg bg-gray-50">
+        <p className="text-gray-600 font-medium">
+          No {source} stocks found for {date}
+        </p>
+        <p className="text-sm text-gray-500 mt-1">
+          Try selecting a different date
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-lg font-medium">{source} Stocks - {date}</h2>
+        <span className="text-sm text-gray-500">
+          Showing {stocks.length} stocks
+        </span>
+      </div>
+      <StocksTable stocks={stocks} />
+    </div>
+  );
+}
