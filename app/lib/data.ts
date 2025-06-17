@@ -11,16 +11,44 @@ import {
 // For Next.js, we need to use relative URLs for API calls to ensure they work
 // regardless of which port the app is running on
 // We need to ensure the API URL is properly formatted for fetch calls
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://162.248.100.66:3000/api';
+
+// In development, use the direct API URL
+// In production, use our proxy API to avoid mixed content issues
+const isProduction = process.env.NODE_ENV === 'production';
+const directApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://162.248.100.66:3000/api';
+
+// In production, we'll use our proxy API route
+const API_URL = isProduction ? '/api/proxy' : directApiUrl;
+
+// Function to create API URLs based on environment
+function createApiUrl(path: string, params?: Record<string, string>) {
+  if (isProduction) {
+    // In production, use the proxy API
+    const url = new URL(`${API_URL}`, 'https://example.com'); // Base URL doesn't matter, we just need a valid URL object
+    url.searchParams.append('path', path.startsWith('/api') ? path : `/api${path}`);
+    
+    // Add any additional parameters
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        url.searchParams.append(key, value);
+      });
+    }
+    
+    return url.toString().replace('https://example.com', '');
+  } else {
+    // In development, use the direct API URL
+    return `${API_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  }
+}
 
 // Log the API URL for debugging
-console.log(`Using API URL: ${API_URL}`);
+console.log(`Using API URL: ${isProduction ? 'Proxy API' : API_URL}`);
 
 export async function fetchStockStats(): Promise<StockStats> {
   noStore();
   try {
     // Fetch all stocks
-    const allStocksResponse = await fetch(`${API_URL}/stocks`);
+    const allStocksResponse = await fetch(createApiUrl('/stocks'));
     
     if (!allStocksResponse.ok) {
       throw new Error(`Failed to fetch stocks: ${allStocksResponse.statusText}`);
@@ -53,7 +81,7 @@ export async function fetchLatestStocks(): Promise<LatestStock[]> {
   noStore();
   try {
     // Fetch sorted stocks with highlight flag
-    const response = await fetch(`${API_URL}/stocks/sorted`);
+    const response = await fetch(createApiUrl('/stocks/sorted'));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch sorted stocks: ${response.statusText}`);
@@ -77,7 +105,7 @@ export async function fetchLatestStocks(): Promise<LatestStock[]> {
 export async function fetchDailyChanges(): Promise<DailyChanges> {
   noStore();
   try {
-    const response = await fetch(`${API_URL}/stocks/daily-changes`);
+    const response = await fetch(createApiUrl('/stocks/daily-changes'));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch daily changes: ${response.statusText}`);
@@ -108,7 +136,7 @@ export async function fetchFilteredStocks(
   
   try {
     // Fetch all stocks first
-    const response = await fetch(`${API_URL}/stocks`);
+    const response = await fetch(createApiUrl('/stocks'));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch stocks: ${response.statusText}`);
@@ -209,7 +237,7 @@ export async function fetchStocksPages(
   noStore();
   try {
     // Fetch all stocks
-    const response = await fetch(`${API_URL}/stocks`);
+    const response = await fetch(createApiUrl('/stocks'));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch stocks: ${response.statusText}`);
@@ -281,7 +309,7 @@ export async function fetchHighlightedStocks(): Promise<StocksTable[]> {
   noStore();
   try {
     // Fetch highlighted stocks directly from the API
-    const response = await fetch(`${API_URL}/stocks/highlighted`);
+    const response = await fetch(createApiUrl('/stocks/highlighted'));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch highlighted stocks: ${response.statusText}`);
@@ -304,12 +332,13 @@ export async function fetchStocksBySource(source: 'Rule1' | 'MagicFormula'): Pro
     const today = new Date();
     const formattedDate = `${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getDate().toString().padStart(2,'0')}/${today.getFullYear()}`;
     
-    // Use the filter-by-date-source endpoint with today's date
-    const url = new URL(`${API_URL}/stocks/filter-by-date-source`);
-    url.searchParams.append('date', formattedDate);
-    url.searchParams.append('source', source);
-
-    const response = await fetch(url.toString());
+    // Use our createApiUrl function with parameters
+    const params: Record<string, string> = {
+      'date': formattedDate,
+      'source': source
+    };
+    
+    const response = await fetch(createApiUrl('/stocks/filter-by-date-source', params));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch stocks: ${response.statusText}`);
@@ -325,16 +354,17 @@ export async function fetchStocksBySource(source: 'Rule1' | 'MagicFormula'): Pro
 export async function fetchStocksByDate(date: string = ''): Promise<Stock[]> {
   noStore();
   try {
-    const url = new URL(`${API_URL}/stocks/filter-by-date`);
-    
     // Format date as MM/DD/YYYY
     const formattedDate = date 
       ? `${(new Date(date).getMonth()+1).toString().padStart(2,'0')}/${new Date(date).getDate().toString().padStart(2,'0')}/${new Date(date).getFullYear()}`
       : `${(new Date().getMonth()+1).toString().padStart(2,'0')}/${new Date().getDate().toString().padStart(2,'0')}/${new Date().getFullYear()}`;
     
-    url.searchParams.append('date', formattedDate);
-
-    const response = await fetch(url.toString());
+    // Use our createApiUrl function with parameters
+    const params: Record<string, string> = {
+      'date': formattedDate
+    };
+    
+    const response = await fetch(createApiUrl('/stocks/filter-by-date', params));
     
     if (!response.ok) {
       throw new Error(`API Error: ${response.statusText}`);
@@ -352,13 +382,13 @@ export async function fetchStocksByDateAndSource(
 ): Promise<Stock[]> {
   noStore();
   try {
-    // Convert date from MM/DD/YYYY to YYYY-MM-DD format
-    const [month, day, year] = date.split('/');
-    const formattedDate = `${year}-${month}-${day}`;
+    // Use our createApiUrl function with parameters
+    const params: Record<string, string> = {
+      'date': date,
+      'source': source
+    };
     
-    const response = await fetch(
-      `http://162.248.100.66:3000/api/stocks/filter-by-date-source?date=${encodeURIComponent(date)}&source=${source}`
-    );
+    const response = await fetch(createApiUrl('/stocks/filter-by-date-source', params));
     
     if (!response.ok) {
       throw new Error(`Failed to fetch ${source} stocks: ${response.statusText}`);
@@ -477,7 +507,7 @@ export async function fetchStocksByDateRange(
     const formattedEndDate = `${month}/${day}/${year}`;
     
     // Use the specific URL for the legacy API
-    const response = await fetch(`http://162.248.100.66:3001/api/stocks/date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`);
+    const response = await fetch(`http://162.248.100.66:3000/api/stocks/date-range?startDate=${formattedStartDate}&endDate=${formattedEndDate}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch stocks by date range: ${response.statusText}`);

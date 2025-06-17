@@ -47,7 +47,7 @@ describe('fetchStocksBySource', () => {
 
     // Verify the fetch was called with the correct URL
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://162.248.100.66:3001/api/stocks/source/Rule1'
+      'http://162.248.100.66:3000/api/stocks/source/Rule1'
     );
 
     // Verify the result contains the expected data

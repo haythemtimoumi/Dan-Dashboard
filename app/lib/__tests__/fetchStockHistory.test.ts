@@ -17,7 +17,7 @@ describe('fetchStockHistory', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     // Set the environment variable for testing
-    process.env.NEXT_PUBLIC_API_URL = 'http://162.248.100.66:3001/api';
+    process.env.NEXT_PUBLIC_API_URL = 'http://162.248.100.66:3000/api';
   });
 
   it('should fetch stock history with the correct URL', async () => {
@@ -44,7 +44,7 @@ describe('fetchStockHistory', () => {
     const result = await fetchStockHistory('1');
 
     // Verify the URL used in the fetch call
-    expect(fetch).toHaveBeenCalledWith('http://162.248.100.66:3001/api/stocks/1/history');
+    expect(fetch).toHaveBeenCalledWith('http://162.248.100.66:3000/api/stocks/1/history');
     expect(result).toEqual(mockStockHistory);
   });
 
@@ -76,7 +76,7 @@ describe('fetchStockHistory', () => {
 
     // Verify the URL includes the query parameters
     expect(fetch).toHaveBeenCalledWith(
-      `http://162.248.100.66:3001/api/stocks/1/history?from=${fromDate}&to=${toDate}`
+      `http://162.248.100.66:3000/api/stocks/1/history?from=${fromDate}&to=${toDate}`
     );
   });
 
@@ -91,7 +91,7 @@ describe('fetchStockHistory', () => {
     const result = await fetchStockHistory('999');
 
     // Verify the URL used in the fetch call
-    expect(fetch).toHaveBeenCalledWith('http://162.248.100.66:3001/api/stocks/999/history');
+    expect(fetch).toHaveBeenCalledWith('http://162.248.100.66:3000/api/stocks/999/history');
     
     // Should return empty array
     expect(result).toEqual([]);
@@ -131,6 +131,6 @@ describe('fetchStockHistory', () => {
     await fetchStockHistory('1');
 
     // Verify the default URL is used
-    expect(fetch).toHaveBeenCalledWith('http://162.248.100.66:3001/api/stocks/1/history');
+    expect(fetch).toHaveBeenCalledWith('http://162.248.100.66:3000/api/stocks/1/history');
   });
 });
