@@ -85,11 +85,15 @@ export default function StocksTable({
                 <div
                   key={stock.id}
                   className={clsx(
-                    "mb-2 w-full rounded-md bg-white p-4 shadow-sm transition-all hover:shadow-md", 
+                    "mb-2 w-full rounded-md bg-white p-4 shadow-sm transition-all hover:shadow-md cursor-pointer hover:bg-gray-100", 
                     {
                       "bg-yellow-50 border-l-4 border-yellow-500": stock.highlight
                     }
                   )}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = `/dashboard/sources/${stock.id}`;
+                  }}
                 >
                   <div className="flex items-center justify-between border-b pb-4">
                     <div>
@@ -180,11 +184,15 @@ export default function StocksTable({
                   <tr
                     key={stock.id}
                     className={clsx(
-                      "w-full border-b py-3 text-sm last-of-type:border-none transition-colors hover:bg-gray-50", 
+                      "w-full border-b py-3 text-sm last-of-type:border-none transition-colors hover:bg-gray-100 cursor-pointer", 
                       {
                         "bg-yellow-50 border-l-4 border-yellow-500": stock.highlight
                       }
                     )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = `/dashboard/sources/${stock.id}`;
+                    }}
                   >
                     <td className="whitespace-nowrap py-3 pl-6 pr-3">
                       <div className="flex items-center gap-3">

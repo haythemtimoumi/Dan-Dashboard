@@ -366,7 +366,11 @@ export default function HighlightedStocksWithDateRange({
                 {paginatedStocks.map((stock) => (
                   <div
                     key={stock.id}
-                    className="mb-3 w-full rounded-md bg-white p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                    className="mb-3 w-full rounded-md bg-white p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer hover:bg-gray-100"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push(`/dashboard/highlighted/${stock.id}`);
+                    }}
                   >
                     <div className="flex items-center justify-between border-b pb-4">
                       <div>
@@ -439,7 +443,11 @@ export default function HighlightedStocksWithDateRange({
                     {paginatedStocks.map((stock) => (
                       <tr
                         key={stock.id}
-                        className="w-full py-3 text-sm hover:bg-gray-50 transition-colors duration-150"
+                        className="w-full py-3 text-sm hover:bg-gray-100 transition-colors duration-150 cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          router.push(`/dashboard/highlighted/${stock.id}`);
+                        }}
                       >
                         <td className="px-3 py-4 whitespace-nowrap font-medium">
                           {stock.ticker}
