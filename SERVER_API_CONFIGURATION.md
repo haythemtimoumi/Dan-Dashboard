@@ -26,7 +26,7 @@ Add these environment variables to your project:
 1. Create a `.env.local` file in your project root:
 ```
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=http://162.248.100.66:3000/api
+NEXT_PUBLIC_API_URL=https://stocksapidashboard.duckdns.org/api
 ```
 
 2. For Vercel deployment, add these same variables in the Vercel dashboard:

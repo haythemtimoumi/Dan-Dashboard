@@ -1,7 +1,7 @@
 import { fetchStockById } from '../data';
 
 // Mock environment variables
-process.env.NEXT_PUBLIC_API_URL = 'http://162.248.100.66:3000/api';
+process.env.NEXT_PUBLIC_API_URL = 'https://stocksapidashboard.duckdns.org/api';
 
 // Mock the fetch function
 global.fetch = jest.fn();
@@ -37,7 +37,7 @@ describe('fetchStockById', () => {
     const result = await fetchStockById('123');
 
     // Verify that fetch was called with the correct URL using the API_URL
-    expect(global.fetch).toHaveBeenCalledWith('http://162.248.100.66:3000/api/stocks/123');
+    expect(global.fetch).toHaveBeenCalledWith('https://stocksapidashboard.duckdns.org/api/stocks/123');
 
     // Verify that the correct stock is returned
     expect(result).toEqual(mockStock);
@@ -55,7 +55,7 @@ describe('fetchStockById', () => {
     const result = await fetchStockById('999');
 
     // Verify that fetch was called with the correct URL
-    expect(global.fetch).toHaveBeenCalledWith('http://162.248.100.66:3000/api/stocks/999');
+    expect(global.fetch).toHaveBeenCalledWith('https://stocksapidashboard.duckdns.org/api/stocks/999');
 
     // Verify that null is returned
     expect(result).toBeNull();
@@ -73,6 +73,6 @@ describe('fetchStockById', () => {
     await expect(fetchStockById('999')).rejects.toThrow('Failed to fetch stock.');
 
     // Verify that fetch was called with the correct URL using the API_URL
-    expect(global.fetch).toHaveBeenCalledWith('http://162.248.100.66:3000/api/stocks/999');
+    expect(global.fetch).toHaveBeenCalledWith('https://stocksapidashboard.duckdns.org/api/stocks/999');
   });
 });

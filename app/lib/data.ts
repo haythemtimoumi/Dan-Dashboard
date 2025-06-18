@@ -15,8 +15,8 @@ import {
 // In development, use the direct API URL
 // In production, use our proxy API to avoid mixed content issues
 const isProduction = process.env.NODE_ENV === 'production';
-const directApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://162.248.100.66:3000/api';
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+const directApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stocksapidashboard.duckdns.org/api';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://dan-dashboard-chi.vercel.app/');
 
 // In production, we'll use our proxy API route
 const API_URL = isProduction ? '/api/proxy' : directApiUrl;

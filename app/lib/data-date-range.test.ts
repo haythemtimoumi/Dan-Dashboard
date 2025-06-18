@@ -22,7 +22,7 @@ describe('fetchStocksByDateRange', () => {
     // Verify that fetch was called with the correct URL and MM/DD/YYYY format
     // End date should be 01/01/2024 (one day after 12/31/2023)
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://162.248.100.66:3000/api/stocks/date-range?startDate=01/01/2023&endDate=01/01/2024'
+      'https://stocksapidashboard.duckdns.org/api/stocks/date-range?startDate=01/01/2023&endDate=01/01/2024'
     );
   });
 
@@ -39,7 +39,7 @@ describe('fetchStocksByDateRange', () => {
     // Verify that fetch was called with the correct URL and MM/DD/YYYY format
     // End date should be 01/01/2024 (one day after 12/31/2023)
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://162.248.100.66:3000/api/stocks/date-range?startDate=01/01/2023&endDate=01/01/2024'
+      'https://stocksapidashboard.duckdns.org/api/stocks/date-range?startDate=01/01/2023&endDate=01/01/2024'
     );
   });
 
