@@ -23,23 +23,21 @@ const API_URL = isProduction ? '/api/proxy' : directApiUrl;
 
 // Function to create API URLs based on environment
 function createApiUrl(path: string, params?: Record<string, string>) {
-  if (isProduction || typeof window === 'undefined') {
-    // In production or on server-side, use absolute URLs with the base URL
-    const url = new URL(`${API_URL}`, baseUrl);
-    url.searchParams.append('path', path.startsWith('/api') ? path : `/api${path}`);
-    
-    // Add any additional parameters
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        url.searchParams.append(key, value);
-      });
-    }
-    
-    return url.toString();
-  } else {
-    // In development on client-side, use the direct API URL
-    return `${API_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const baseUrl = process.env.API_URL || 'http://localhost:3000';
+
+  // Ensure path always starts with /api
+  const fullPath = path.startsWith('/api') ? path : `/api${path}`;
+
+  const url = new URL(fullPath, baseUrl);
+
+  // Add query parameters if any
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.append(key, value);
+    });
   }
+
+  return url.toString();
 }
 
 // Log the API URL for debugging
