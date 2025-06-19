@@ -23,7 +23,7 @@ const API_URL = isProduction ? '/api/proxy' : directApiUrl;
 
 // Function to create API URLs based on environment
 function createApiUrl(path: string, params?: Record<string, string>) {
-  const baseUrl = process.env.API_URL || 'http://localhost:3000';
+  const baseUrl = process.env.API_URL || 'https://dan-dashboard-chi.vercel.app/';
 
   // Ensure path always starts with /api
   const fullPath = path.startsWith('/api') ? path : `/api${path}`;
