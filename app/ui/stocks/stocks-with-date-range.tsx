@@ -486,6 +486,15 @@ export default function StocksWithDateRange({
                           <span className="font-medium">Signal:</span> {stock.signal_score}
                         </p>
                         <p className="text-sm">
+                          <span className="font-medium">Rule1 Score:</span> {stock.rule1_score !== null ? stock.rule1_score : '-'}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Moat Score:</span> {stock.moat_score !== null ? stock.moat_score : '-'}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Management Score:</span> {stock.management_score !== null ? stock.management_score : '-'}
+                        </p>
+                        <p className="text-sm">
                           <span className="font-medium">PE:</span> {stock.pe}
                         </p>
                         <p className="text-sm">
@@ -528,6 +537,9 @@ export default function StocksWithDateRange({
                       <SortableHeader label="Ticker" field="ticker" />
                       <SortableHeader label="Sentiment" field="sentiment_score" />
                       <SortableHeader label="Signal" field="signal_score" />
+                      <SortableHeader label="Rule1 Score" field="rule1_score" />
+                      <SortableHeader label="Moat Score" field="moat_score" />
+                      <SortableHeader label="Management Score" field="management_score" />
                       <SortableHeader label="PE" field="pe" />
                       <SortableHeader label="Buy Price" field="buy_price" />
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
@@ -577,6 +589,15 @@ export default function StocksWithDateRange({
                           )}>
                             {stock.signal_score}
                           </p>
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {stock.rule1_score !== null ? stock.rule1_score : '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {stock.moat_score !== null ? stock.moat_score : '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {stock.management_score !== null ? stock.management_score : '-'}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           {stock.pe}

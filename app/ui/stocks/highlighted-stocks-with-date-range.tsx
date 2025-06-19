@@ -387,6 +387,15 @@ export default function HighlightedStocksWithDateRange({
                           <span className="font-medium">Signal:</span> {stock.signal_score}
                         </p>
                         <p className="text-sm">
+                          <span className="font-medium">Rule1 Score:</span> {stock.rule1_score !== null ? stock.rule1_score : '-'}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Moat Score:</span> {stock.moat_score !== null ? stock.moat_score : '-'}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Management Score:</span> {stock.management_score !== null ? stock.management_score : '-'}
+                        </p>
+                        <p className="text-sm">
                           <span className="font-medium">PE:</span> {stock.pe}
                         </p>
                         <p className="text-sm">
@@ -421,6 +430,15 @@ export default function HighlightedStocksWithDateRange({
                       </th>
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
                         Signal
+                      </th>
+                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
+                        Rule1 Score
+                      </th>
+                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
+                        Moat Score
+                      </th>
+                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
+                        Management Score
                       </th>
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
                         PE
@@ -467,6 +485,15 @@ export default function HighlightedStocksWithDateRange({
                           )}>
                             {stock.signal_score}
                           </p>
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {stock.rule1_score !== null ? stock.rule1_score : '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {stock.moat_score !== null ? stock.moat_score : '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {stock.management_score !== null ? stock.management_score : '-'}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           {stock.pe}

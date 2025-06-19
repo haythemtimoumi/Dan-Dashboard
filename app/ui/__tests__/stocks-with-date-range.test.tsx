@@ -126,8 +126,8 @@ describe('StocksWithDateRange', () => {
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve([
-          { id: '1', ticker: 'AAPL', sentiment_score: 80, signal_score: 75, pe: 25, buy_price: 150, guru: 'Test', source: 'Rule 1', highlight: false, created_at: '2023-01-01' },
-          { id: '2', ticker: 'MSFT', sentiment_score: 70, signal_score: 65, pe: 30, buy_price: 200, guru: 'Test', source: 'Magic Formula', highlight: true, created_at: '2023-01-02' }
+          { id: '1', ticker: 'AAPL', sentiment_score: 80, signal_score: 75, pe: 25, buy_price: 150, guru: 'Test', source: 'Rule 1', highlight: false, created_at: '2023-01-01', rule1_score: 85, moat_score: 90, management_score: 75 },
+          { id: '2', ticker: 'MSFT', sentiment_score: 70, signal_score: 65, pe: 30, buy_price: 200, guru: 'Test', source: 'Magic Formula', highlight: true, created_at: '2023-01-02', rule1_score: 80, moat_score: 85, management_score: 70 }
         ]),
       })
     );

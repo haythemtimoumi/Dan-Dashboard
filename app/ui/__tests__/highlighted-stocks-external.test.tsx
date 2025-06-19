@@ -23,6 +23,9 @@ const mockHighlightedStocks: Stock[] = [
     highlight: true,
     created_at: '2023-01-15T12:00:00Z',
     updated_at: '2023-06-20T14:30:00Z',
+    rule1_score: 90,
+    moat_score: 85,
+    management_score: 80,
   },
   {
     id: '2',
@@ -210,6 +213,9 @@ describe('HighlightedStocksExternalSkeleton', () => {
     expect(screen.getByText('Ticker')).toBeInTheDocument();
     expect(screen.getByText('Sentiment')).toBeInTheDocument();
     expect(screen.getByText('Signal')).toBeInTheDocument();
+    expect(screen.getByText('Rule1 Score')).toBeInTheDocument();
+    expect(screen.getByText('Moat Score')).toBeInTheDocument();
+    expect(screen.getByText('Management Score')).toBeInTheDocument();
     expect(screen.getByText('PE')).toBeInTheDocument();
     expect(screen.getByText('Buy Price')).toBeInTheDocument();
     expect(screen.getByText('Guru')).toBeInTheDocument();

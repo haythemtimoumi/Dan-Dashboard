@@ -110,6 +110,15 @@ export default function StocksTable({
                         <span className="font-medium">PE:</span> {stock.pe}
                       </p>
                       <p className="text-sm">
+                        <span className="font-medium">Rule1 Score:</span> {stock.rule1_score !== null ? stock.rule1_score : '-'}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Moat Score:</span> {stock.moat_score !== null ? stock.moat_score : '-'}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Management Score:</span> {stock.management_score !== null ? stock.management_score : '-'}
+                      </p>
+                      <p className="text-sm">
                         <span className="font-medium">Buy Price:</span> {formatCurrency(stock.buy_price)}
                       </p>
                       <p className="mt-2">
@@ -152,6 +161,24 @@ export default function StocksTable({
                 <SortableHeader 
                   label="Signal" 
                   field="signal_score" 
+                  currentSortBy={sortBy} 
+                  currentSortOrder={sortOrder} 
+                />
+                <SortableHeader 
+                  label="Rule1 Score" 
+                  field="rule1_score" 
+                  currentSortBy={sortBy} 
+                  currentSortOrder={sortOrder} 
+                />
+                <SortableHeader 
+                  label="Moat Score" 
+                  field="moat_score" 
+                  currentSortBy={sortBy} 
+                  currentSortOrder={sortOrder} 
+                />
+                <SortableHeader 
+                  label="Management Score" 
+                  field="management_score" 
                   currentSortBy={sortBy} 
                   currentSortOrder={sortOrder} 
                 />
@@ -214,6 +241,15 @@ export default function StocksTable({
                       )}>
                         {stock.signal_score}
                       </p>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3">
+                      {stock.rule1_score !== null ? stock.rule1_score : '-'}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3">
+                      {stock.moat_score !== null ? stock.moat_score : '-'}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3">
+                      {stock.management_score !== null ? stock.management_score : '-'}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">
                       {stock.pe}
