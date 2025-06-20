@@ -77,3 +77,15 @@ export type StockStats = {
   rule1Stocks: number;
   magicFormulaStocks: number;
 };
+
+export type StockChange = {
+  ticker: string;
+  source: string;
+  guru: string;
+  metric: string;
+  start_value: number;
+  end_value: number;
+  change_percent: number;
+  change: number;
+  status: string;
+};

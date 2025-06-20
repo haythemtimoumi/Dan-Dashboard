@@ -8,6 +8,7 @@ import {
   StarIcon,
   ScaleIcon,
   PlusCircleIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -16,6 +17,7 @@ const links = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'All Stocks', href: '/dashboard/stocks', icon: TableCellsIcon },
   { name: 'Highlighted Stocks', href: '/dashboard/highlighted', icon: StarIcon },
+  { name: 'Recent Changes', href: '/dashboard/recent-changes', icon: ChartBarIcon },
   { name: 'Rule1 vs MagicFormula', href: '/dashboard/sources', icon: ScaleIcon },
   { name: 'Add New Stock', href: '/dashboard/stocks/create', icon: PlusCircleIcon },
 ];

@@ -352,3 +352,47 @@ export function InvoicesTableSkeleton() {
 }
 
 export default DashboardSkeleton;
+
+export function RecentChangesSkeleton() {
+  return (
+    <div className={`${shimmer} relative overflow-hidden`}>
+      {/* Form skeleton */}
+      <div className="mb-8 rounded-md bg-gray-100 p-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {Array(7).fill(0).map((_, i) => (
+            <div key={i} className="h-20 rounded-md bg-gray-200"></div>
+          ))}
+        </div>
+        <div className="mt-6 flex justify-end">
+          <div className="h-10 w-32 rounded-md bg-gray-200"></div>
+        </div>
+      </div>
+      
+      {/* Table skeleton */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              {Array(8).fill(0).map((_, i) => (
+                <th key={i} scope="col" className="px-6 py-3 text-left">
+                  <div className="h-4 w-20 rounded-md bg-gray-200"></div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {Array(5).fill(0).map((_, rowIndex) => (
+              <tr key={rowIndex}>
+                {Array(8).fill(0).map((_, colIndex) => (
+                  <td key={colIndex} className="whitespace-nowrap px-6 py-4">
+                    <div className="h-5 w-20 rounded-md bg-gray-200"></div>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

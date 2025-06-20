@@ -612,3 +612,60 @@ export async function fetchStockHistory(
     throw new Error('Failed to fetch stock history.');
   }
 }
+
+// Define the type for stock changes
+export type StockChange = {
+  ticker: string;
+  source: string;
+  guru: string;
+  metric: string;
+  start_value: number;
+  end_value: number;
+  change_percent: number;
+  change: number;
+  status: string;
+};
+
+export async function fetchRecentChanges(
+  metric: string,
+  startDate: string,
+  endDate: string,
+  threshold: number = 5,
+  ticker?: string,
+  source?: string,
+  guru?: string
+): Promise<StockChange[]> {
+  noStore();
+  try {
+    // Build the URL with parameters
+    const params: Record<string, string> = {
+      metric,
+      start_date: startDate,
+      end_date: endDate,
+      threshold: threshold.toString()
+    };
+    
+    if (ticker) {
+      params['ticker'] = ticker;
+    }
+    
+    if (source) {
+      params['source'] = source;
+    }
+    
+    if (guru) {
+      params['guru'] = guru;
+    }
+    
+    const response = await fetch(createApiUrl('/stocks/recent-changes', params));
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch recent changes: ${response.statusText}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API Error:', error);
+    throw new Error('Failed to fetch recent stock changes.');
+  }
+}
