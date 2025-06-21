@@ -24,13 +24,14 @@ const API_URL = isProduction ? '/api/proxy' : directApiUrl;
 // Function to create API URLs based on environment
 function createApiUrl(path: string, params?: Record<string, string>) {
   const base = isProduction 
-    ? 'https://stocksapidashboard.duckdns.org/api' 
+    ? 'https://stocksapidashboard.duckdns.org' 
     : directApiUrl;
 
-  // Ensure path does not start with /api to avoid duplication
-  const trimmedPath = path.replace(/^\/api/, '');
+  // Ensure path starts with /api
+  const fullPath = path.startsWith('/api') ? path : `/api${path}`;
 
-  const url = new URL(trimmedPath, base);
+  // Construct full absolute URL safely
+  const url = new URL(`${base}${fullPath}`);
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -40,6 +41,7 @@ function createApiUrl(path: string, params?: Record<string, string>) {
 
   return url.toString();
 }
+
 
 
 // Log the API URL for debugging
