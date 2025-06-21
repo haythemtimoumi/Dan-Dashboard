@@ -23,14 +23,15 @@ const API_URL = isProduction ? '/api/proxy' : directApiUrl;
 
 // Function to create API URLs based on environment
 function createApiUrl(path: string, params?: Record<string, string>) {
-  const baseUrl = process.env.API_URL || 'https://dan-dashboard-chi.vercel.app/';
+  const base = isProduction 
+    ? 'https://stocksapidashboard.duckdns.org/api' 
+    : directApiUrl;
 
-  // Ensure path always starts with /api
-  const fullPath = path.startsWith('/api') ? path : `/api${path}`;
+  // Ensure path does not start with /api to avoid duplication
+  const trimmedPath = path.replace(/^\/api/, '');
 
-  const url = new URL(fullPath, baseUrl);
+  const url = new URL(trimmedPath, base);
 
-  // Add query parameters if any
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, value);
@@ -39,6 +40,7 @@ function createApiUrl(path: string, params?: Record<string, string>) {
 
   return url.toString();
 }
+
 
 // Log the API URL for debugging
 console.log(`Using API URL: ${isProduction ? 'Proxy API' : API_URL}`);
