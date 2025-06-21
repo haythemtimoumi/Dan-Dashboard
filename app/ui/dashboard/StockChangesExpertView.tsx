@@ -48,13 +48,16 @@ export default function StockChangesView() {
     .slice(0, 5);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
+      {/* Header Title */}
+      <h1 className="text-2xl font-bold text-gray-800 mb-2">📊 Metric Movements Dashboard</h1>
+
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-4 rounded-xl shadow-sm">
+      <div className="sticky top-2 z-10 bg-white/70 backdrop-blur-md rounded-xl border p-4 shadow-md flex flex-wrap items-center gap-4">
         <div className="flex flex-col">
-          <label className="text-xs font-medium text-gray-600">Metric</label>
+          <label className="text-xs font-semibold text-gray-600">Metric</label>
           <select
-            className="mt-1 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={metric}
             onChange={e => setMetric(e.target.value)}
           >
@@ -64,55 +67,51 @@ export default function StockChangesView() {
           </select>
         </div>
         <div className="flex flex-col">
-          <label className="text-xs font-medium text-gray-600">Start Date</label>
+          <label className="text-xs font-semibold text-gray-600">Start Date</label>
           <DatePicker
             selected={startDate}
             onChange={(d: Date) => setStartDate(d)}
-            className="mt-1 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             dateFormat="yyyy-MM-dd"
           />
         </div>
         <div className="flex flex-col">
-          <label className="text-xs font-medium text-gray-600">End Date</label>
+          <label className="text-xs font-semibold text-gray-600">End Date</label>
           <DatePicker
             selected={endDate}
             onChange={(d: Date) => setEndDate(d)}
-            className="mt-1 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             dateFormat="yyyy-MM-dd"
           />
         </div>
         <div className="flex flex-col">
-          <label className="text-xs font-medium text-gray-600">Threshold (%)</label>
+          <label className="text-xs font-semibold text-gray-600">Threshold (%)</label>
           <input
             type="number"
             min="0"
             step="1"
             value={threshold}
             onChange={e => setThreshold(Number(e.target.value))}
-            className="mt-1 w-24 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
 
       {/* Charts and Tables */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <StockBarChart title="Top Gainers" data={topGainers} />
-          <div className="mt-4">
-            <StockChangeTable title="Top Gainers Table" rows={topGainers} />
-          </div>
+        <div className="space-y-4">
+          <StockBarChart title="📈 Top Gainers" data={topGainers} />
+          <StockChangeTable title="Top Gainers Table" rows={topGainers} />
         </div>
-        <div>
-          <StockBarChart title="Top Losers" data={topLosers} />
-          <div className="mt-4">
-            <StockChangeTable title="Top Losers Table" rows={topLosers} />
-          </div>
+        <div className="space-y-4">
+          <StockBarChart title="📉 Top Losers" data={topLosers} />
+          <StockChangeTable title="Top Losers Table" rows={topLosers} />
         </div>
       </div>
 
       {/* Placeholder for future sections */}
-      <div className="border rounded-lg p-4 text-muted-foreground text-sm text-center">
-        More insights coming below... (we’ll define together)
+      <div className="border rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-500 shadow-sm">
+        🚧 More insights and analytics coming soon below...
       </div>
     </div>
   );
