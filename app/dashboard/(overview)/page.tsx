@@ -1,47 +1,16 @@
-import { Suspense } from 'react';
 import { Metadata } from 'next';
-
-import CardWrapper from '@/app/ui/dashboard/cards';
-import LatestStocks from '@/app/ui/dashboard/latest-stocks';
-import StockChart from '@/app/ui/dashboard/stock-chart';
-import { lusitana } from '@/app/ui/fonts';
-import {
-  CardsSkeleton,
-  LatestStocksSkeleton,
-  DailyChangesSkeleton,
-} from '@/app/ui/skeletons';
-import { fetchStocksForChart } from '@/app/lib/data';
-import RecentChanges from '@/app/ui/dashboard/RecentChanges'; // ✅ new component
+import StockChangesView from '@/app/ui/dashboard/StockChangesView';
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Stock Analysis Dashboard Overview"
+  title: "Stock Changes",
+  description: "Metric comparison and analysis dashboard"
 };
 
-export default async function DashboardPage() {
-  const stocksForChart = await fetchStocksForChart();
-
+export default function DashboardPage() {
   return (
-    <main>
-      <h1 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
-        Stock Analysis Dashboard
-      </h1>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Suspense fallback={<CardsSkeleton />}>
-          <CardWrapper />
-        </Suspense>
-      </div>
-      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-8">
-        <Suspense fallback={<LatestStocksSkeleton />}>
-          <LatestStocks />
-        </Suspense>
-        <Suspense fallback={<DailyChangesSkeleton />}>
-          <StockChart stocks={stocksForChart} />
-        </Suspense>
-      </div>
-
-      {/* ✅ Added: Section to display recent stock changes */}
-      <RecentChanges />
+    <main className="p-4 md:p-8">
+      <h1 className="text-2xl font-bold mb-4">Recent Stock Metric Changes</h1>
+      <StockChangesView />
     </main>
   );
 }
