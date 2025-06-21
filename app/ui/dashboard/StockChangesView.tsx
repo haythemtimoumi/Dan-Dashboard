@@ -58,19 +58,21 @@ export default function StockChangesView() {
       {
         label: 'Change %',
         data: topChanges.map(d => d.change_percent),
-        backgroundColor: topChanges.map(d => d.change_percent >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)'),
+        backgroundColor: topChanges.map(d => d.change_percent >= 0 ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)'),
+        borderRadius: 8,
+        borderSkipped: false,
       },
     ],
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-4">
-        <label className="text-sm font-medium">
-          Metric:
+      <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-4 rounded-xl shadow-sm">
+        <div className="flex flex-col">
+          <label className="text-xs font-medium text-gray-600">Metric</label>
           <select
-            className="ml-2 px-2 py-1 border rounded"
+            className="mt-1 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={metric}
             onChange={e => setMetric(e.target.value)}
           >
@@ -78,41 +80,41 @@ export default function StockChangesView() {
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
-        </label>
-        <label className="text-sm font-medium">
-          Start Date:
+        </div>
+        <div className="flex flex-col">
+          <label className="text-xs font-medium text-gray-600">Start Date</label>
           <DatePicker
             selected={startDate}
             onChange={(d: Date) => setStartDate(d)}
-            className="ml-2 px-2 py-1 border rounded"
+            className="mt-1 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             dateFormat="yyyy-MM-dd"
           />
-        </label>
-        <label className="text-sm font-medium">
-          End Date:
+        </div>
+        <div className="flex flex-col">
+          <label className="text-xs font-medium text-gray-600">End Date</label>
           <DatePicker
             selected={endDate}
             onChange={(d: Date) => setEndDate(d)}
-            className="ml-2 px-2 py-1 border rounded"
+            className="mt-1 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             dateFormat="yyyy-MM-dd"
           />
-        </label>
-        <label className="text-sm font-medium">
-          Threshold (%):
+        </div>
+        <div className="flex flex-col">
+          <label className="text-xs font-medium text-gray-600">Threshold (%)</label>
           <input
             type="number"
             min="0"
             step="1"
             value={threshold}
             onChange={e => setThreshold(Number(e.target.value))}
-            className="ml-2 w-20 px-2 py-1 border rounded"
+            className="mt-1 w-24 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        </label>
+        </div>
       </div>
 
       {/* Chart */}
-      <div className="bg-white p-4 rounded shadow">
-        <h2 className="text-md font-semibold mb-2">Top 10 Movers by % Change</h2>
+      <div className="bg-white p-6 rounded-xl shadow-md">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Top 10 Movers by % Change</h2>
         {topChanges.length === 0 ? (
           <p className="text-sm text-gray-500">No significant changes found for the selected range.</p>
         ) : (
@@ -121,36 +123,33 @@ export default function StockChangesView() {
       </div>
 
       {/* Table */}
-      <div className="overflow-auto bg-white p-4 rounded shadow">
-        <h2 className="text-md font-semibold mb-2">Detailed Changes</h2>
+      <div className="overflow-auto bg-white p-6 rounded-xl shadow-md">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Detailed Changes</h2>
         {loading ? (
           <p>Loading...</p>
         ) : data.length === 0 ? (
           <p className="text-sm text-gray-500">No data found for this selection.</p>
         ) : (
-          <table className="min-w-full text-sm text-left">
-            <thead>
-              <tr className="border-b">
-                <th className="p-2">Ticker</th>
-                <th className="p-2">Source</th>
-                <th className="p-2">Guru</th>
-                <th className="p-2">Start</th>
-                <th className="p-2">End</th>
-                <th className="p-2">Change %</th>
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-100 text-gray-700">
+              <tr>
+                <th className="p-3 text-left">Ticker</th>
+                <th className="p-3 text-left">Source</th>
+                <th className="p-3 text-left">Guru</th>
+                <th className="p-3 text-right">Start</th>
+                <th className="p-3 text-right">End</th>
+                <th className="p-3 text-right">Change %</th>
               </tr>
             </thead>
             <tbody>
               {data.map((row, idx) => (
-                <tr
-                  key={idx}
-                  className="border-b"
-                >
-                  <td className="p-2 font-bold">{row.ticker.toUpperCase()}</td>
-                  <td className="p-2">{row.source}</td>
-                  <td className="p-2">{row.guru}</td>
-                  <td className="p-2">{row.start_value}</td>
-                  <td className="p-2">{row.end_value}</td>
-                  <td className={`p-2 font-semibold ${row.change_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <tr key={idx} className="border-b hover:bg-gray-50">
+                  <td className="p-3 font-semibold text-blue-700">{row.ticker.toUpperCase()}</td>
+                  <td className="p-3">{row.source}</td>
+                  <td className="p-3">{row.guru}</td>
+                  <td className="p-3 text-right">{row.start_value}</td>
+                  <td className="p-3 text-right">{row.end_value}</td>
+                  <td className={`p-3 text-right font-bold ${row.change_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {row.change_percent}%
                   </td>
                 </tr>
