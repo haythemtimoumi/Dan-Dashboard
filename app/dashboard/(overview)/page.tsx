@@ -1,16 +1,15 @@
 import { Metadata } from 'next';
-import StockChangesView from '@/app/ui/dashboard/StockChangesView';
+import StockChangesExpertView from '@/app/ui/dashboard/StockChangesExpertView';
 
 export const metadata: Metadata = {
-  title: "Stock Changes",
-  description: "Metric comparison and analysis dashboard"
+  title: "Dashboard",
+  description: "Stock Metric Changes Overview"
 };
 
 export default function DashboardPage() {
   return (
-    <main className="p-4 md:p-8">
-      <h1 className="text-2xl font-bold mb-4">Recent Stock Metric Changes</h1>
-      <StockChangesView />
+    <main className="space-y-8 px-4 py-6">
+      <StockChangesExpertView />
     </main>
   );
 }
