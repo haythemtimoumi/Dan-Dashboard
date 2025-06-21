@@ -641,35 +641,37 @@ export async function fetchRecentChanges(
 ): Promise<StockChange[]> {
   noStore();
   try {
-    // Build the URL with parameters
     const params: Record<string, string> = {
       metric,
       start_date: startDate,
       end_date: endDate,
       threshold: threshold.toString()
     };
-    
-    if (ticker) {
-      params['ticker'] = ticker;
-    }
-    
-    if (source) {
-      params['source'] = source;
-    }
-    
-    if (guru) {
-      params['guru'] = guru;
-    }
-    
+
+    if (ticker) params['ticker'] = ticker;
+    if (source) params['source'] = source;
+    if (guru) params['guru'] = guru;
+
     const response = await fetch(createApiUrl('/stocks/recent-changes', params));
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch recent changes: ${response.statusText}`);
+
+    // New: verify content-type
+    const contentType = response.headers.get('content-type');
+    if (!response.ok || !contentType?.includes('application/json')) {
+      const text = await response.text();
+      console.error('Unexpected API response:', text);
+      throw new Error('API response is not valid JSON.');
     }
-    
-    return await response.json();
+
+    const data = await response.json();
+
+    if (!Array.isArray(data)) {
+      console.error('Expected array but got:', data);
+      throw new Error('Unexpected API response format');
+    }
+
+    return data;
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('fetchRecentChanges failed:', error);
     throw new Error('Failed to fetch recent stock changes.');
   }
 }
