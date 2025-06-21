@@ -27,6 +27,7 @@ export default function StockChangesView() {
     return d;
   });
   const [endDate, setEndDate] = useState(() => new Date());
+  const [threshold, setThreshold] = useState(5);
   const [data, setData] = useState<StockChange[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +36,7 @@ export default function StockChangesView() {
       setLoading(true);
       try {
         const format = (d: Date) => d.toISOString().split('T')[0];
-        const changes = await fetchRecentChangesAll(metric, format(startDate), format(endDate));
+        const changes = await fetchRecentChangesAll(metric, format(startDate), format(endDate), threshold);
         setData(changes);
       } catch (error) {
         console.error('Error loading changes:', error);
@@ -44,7 +45,7 @@ export default function StockChangesView() {
       }
     };
     fetchData();
-  }, [metric, startDate, endDate]);
+  }, [metric, startDate, endDate, threshold]);
 
   const topChanges = data
     .filter(d => !isNaN(d.change_percent))
@@ -57,7 +58,7 @@ export default function StockChangesView() {
       {
         label: 'Change %',
         data: topChanges.map(d => d.change_percent),
-        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+        backgroundColor: topChanges.map(d => d.change_percent >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)'),
       },
     ],
   };
@@ -96,12 +97,27 @@ export default function StockChangesView() {
             dateFormat="yyyy-MM-dd"
           />
         </label>
+        <label className="text-sm font-medium">
+          Threshold (%):
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={threshold}
+            onChange={e => setThreshold(Number(e.target.value))}
+            className="ml-2 w-20 px-2 py-1 border rounded"
+          />
+        </label>
       </div>
 
       {/* Chart */}
       <div className="bg-white p-4 rounded shadow">
         <h2 className="text-md font-semibold mb-2">Top 10 Movers by % Change</h2>
-        <Bar data={chartData} options={{ responsive: true }} />
+        {topChanges.length === 0 ? (
+          <p className="text-sm text-gray-500">No significant changes found for the selected range.</p>
+        ) : (
+          <Bar data={chartData} options={{ responsive: true }} />
+        )}
       </div>
 
       {/* Table */}
@@ -109,6 +125,8 @@ export default function StockChangesView() {
         <h2 className="text-md font-semibold mb-2">Detailed Changes</h2>
         {loading ? (
           <p>Loading...</p>
+        ) : data.length === 0 ? (
+          <p className="text-sm text-gray-500">No data found for this selection.</p>
         ) : (
           <table className="min-w-full text-sm text-left">
             <thead>
@@ -123,13 +141,18 @@ export default function StockChangesView() {
             </thead>
             <tbody>
               {data.map((row, idx) => (
-                <tr key={idx} className="border-b">
+                <tr
+                  key={idx}
+                  className="border-b"
+                >
                   <td className="p-2 font-bold">{row.ticker.toUpperCase()}</td>
                   <td className="p-2">{row.source}</td>
                   <td className="p-2">{row.guru}</td>
                   <td className="p-2">{row.start_value}</td>
                   <td className="p-2">{row.end_value}</td>
-                  <td className="p-2">{row.change_percent}%</td>
+                  <td className={`p-2 font-semibold ${row.change_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {row.change_percent}%
+                  </td>
                 </tr>
               ))}
             </tbody>
