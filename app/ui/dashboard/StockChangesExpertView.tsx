@@ -2,20 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { StockChange, fetchRecentChangesAll } from '@/app/lib/data';
-import { Bar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import StockBarChart from './StockBarChart';
+import StockChangeTable from './StockChangeTable';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const metrics = ['sentiment_score', 'signal_score', 'pe', 'buy_price'];
 
@@ -47,23 +37,15 @@ export default function StockChangesView() {
     fetchData();
   }, [metric, startDate, endDate, threshold]);
 
-  const topChanges = data
-    .filter(d => !isNaN(d.change_percent))
-    .sort((a, b) => Math.abs(b.change_percent) - Math.abs(a.change_percent))
-    .slice(0, 10);
+  const topGainers = data
+    .filter(d => d.change_percent > 0)
+    .sort((a, b) => b.change_percent - a.change_percent)
+    .slice(0, 5);
 
-  const chartData = {
-    labels: topChanges.map(d => d.ticker.toUpperCase()),
-    datasets: [
-      {
-        label: 'Change %',
-        data: topChanges.map(d => d.change_percent),
-        backgroundColor: topChanges.map(d => d.change_percent >= 0 ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)'),
-        borderRadius: 8,
-        borderSkipped: false,
-      },
-    ],
-  };
+  const topLosers = data
+    .filter(d => d.change_percent < 0)
+    .sort((a, b) => a.change_percent - b.change_percent)
+    .slice(0, 5);
 
   return (
     <div className="space-y-8">
@@ -112,51 +94,25 @@ export default function StockChangesView() {
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="bg-white p-6 rounded-xl shadow-md">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Top 10 Movers by % Change</h2>
-        {topChanges.length === 0 ? (
-          <p className="text-sm text-gray-500">No significant changes found for the selected range.</p>
-        ) : (
-          <Bar data={chartData} options={{ responsive: true }} />
-        )}
+      {/* Charts and Tables */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <StockBarChart title="Top Gainers" data={topGainers} />
+          <div className="mt-4">
+            <StockChangeTable title="Top Gainers Table" rows={topGainers} />
+          </div>
+        </div>
+        <div>
+          <StockBarChart title="Top Losers" data={topLosers} />
+          <div className="mt-4">
+            <StockChangeTable title="Top Losers Table" rows={topLosers} />
+          </div>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-auto bg-white p-6 rounded-xl shadow-md">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Detailed Changes</h2>
-        {loading ? (
-          <p>Loading...</p>
-        ) : data.length === 0 ? (
-          <p className="text-sm text-gray-500">No data found for this selection.</p>
-        ) : (
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-100 text-gray-700">
-              <tr>
-                <th className="p-3 text-left">Ticker</th>
-                <th className="p-3 text-left">Source</th>
-                <th className="p-3 text-left">Guru</th>
-                <th className="p-3 text-right">Start</th>
-                <th className="p-3 text-right">End</th>
-                <th className="p-3 text-right">Change %</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row, idx) => (
-                <tr key={idx} className="border-b hover:bg-gray-50">
-                  <td className="p-3 font-semibold text-blue-700">{row.ticker.toUpperCase()}</td>
-                  <td className="p-3">{row.source}</td>
-                  <td className="p-3">{row.guru}</td>
-                  <td className="p-3 text-right">{row.start_value}</td>
-                  <td className="p-3 text-right">{row.end_value}</td>
-                  <td className={`p-3 text-right font-bold ${row.change_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {row.change_percent}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      {/* Placeholder for future sections */}
+      <div className="border rounded-lg p-4 text-muted-foreground text-sm text-center">
+        More insights coming below... (we’ll define together)
       </div>
     </div>
   );
