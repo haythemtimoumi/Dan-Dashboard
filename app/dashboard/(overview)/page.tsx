@@ -11,6 +11,7 @@ import {
   DailyChangesSkeleton,
 } from '@/app/ui/skeletons';
 import { fetchStocksForChart } from '@/app/lib/data';
+import RecentChanges from '@/app/ui/dashboard/RecentChanges'; // ✅ new component
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 
 export default async function DashboardPage() {
   const stocksForChart = await fetchStocksForChart();
-  
+
   return (
     <main>
       <h1 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
@@ -38,6 +39,9 @@ export default async function DashboardPage() {
           <StockChart stocks={stocksForChart} />
         </Suspense>
       </div>
+
+      {/* ✅ Added: Section to display recent stock changes */}
+      <RecentChanges />
     </main>
   );
 }

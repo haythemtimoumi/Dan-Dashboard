@@ -576,6 +576,33 @@ export async function fetchHighlightedStocksByDateRange(
     throw new Error('Failed to fetch highlighted stocks by date range.');
   }
 }
+export async function fetchRecentChangesAll(
+  metric: string,
+  startDate: string,
+  endDate: string,
+  threshold: number = 5
+): Promise<StockChange[]> {
+  noStore();
+  try {
+    const params: Record<string, string> = {
+      metric,
+      start_date: startDate,
+      end_date: endDate,
+      threshold: threshold.toString()
+    };
+
+    const response = await fetch(createApiUrl('/stocks/recent-changes/all', params));
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch recent changes (all): ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('fetchRecentChangesAll failed:', error);
+    throw new Error('Failed to fetch recent stock changes (all).');
+  }
+}
 
 export async function fetchStockHistory(
   id: string,
