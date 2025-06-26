@@ -52,8 +52,28 @@ export async function GET(request: Request) {
       filteredStocks.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
+      
+      // Helper function to format date string to MM/DD/YYYY
+      const formatDateString = (dateStr: string): string => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return '';
+        
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        
+        return `${month}/${day}/${year}`;
+      };
+      
+      // Make sure each stock has a properly formatted date field
+      const processedStocks = filteredStocks.map(stock => ({
+        ...stock,
+        // If date field doesn't exist, create it from created_at
+        date: stock.date || formatDateString(stock.created_at)
+      }));
 
-      return NextResponse.json(filteredStocks);
+      return NextResponse.json(processedStocks);
     } catch (error) {
       return NextResponse.json(
         { error: 'Invalid date format. Use YYYY-MM-DD or MM/DD/YYYY' },

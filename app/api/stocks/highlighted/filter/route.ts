@@ -56,13 +56,33 @@ export async function GET(request: Request) {
     // Sort by sentiment score in descending order
     highlightedStocks.sort((a, b) => b.sentiment_score - a.sentiment_score);
     
-    if (highlightedStocks.length === 0) {
+    // Helper function to format date string to MM/DD/YYYY
+    const formatDateString = (dateStr: string): string => {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '';
+      
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${month}/${day}/${year}`;
+    };
+    
+    // Make sure each stock has a properly formatted date field
+    const processedStocks = highlightedStocks.map(stock => ({
+      ...stock,
+      // If date field doesn't exist, create it from created_at
+      date: stock.date || formatDateString(stock.created_at)
+    }));
+    
+    if (processedStocks.length === 0) {
       console.warn('No highlighted stocks found for the specified date range');
       // Return an empty array with 200 status instead of an error
       return NextResponse.json([], { status: 200 });
     }
     
-    return NextResponse.json(highlightedStocks);
+    return NextResponse.json(processedStocks);
   } catch (error) {
     console.error('Error fetching highlighted stocks by date range:', error);
     return NextResponse.json(
