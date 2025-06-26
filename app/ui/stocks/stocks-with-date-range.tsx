@@ -205,7 +205,14 @@ export default function StocksWithDateRange({
         
         const data = await response.json();
         console.log(`Received ${data.length} stocks from API`);
-        setStocks(data);
+        
+        // Process the data to ensure dates are properly formatted
+        const processedData = data.map((stock: any) => ({
+          ...stock,
+          created_at: stock.created_at ? new Date(stock.created_at).toISOString() : null
+        }));
+        
+        setStocks(processedData);
         setError(null);
       } catch (err) {
         console.error('Error fetching stocks:', err);
@@ -474,7 +481,6 @@ export default function StocksWithDateRange({
                     <div className="flex items-center justify-between border-b pb-4">
                       <div>
                         <p className="text-sm font-semibold">{stock.ticker}</p>
-                        <p className="text-sm text-gray-500">{stock.guru}</p>
                       </div>
                       <div className={`${getSentimentColor(stock.sentiment_score)} text-sm font-medium`}>
                         {stock.sentiment_score}
@@ -493,9 +499,6 @@ export default function StocksWithDateRange({
                         </p>
                         <p className="text-sm">
                           <span className="font-medium">Management Score:</span> {stock.management_score !== null ? stock.management_score : '-'}
-                        </p>
-                        <p className="text-sm">
-                          <span className="font-medium">PE:</span> {stock.pe}
                         </p>
                         <p className="text-sm">
                           <span className="font-medium">Buy Price:</span> {formatCurrency(stock.buy_price)}
@@ -540,11 +543,7 @@ export default function StocksWithDateRange({
                       <SortableHeader label="Rule1 Score" field="rule1_score" />
                       <SortableHeader label="Moat Score" field="moat_score" />
                       <SortableHeader label="Management Score" field="management_score" />
-                      <SortableHeader label="PE" field="pe" />
                       <SortableHeader label="Buy Price" field="buy_price" />
-                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Guru
-                      </th>
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
                         Source
                       </th>
@@ -600,13 +599,7 @@ export default function StocksWithDateRange({
                           {stock.management_score !== null ? stock.management_score : '-'}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
-                          {stock.pe}
-                        </td>
-                        <td className="px-3 py-4 whitespace-nowrap">
                           {formatCurrency(stock.buy_price)}
-                        </td>
-                        <td className="px-3 py-4 whitespace-nowrap">
-                          {stock.guru}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-xs", 
