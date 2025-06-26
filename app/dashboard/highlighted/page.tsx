@@ -33,7 +33,7 @@ export default function HighlightedStocksPage({
         Highlighted Stocks
       </h1>
       <p className="text-gray-600 mb-6">
-        View all highlighted stocks with detailed information including ticker, sentiment, signal, buy price, and source.
+        View all highlighted stocks with detailed information including ticker, sentiment, signal, PE, current ratio, buy price, and source.
       </p>
       
       <Suspense fallback={<HighlightedStocksExternalSkeleton />}>

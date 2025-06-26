@@ -397,6 +397,12 @@ export default function HighlightedStocksWithDateRange({
                           <span className="font-medium">Management Score:</span> {stock.management_score !== null ? stock.management_score : '-'}
                         </p>
                         <p className="text-sm">
+                          <span className="font-medium">PE:</span> {stock.pe}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Current Ratio:</span> {stock.current_ratio}
+                        </p>
+                        <p className="text-sm">
                           <span className="font-medium">Buy Price:</span> {formatCurrency(stock.buy_price)}
                         </p>
                         <p className="text-sm">
@@ -437,6 +443,12 @@ export default function HighlightedStocksWithDateRange({
                       </th>
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
                         Management Score
+                      </th>
+                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
+                        PE
+                      </th>
+                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
+                        Current Ratio
                       </th>
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
                         Buy Price
@@ -486,6 +498,12 @@ export default function HighlightedStocksWithDateRange({
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           {stock.management_score !== null ? stock.management_score : '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {stock.pe}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {stock.current_ratio}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           {formatCurrency(stock.buy_price)}

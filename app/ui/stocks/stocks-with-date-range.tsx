@@ -496,6 +496,12 @@ export default function StocksWithDateRange({
                           <span className="font-medium">Management Score:</span> {stock.management_score !== null ? stock.management_score : '-'}
                         </p>
                         <p className="text-sm">
+                          <span className="font-medium">PE:</span> {stock.pe}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Current Ratio:</span> {stock.current_ratio}
+                        </p>
+                        <p className="text-sm">
                           <span className="font-medium">Buy Price:</span> {formatCurrency(stock.buy_price)}
                         </p>
                         <p className="text-sm">
@@ -538,6 +544,8 @@ export default function StocksWithDateRange({
                       <SortableHeader label="Rule1 Score" field="rule1_score" />
                       <SortableHeader label="Moat Score" field="moat_score" />
                       <SortableHeader label="Management Score" field="management_score" />
+                      <SortableHeader label="PE" field="pe" />
+                      <SortableHeader label="Current Ratio" field="current_ratio" />
                       <SortableHeader label="Buy Price" field="buy_price" />
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
                         Source
@@ -592,6 +600,12 @@ export default function StocksWithDateRange({
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           {stock.management_score !== null ? stock.management_score : '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {stock.pe}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {stock.current_ratio}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           {formatCurrency(stock.buy_price)}
