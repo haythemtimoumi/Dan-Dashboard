@@ -26,18 +26,8 @@ export default function StocksPage({
   // Format current date as MM/DD/YYYY
   const currentDateFormatted = `${month}/${day}/${year}`;
   
-  // Calculate date 30 days ago for default start date
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const startMonth = String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0');
-  const startDay = String(thirtyDaysAgo.getDate()).padStart(2, '0');
-  const startYear = thirtyDaysAgo.getFullYear();
-  
-  // Format 30 days ago as MM/DD/YYYY
-  const thirtyDaysAgoFormatted = `${startMonth}/${startDay}/${startYear}`;
-  
-  // Default to last 30 days if no dates provided
-  const startDate = searchParams?.startDate || thirtyDaysAgoFormatted;
+  // Use current date as default if no dates provided
+  const startDate = searchParams?.startDate || currentDateFormatted;
   const endDate = searchParams?.endDate || currentDateFormatted;
 
   return (

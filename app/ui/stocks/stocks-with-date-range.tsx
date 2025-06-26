@@ -427,10 +427,22 @@ export default function StocksWithDateRange({
                     const today = new Date();
                     setStartDateObj(today);
                     setEndDateObj(today);
+                    
+                    // Auto-submit the form to apply the filter immediately
+                    setTimeout(() => {
+                      const formattedToday = `${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}/${today.getFullYear()}`;
+                      const params = new URLSearchParams();
+                      params.set('startDate', formattedToday);
+                      params.set('endDate', formattedToday);
+                      router.push(`${pathname}?${params.toString()}`);
+                    }, 100);
                   }}
-                  className="rounded-md bg-green-500 px-3 py-2 text-sm font-medium text-white hover:bg-green-600"
+                  className="rounded-md bg-green-500 px-3 py-2 text-sm font-medium text-white hover:bg-green-600 flex-grow"
                 >
-                  Set Today
+                  <span className="flex items-center justify-center">
+                    <CalendarIcon className="h-4 w-4 mr-1" />
+                    Today&apos;s Data
+                  </span>
                 </button>
                 <button
                   type="submit"

@@ -19,13 +19,11 @@ export default function HighlightedStocksPage({
 }) {
   // Get current date for default values
   const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const startOfYear = `${currentYear}-01-01`;
-  const endOfYear = `${currentYear}-12-31`;
+  const currentDateFormatted = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
   
-  // Default to current year if no dates provided
-  const startDate = searchParams?.startDate || startOfYear;
-  const endDate = searchParams?.endDate || endOfYear;
+  // Default to current date if no dates provided
+  const startDate = searchParams?.startDate || currentDateFormatted;
+  const endDate = searchParams?.endDate || currentDateFormatted;
 
   return (
     <main>

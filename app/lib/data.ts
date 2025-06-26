@@ -473,30 +473,35 @@ export async function fetchStocksForChart(): Promise<Stock[]> {
 }
 
 export async function fetchStocksByDateRange(
-  startDate: string,
-  endDate: string
+  startDate?: string,
+  endDate?: string
 ): Promise<Stock[]> {
   noStore();
   try {
     // Format: MM/DD/YYYY for the legacy API
     
+    // If no dates provided, use current date
+    const today = new Date();
+    const formattedToday = `${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}/${today.getFullYear()}`;
+    
     // Ensure dates are in MM/DD/YYYY format for the legacy API
-    let formattedStartDate = startDate;
-    if (startDate.includes('-')) {
+    let formattedStartDate = startDate || formattedToday;
+    if (formattedStartDate.includes('-')) {
       // Convert from YYYY-MM-DD to MM/DD/YYYY
-      const [year, month, day] = startDate.split('-');
+      const [year, month, day] = formattedStartDate.split('-');
       formattedStartDate = `${month}/${day}/${year}`;
     }
     
     // Add one day to end date to include all records for that day
     let endDateObj;
-    if (endDate.includes('/')) {
+    const endDateValue = endDate || formattedToday;
+    if (endDateValue.includes('/')) {
       // MM/DD/YYYY format
-      const [month, day, year] = endDate.split('/').map(Number);
+      const [month, day, year] = endDateValue.split('/').map(Number);
       endDateObj = new Date(year, month - 1, day);
     } else {
       // YYYY-MM-DD format
-      endDateObj = new Date(endDate);
+      endDateObj = new Date(endDateValue);
     }
     
     // Add one day to end date
@@ -529,22 +534,29 @@ export async function fetchStocksByDateRange(
 }
 
 export async function fetchHighlightedStocksByDateRange(
-  startDate: string,
-  endDate: string
+  startDate?: string,
+  endDate?: string
 ): Promise<Stock[]> {
   noStore();
   try {
     // Format: YYYY-MM-DD for the new API
     
+    // If no dates provided, use current date
+    const today = new Date();
+    const formattedToday = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const formattedTodaySlash = `${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}/${today.getFullYear()}`; // MM/DD/YYYY format
+    
     // Add one day to end date to include all records for that day
     let endDateObj;
-    if (endDate.includes('/')) {
+    const endDateValue = endDate || (endDate?.includes('/') ? formattedTodaySlash : formattedToday);
+    
+    if (endDateValue.includes('/')) {
       // MM/DD/YYYY format
-      const [month, day, year] = endDate.split('/').map(Number);
+      const [month, day, year] = endDateValue.split('/').map(Number);
       endDateObj = new Date(year, month - 1, day);
     } else {
       // YYYY-MM-DD format
-      endDateObj = new Date(endDate);
+      endDateObj = new Date(endDateValue);
     }
     
     // Add one day to end date
@@ -552,7 +564,7 @@ export async function fetchHighlightedStocksByDateRange(
     
     // Format the adjusted end date
     let adjustedEndDate;
-    if (endDate.includes('/')) {
+    if (endDateValue.includes('/')) {
       // Keep MM/DD/YYYY format
       const month = String(endDateObj.getMonth() + 1).padStart(2, '0');
       const day = String(endDateObj.getDate()).padStart(2, '0');
@@ -563,7 +575,10 @@ export async function fetchHighlightedStocksByDateRange(
       adjustedEndDate = endDateObj.toISOString().split('T')[0];
     }
     
-    const response = await fetch(`${API_URL}/stocks/highlighted/filter?startDate=${startDate}&endDate=${adjustedEndDate}`);
+    // Use the same format as the input for startDate or default to today
+    const formattedStartDate = startDate || (endDateValue.includes('/') ? formattedTodaySlash : formattedToday);
+    
+    const response = await fetch(`${API_URL}/stocks/highlighted/filter?startDate=${formattedStartDate}&endDate=${adjustedEndDate}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch highlighted stocks by date range: ${response.statusText}`);
