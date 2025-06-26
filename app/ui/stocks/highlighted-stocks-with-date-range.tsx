@@ -175,13 +175,8 @@ export default function HighlightedStocksWithDateRange({
         
         const data = await response.json();
         
-        // Process the data to ensure dates are properly formatted
-        const processedData = data.map((stock: any) => ({
-          ...stock,
-          created_at: stock.created_at ? new Date(stock.created_at).toISOString() : null
-        }));
-        
-        setStocks(processedData);
+        // Use the data directly without additional processing
+        setStocks(data);
         setError(null);
       } catch (err) {
         console.error('Error fetching highlighted stocks:', err);
@@ -405,7 +400,7 @@ export default function HighlightedStocksWithDateRange({
                           <span className="font-medium">Buy Price:</span> {formatCurrency(stock.buy_price)}
                         </p>
                         <p className="text-sm">
-                          <span className="font-medium">Date:</span> {formatDate(stock.created_at)}
+                          <span className="font-medium">Date:</span> {stock.created_at ? formatDate(stock.created_at) : 'No date'}
                         </p>
                         <p className="mt-2">
                           <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-xs", 
@@ -503,7 +498,7 @@ export default function HighlightedStocksWithDateRange({
                           </span>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-gray-500">
-                          {formatDate(stock.created_at)}
+                          {stock.created_at ? formatDate(stock.created_at) : 'No date'}
                         </td>
                       </tr>
                     ))}

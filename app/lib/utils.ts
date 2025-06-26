@@ -81,21 +81,36 @@ export const getSourceBadgeColor = (source: string): string => {
 
 export const formatDate = (dateStr: string | undefined): string => {
   if (!dateStr) return '';
+  
+  // For debugging
+  console.log('Date string to format:', dateStr);
+  
   try {
+    // Check if the date is already in MM/DD/YYYY format
+    if (dateStr.includes('/')) {
+      return dateStr;
+    }
+    
+    // Try to parse the date
     const date = new Date(dateStr);
     
     // Check if date is valid
-    if (isNaN(date.getTime())) return 'Invalid date';
+    if (isNaN(date.getTime())) {
+      console.log('Invalid date:', dateStr);
+      return dateStr; // Return the original string if we can't parse it
+    }
     
     // Format as MM/DD/YYYY
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const year = date.getFullYear();
     
-    return `${month}/${day}/${year}`;
+    const formatted = `${month}/${day}/${year}`;
+    console.log('Formatted date:', formatted);
+    return formatted;
   } catch (error) {
-    console.error('Error formatting date:', error);
-    return 'Invalid date';
+    console.error('Error formatting date:', error, dateStr);
+    return dateStr; // Return the original string on error
   }
 };
 
