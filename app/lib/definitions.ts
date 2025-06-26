@@ -10,7 +10,7 @@ export type Stock = {
   pe: number;
   buy_price: number;
   guru: string;
-  source: 'Rule1' | 'MagicFormula';
+  source: 'rule1' | 'manual';
   highlight: boolean;
   created_at: string;
   updated_at: string;
@@ -32,7 +32,7 @@ export type StocksTable = {
   pe: number;
   buy_price: number;
   guru: string;
-  source: 'Rule1' | 'MagicFormula';
+  source: 'rule1' | 'manual';
   highlight: boolean;
   created_at: string;
   updated_at: string;
@@ -61,7 +61,7 @@ export type StockForm = {
   pe: number;
   buy_price: number;
   guru: string;
-  source: 'Rule1' | 'MagicFormula';
+  source: 'rule1' | 'manual';
   highlight: boolean;
 };
 

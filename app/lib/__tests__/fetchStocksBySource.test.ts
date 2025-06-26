@@ -26,7 +26,7 @@ describe('fetchStocksBySource', () => {
         pe: 28.5,
         buy_price: 150.00,
         guru: 'Warren Buffett',
-        source: 'Rule1',
+        source: 'rule1',
         highlight: true,
         created_at: '2023-06-15T12:00:00Z',
         updated_at: '2023-06-15T12:00:00Z'
@@ -42,12 +42,12 @@ describe('fetchStocksBySource', () => {
       json: jest.fn().mockResolvedValueOnce(mockStocks)
     });
 
-    // Call the function with Rule1 source
-    const result = await fetchStocksBySource('Rule1');
+    // Call the function with rule1 source
+    const result = await fetchStocksBySource('rule1');
 
     // Verify the fetch was called with the correct URL
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://stocksapidashboard.duckdns.org/api/stocks/source/Rule1'
+      'https://stocksapidashboard.duckdns.org/api/stocks/source/rule1'
     );
 
     // Verify the result contains the expected data
@@ -65,7 +65,7 @@ describe('fetchStocksBySource', () => {
     });
 
     // Call the function
-    const result = await fetchStocksBySource('MagicFormula');
+    const result = await fetchStocksBySource('manual');
 
     // Verify the result is an empty array
     expect(result).toEqual([]);
@@ -77,7 +77,7 @@ describe('fetchStocksBySource', () => {
     global.fetch.mockRejectedValueOnce(new Error('Network error'));
 
     // Call the function
-    const result = await fetchStocksBySource('Rule1');
+    const result = await fetchStocksBySource('rule1');
 
     // Verify the result is an empty array
     expect(result).toEqual([]);
@@ -94,7 +94,7 @@ describe('fetchStocksBySource', () => {
     });
 
     // Call the function
-    const result = await fetchStocksBySource('Rule1');
+    const result = await fetchStocksBySource('rule1');
 
     // Verify the result is an empty array
     expect(result).toEqual([]);
@@ -112,7 +112,7 @@ describe('fetchStocksBySource', () => {
     });
 
     // Call the function
-    const result = await fetchStocksBySource('Rule1');
+    const result = await fetchStocksBySource('rule1');
 
     // Verify the result is an empty array
     expect(result).toEqual([]);

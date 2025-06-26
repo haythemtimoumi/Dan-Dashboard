@@ -9,7 +9,7 @@ const testStock: Stock = {
   pe: 25,
   buy_price: 150,
   guru: 'Warren Buffett',
-  source: 'Rule1', // This should now be valid
+  source: 'rule1', // This should now be valid
   highlight: true,
   created_at: '2023-01-01',
   updated_at: '2023-01-01'
@@ -17,5 +17,5 @@ const testStock: Stock = {
 
 // Test the filter that was causing the error
 const stocks: Stock[] = [testStock];
-const rule1Stocks = stocks.filter(stock => stock.source === 'Rule1').length;
-console.log(`Rule 1 stocks: ${rule1Stocks}`);
+const rule1Stocks = stocks.filter(stock => stock.source === 'rule1').length;
+console.log(`rule1 stocks: ${rule1Stocks}`);

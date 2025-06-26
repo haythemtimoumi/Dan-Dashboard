@@ -18,7 +18,7 @@ const links = [
   { name: 'All Stocks', href: '/dashboard/stocks', icon: TableCellsIcon },
   { name: 'Highlighted Stocks', href: '/dashboard/highlighted', icon: StarIcon },
   { name: 'Recent Changes', href: '/dashboard/recent-changes', icon: ChartBarIcon },
-  { name: 'Rule1 vs MagicFormula', href: '/dashboard/sources', icon: ScaleIcon },
+  { name: 'rule1 vs manual', href: '/dashboard/sources', icon: ScaleIcon },
   { name: 'Add New Stock', href: '/dashboard/stocks/create', icon: PlusCircleIcon },
 ];
 

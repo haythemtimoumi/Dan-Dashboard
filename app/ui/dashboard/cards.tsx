@@ -26,8 +26,8 @@ export default async function CardWrapper() {
     <>
       <Card title="Total Stocks" value={totalStocks} type="totalStocks" />
       <Card title="Highlighted Stocks" value={highlightedStocks} type="highlightedStocks" />
-      <Card title="Rule 1 Stocks" value={rule1Stocks} type="rule1Stocks" />
-      <Card title="Magic Formula Stocks" value={magicFormulaStocks} type="magicFormulaStocks" />
+      <Card title="rule1 Stocks" value={rule1Stocks} type="rule1Stocks" />
+      <Card title="manual Stocks" value={magicFormulaStocks} type="magicFormulaStocks" />
     </>
   );
 }

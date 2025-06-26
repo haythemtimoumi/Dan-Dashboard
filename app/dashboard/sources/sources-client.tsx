@@ -12,7 +12,7 @@ import DatePickerWrapper from './date-picker-wrapper';
 export default function SourcesClient({ initialDate }: { initialDate?: string }) {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentSource, setCurrentSource] = useState<'Rule1' | 'MagicFormula'>('Rule1');
+  const [currentSource, setCurrentSource] = useState<'rule1' | 'manual'>('rule1');
   const [currentDate, setCurrentDate] = useState<string>(
     initialDate ? formatDateFromURL(initialDate) : getDefaultDate()
   );
@@ -43,7 +43,7 @@ export default function SourcesClient({ initialDate }: { initialDate?: string })
     fetchStocks(currentDate, currentSource);
   }, [currentDate, currentSource]);
 
-  const fetchStocks = async (date: string, source: 'Rule1' | 'MagicFormula') => {
+  const fetchStocks = async (date: string, source: 'rule1' | 'manual') => {
     setLoading(true);
     setStocks([]);
     try {
@@ -69,7 +69,7 @@ export default function SourcesClient({ initialDate }: { initialDate?: string })
     }
   };
 
-  const handleSourceChange = (source: 'Rule1' | 'MagicFormula') => {
+  const handleSourceChange = (source: 'rule1' | 'manual') => {
     setCurrentSource(source);
   };
 
@@ -88,26 +88,26 @@ export default function SourcesClient({ initialDate }: { initialDate?: string })
         <div className="mt-6">
           <Tabs defaultValue={currentSource}>
             <TabsList>
-              <TabsTrigger value="Rule1" onClick={() => handleSourceChange('Rule1')}>
-                Rule 1
+              <TabsTrigger value="rule1" onClick={() => handleSourceChange('rule1')}>
+                rule1
               </TabsTrigger>
-              <TabsTrigger value="MagicFormula" onClick={() => handleSourceChange('MagicFormula')}>
-                Magic Formula
+              <TabsTrigger value="manual" onClick={() => handleSourceChange('manual')}>
+                manual
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="Rule1">
+            <TabsContent value="rule1">
               <StockTabContent 
                 stocks={stocks} 
-                source="Rule 1" 
+                source="rule1" 
                 date={currentDate} 
               />
             </TabsContent>
 
-            <TabsContent value="MagicFormula">
+            <TabsContent value="manual">
               <StockTabContent 
                 stocks={stocks} 
-                source="Magic Formula" 
+                source="manual" 
                 date={currentDate} 
               />
             </TabsContent>

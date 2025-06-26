@@ -195,8 +195,8 @@ useEffect(() => {
               onChange={(e) => setSource(e.target.value)}
             >
               <option value="">All Sources</option>
-              <option value="rule1">Rule1</option>
-              <option value="magicformula">Magic Formula</option>
+              <option value="rule1">rule1</option>
+              <option value="manual">manual</option>
             </select>
           </div>
 

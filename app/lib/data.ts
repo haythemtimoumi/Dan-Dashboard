@@ -65,8 +65,8 @@ export async function fetchStockStats(): Promise<StockStats> {
     const highlightedStocks = allStocks.filter(stock => 
       stock.sentiment_score > 60 && stock.signal_score > 80
     ).length;
-    const rule1Stocks = allStocks.filter(stock => stock.source === 'Rule1').length;
-    const magicFormulaStocks = allStocks.filter(stock => stock.source === 'MagicFormula').length;
+    const rule1Stocks = allStocks.filter(stock => stock.source === 'rule1').length;
+    const magicFormulaStocks = allStocks.filter(stock => stock.source === 'manual').length;
     
     return {
       totalStocks,
@@ -328,7 +328,7 @@ export async function fetchHighlightedStocks(): Promise<StocksTable[]> {
   }
 }
 
-export async function fetchStocksBySource(source: 'Rule1' | 'MagicFormula'): Promise<StocksTable[]> {
+export async function fetchStocksBySource(source: 'rule1' | 'manual'): Promise<StocksTable[]> {
   noStore();
   try {
     // Get current date in MM/DD/YYYY format
@@ -381,7 +381,7 @@ export async function fetchStocksByDate(date: string = ''): Promise<Stock[]> {
 }
 export async function fetchStocksByDateAndSource(
   date: string, 
-  source: 'Rule1' | 'MagicFormula'
+  source: 'rule1' | 'manual'
 ): Promise<Stock[]> {
   noStore();
   try {

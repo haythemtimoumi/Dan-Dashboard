@@ -19,7 +19,7 @@ jest.mock('@/app/lib/stock-data', () => ({
       pe: 28.5,
       buy_price: 150.0,
       guru: 'Warren Buffett',
-      source: 'Rule1',
+      source: 'rule1',
       highlight: true,
       created_at: '2023-01-15T12:00:00Z',
       updated_at: '2023-06-20T14:30:00Z',
@@ -33,7 +33,7 @@ jest.mock('@/app/lib/stock-data', () => ({
       pe: 30.0,
       buy_price: 155.0,
       guru: 'Warren Buffett',
-      source: 'Rule1',
+      source: 'rule1',
       highlight: true,
       created_at: '2023-01-20T12:00:00Z',
       updated_at: '2023-06-25T14:30:00Z',
@@ -47,7 +47,7 @@ jest.mock('@/app/lib/stock-data', () => ({
       pe: 25.0,
       buy_price: 280.0,
       guru: 'Bill Gates',
-      source: 'MagicFormula',
+      source: 'manual',
       highlight: true,
       created_at: '2023-01-15T12:00:00Z',
       updated_at: '2023-06-20T14:30:00Z',
@@ -61,7 +61,7 @@ jest.mock('@/app/lib/stock-data', () => ({
       pe: 26.0,
       buy_price: 285.0,
       guru: 'Bill Gates',
-      source: 'MagicFormula',
+      source: 'manual',
       highlight: true,
       created_at: '2023-01-20T12:00:00Z',
       updated_at: '2023-06-25T14:30:00Z',
@@ -177,7 +177,7 @@ describe('Recent Changes API', () => {
       start_date: '2023-01-15',
       end_date: '2023-01-20',
       threshold: '1',
-      source: 'MagicFormula',
+      source: 'manual',
     });
     
     const response = await GET(req);
@@ -185,7 +185,7 @@ describe('Recent Changes API', () => {
     
     expect(response.status).toBe(200);
     expect(data).toHaveLength(1);
-    expect(data[0].source).toBe('MagicFormula');
+    expect(data[0].source).toBe('manual');
   });
 
   it('should filter by guru correctly', async () => {

@@ -18,16 +18,16 @@ export async function GET(request: Request) {
     }
 
     // Convert source parameter to match the type in the stock data
-    // The API accepts "Rule1" or "MagicFormula" but the data uses "Rule 1" or "Magic Formula"
-    let normalizedSource: 'Rule1' | 'MagicFormula';
+    // The API accepts "rule1" or "manual"
+    let normalizedSource: 'rule1' | 'manual';
     
-    if (source === 'Rule1') {
-      normalizedSource = 'Rule1';
-    } else if (source === 'MagicFormula') {
-      normalizedSource = 'MagicFormula';
+    if (source === 'rule1') {
+      normalizedSource = 'rule1';
+    } else if (source === 'manual') {
+      normalizedSource = 'manual';
     } else {
       return NextResponse.json(
-        { error: `Invalid source: ${source}. Must be 'Rule1' or 'MagicFormula'` },
+        { error: `Invalid source: ${source}. Must be 'rule1' or 'manual'` },
         { status: 400 }
       );
     }

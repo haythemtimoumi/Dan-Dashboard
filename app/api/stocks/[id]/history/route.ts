@@ -85,7 +85,7 @@ function generateStockHistory(stockId: string, fromDate?: string, toDate?: strin
         sentiment_score: sentiment_score,
         screenshot: baseStock.screenshot || `https://example.com/screenshots/${baseStock.ticker.toLowerCase()}_${date.toISOString().split('T')[0]}.png`,
         guru: baseStock.guru,
-        rule1_score: baseStock.source === 'Rule1' ? Math.floor(Math.random() * 100) : null,
+        rule1_score: baseStock.source === 'rule1' ? Math.floor(Math.random() * 100) : null,
         moat_score: Math.random() < 0.5 ? Math.floor(Math.random() * 100) : null,
         management_score: Math.random() < 0.5 ? Math.floor(Math.random() * 100) : null,
         buy_price: buy_price_value,
