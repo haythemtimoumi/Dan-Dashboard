@@ -400,7 +400,7 @@ export default function HighlightedStocksWithDateRange({
                           <span className="font-medium">Buy Price:</span> {formatCurrency(stock.buy_price)}
                         </p>
                         <p className="text-sm">
-                          <span className="font-medium">Date:</span> {stock.date || stock.created_at || 'No date'}
+                          <span className="font-medium">Date:</span> {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : 'No date'}
                         </p>
                         <p className="mt-2">
                           <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-xs", 
@@ -498,7 +498,7 @@ export default function HighlightedStocksWithDateRange({
                           </span>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-gray-500">
-                          {stock.date || stock.created_at || 'No date'}
+                          {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : 'No date'}
                         </td>
                       </tr>
                     ))}
