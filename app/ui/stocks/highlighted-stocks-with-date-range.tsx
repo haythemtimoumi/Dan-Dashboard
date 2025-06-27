@@ -409,13 +409,13 @@ export default function HighlightedStocksWithDateRange({
                           <span className="font-medium">Management Score:</span> {stock.management_score !== null ? stock.management_score : '-'}
                         </p>
                         <p className="text-sm">
-                          <span className="font-medium">Percentage Upside:</span> {stock.pe}
+                          <span className="font-medium">Sticker Price:</span> {formatCurrency(stock.buy_price)}
                         </p>
                         <p className="text-sm">
                           <span className="font-medium">Last Price:</span> {stock.current_ratio}
                         </p>
                         <p className="text-sm">
-                          <span className="font-medium">Sticker Price:</span> {formatCurrency(stock.buy_price)}
+                          <span className="font-medium">Percentage Upside:</span> {stock.pe}
                         </p>
                         <p className="text-sm">
                           <span className="font-medium">Date:</span> {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : 'No date'}
@@ -457,13 +457,13 @@ export default function HighlightedStocksWithDateRange({
                         Management Score
                       </th>
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Percentage Upside
+                        Sticker Price
                       </th>
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
                         Last Price
                       </th>
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Sticker Price
+                        Percentage Upside
                       </th>
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
                         Source
@@ -512,13 +512,13 @@ export default function HighlightedStocksWithDateRange({
                           {stock.management_score !== null ? stock.management_score : '-'}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
-                          {stock.pe}
+                          {formatCurrency(stock.buy_price)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           {stock.current_ratio}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
-                          {formatCurrency(stock.buy_price)}
+                          {stock.pe}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-xs", 

@@ -508,13 +508,13 @@ export default function StocksWithDateRange({
                           <span className="font-medium">Management Score:</span> {stock.management_score !== null ? stock.management_score : '-'}
                         </p>
                         <p className="text-sm">
-                          <span className="font-medium">Percentage Upside:</span> {stock.pe}
+                          <span className="font-medium">Sticker Price:</span> {formatCurrency(stock.buy_price)}
                         </p>
                         <p className="text-sm">
                           <span className="font-medium">Last Price:</span> {stock.current_ratio}
                         </p>
                         <p className="text-sm">
-                          <span className="font-medium">Sticker Price:</span> {formatCurrency(stock.buy_price)}
+                          <span className="font-medium">Percentage Upside:</span> {stock.pe}
                         </p>
                         <p className="text-sm">
                           <span className="font-medium">Date:</span> {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : 'No date'}
@@ -556,9 +556,9 @@ export default function StocksWithDateRange({
                       <SortableHeader label="Rule1 Score" field="rule1_score" />
                       <SortableHeader label="Moat Score" field="moat_score" />
                       <SortableHeader label="Management Score" field="management_score" />
-                      <SortableHeader label="Percentage Upside" field="pe" />
-                      <SortableHeader label="Last Price" field="current_ratio" />
                       <SortableHeader label="Sticker Price" field="buy_price" />
+                      <SortableHeader label="Last Price" field="current_ratio" />
+                      <SortableHeader label="Percentage Upside" field="pe" />
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
                         Source
                       </th>
@@ -614,13 +614,13 @@ export default function StocksWithDateRange({
                           {stock.management_score !== null ? stock.management_score : '-'}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
-                          {stock.pe}
+                          {formatCurrency(stock.buy_price)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           {stock.current_ratio}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
-                          {formatCurrency(stock.buy_price)}
+                          {stock.pe}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
                           <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-xs", 
