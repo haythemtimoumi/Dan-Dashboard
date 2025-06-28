@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Stock } from '@/app/lib/definitions';
-import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatDate, generatePagination } from '@/app/lib/utils';
+import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatDate } from '@/app/lib/utils';
 import clsx from 'clsx';
 import { CalendarIcon } from '@heroicons/react/24/outline';
 import DatePicker from 'react-datepicker';
@@ -13,98 +13,9 @@ import '@/app/ui/datepicker-custom.css';
 // Get API URL from environment variable
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stocksapidashboard.duckdns.org/api';
 
-// Items per page for pagination
-const ITEMS_PER_PAGE = 5;
+// No pagination - show all items
 
-// Pagination component
-function Pagination({ 
-  currentPage, 
-  totalPages, 
-  onPageChange 
-}: { 
-  currentPage: number; 
-  totalPages: number; 
-  onPageChange: (page: number) => void;
-}) {
-  const allPages = generatePagination(currentPage, totalPages);
-
-  // If there are no pages, don't render pagination
-  if (totalPages <= 1) {
-    return null;
-  }
-
-  return (
-    <div className="inline-flex items-center gap-2 mt-6">
-      {/* Left Arrow */}
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage <= 1}
-        className={`flex h-9 w-9 items-center justify-center rounded-md border transition-colors ${
-          currentPage <= 1
-            ? 'pointer-events-none text-gray-300 border-gray-200'
-            : 'hover:bg-gray-100 text-gray-700 border-gray-300'
-        }`}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4">
-          <path d="M19 12H5M12 19l-7-7 7-7" />
-        </svg>
-      </button>
-
-      {/* Page Numbers */}
-      <div className="flex -space-x-px">
-        {allPages.map((page, index) => {
-          let position: 'first' | 'last' | 'single' | 'middle' | undefined;
-
-          if (index === 0) position = 'first';
-          if (index === allPages.length - 1) position = 'last';
-          if (allPages.length === 1) position = 'single';
-          if (page === '...') position = 'middle';
-
-          return (
-            <button
-              key={page.toString() + index}
-              onClick={() => typeof page === 'number' ? onPageChange(page) : null}
-              disabled={page === '...'}
-              className={`flex h-9 w-9 items-center justify-center text-sm border transition-colors ${
-                position === 'first' || position === 'single' ? 'rounded-l-md' : ''
-              } ${
-                position === 'last' || position === 'single' ? 'rounded-r-md' : ''
-              } ${
-                currentPage === page
-                  ? 'z-10 bg-blue-600 border-blue-600 text-white hover:bg-blue-700'
-                  : position === 'middle'
-                  ? 'text-gray-300'
-                  : 'hover:bg-gray-100'
-              }`}
-            >
-              {page}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Right Arrow */}
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage >= totalPages}
-        className={`flex h-9 w-9 items-center justify-center rounded-md border transition-colors ${
-          currentPage >= totalPages
-            ? 'pointer-events-none text-gray-300 border-gray-200'
-            : 'hover:bg-gray-100 text-gray-700 border-gray-300'
-        }`}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4">
-          <path d="M5 12h14M12 5l7 7-7 7" />
-        </svg>
-      </button>
-      
-      {/* Page info */}
-      <div className="ml-2 text-sm text-gray-500">
-        Page {currentPage} of {totalPages}
-      </div>
-    </div>
-  );
-}
+// No pagination component needed
 
 // Main component for highlighted stocks with date range
 export default function HighlightedStocksWithDateRange({
@@ -120,7 +31,7 @@ export default function HighlightedStocksWithDateRange({
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  // No pagination state needed
   const [startDateObj, setStartDateObj] = useState<Date | null>(parseDate(startDate));
   const [endDateObj, setEndDateObj] = useState<Date | null>(parseDate(endDate));
   const [dateError, setDateError] = useState<string | null>(null);
@@ -223,12 +134,7 @@ export default function HighlightedStocksWithDateRange({
     }
   };
 
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    // Scroll to top of the component
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  // No page change handler needed
 
   // Handle sorting
   const handleSort = (field: string) => {
@@ -260,10 +166,8 @@ export default function HighlightedStocksWithDateRange({
     return 0;
   });
 
-  // Calculate pagination
-  const totalPages = Math.ceil(sortedStocks.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedStocks = sortedStocks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  // Use all sorted stocks without pagination
+  const paginatedStocks = sortedStocks;
   
   // Sortable header component
   const SortableHeader = ({ label, field }: { label: string; field: string }) => (
@@ -574,16 +478,7 @@ export default function HighlightedStocksWithDateRange({
                 </table>
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-5 flex w-full justify-center">
-                  <Pagination 
-                    currentPage={currentPage} 
-                    totalPages={totalPages} 
-                    onPageChange={handlePageChange} 
-                  />
-                </div>
-              )}
+              {/* No pagination */}
             </>
           )}
         </div>
