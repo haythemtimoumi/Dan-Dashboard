@@ -174,31 +174,52 @@ export default function StocksWithDateRange({
 
   // Handle sorting
   const handleSort = (field: string) => {
+    console.log(`Sorting by ${field}, current sort: ${sortBy}, order: ${sortOrder}`);
+    
     if (sortBy === field) {
       // Toggle sort order if already sorting by this field
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+      console.log(`Toggling order to ${newOrder}`);
+      setSortOrder(newOrder);
     } else {
       // Set new sort field and default to descending
+      console.log(`New sort field: ${field}, setting order to desc`);
       setSortBy(field);
       setSortOrder('desc');
     }
   };
 
-  // Sort stocks
+  // Sort stocks with improved handling for null/undefined values
   const sortedStocks = [...stocks].sort((a, b) => {
     const valueA = a[sortBy as keyof Stock];
     const valueB = b[sortBy as keyof Stock];
     
+    // Debug sorting values
+    if (sortBy === 'rule1_score' || sortBy === 'moat_score' || sortBy === 'management_score') {
+      console.log(`Comparing ${a.ticker} (${valueA}) with ${b.ticker} (${valueB}) for ${sortBy}`);
+    }
+    
+    // Handle null/undefined values - always sort them to the end
+    if (valueA === null || valueA === undefined) {
+      return sortOrder === 'asc' ? 1 : -1; // null values at end
+    }
+    if (valueB === null || valueB === undefined) {
+      return sortOrder === 'asc' ? -1 : 1; // null values at end
+    }
+    
+    // Handle numbers
     if (typeof valueA === 'number' && typeof valueB === 'number') {
       return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
     }
     
+    // Handle strings
     if (typeof valueA === 'string' && typeof valueB === 'string') {
       return sortOrder === 'asc' 
         ? valueA.localeCompare(valueB) 
         : valueB.localeCompare(valueA);
     }
     
+    // Default case
     return 0;
   });
 

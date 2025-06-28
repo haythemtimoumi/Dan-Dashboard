@@ -75,21 +75,32 @@ export default function StocksTable({
   sortBy?: string;
   sortOrder?: string;
 }) {
-  // Sort stocks based on sortBy and sortOrder
+  // Sort stocks based on sortBy and sortOrder with improved handling for null/undefined values
   const sortedStocks = [...stocks].sort((a, b) => {
     const valueA = a[sortBy as keyof StocksTable];
     const valueB = b[sortBy as keyof StocksTable];
     
+    // Handle null/undefined values - always sort them to the end
+    if (valueA === null || valueA === undefined) {
+      return sortOrder === 'asc' ? 1 : -1; // null values at end
+    }
+    if (valueB === null || valueB === undefined) {
+      return sortOrder === 'asc' ? -1 : 1; // null values at end
+    }
+    
+    // Handle numbers
     if (typeof valueA === 'number' && typeof valueB === 'number') {
       return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
     }
     
+    // Handle strings
     if (typeof valueA === 'string' && typeof valueB === 'string') {
       return sortOrder === 'asc' 
         ? valueA.localeCompare(valueB) 
         : valueB.localeCompare(valueA);
     }
     
+    // Default case
     return 0;
   });
   return (
