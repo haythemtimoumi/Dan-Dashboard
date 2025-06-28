@@ -26,26 +26,38 @@ export default function NavLinks() {
   const pathname = usePathname();
   
   return (
-    <>
+    <div className="space-y-1">
       {links.map((link) => {
         const LinkIcon = link.icon;
+        const isActive = pathname === link.href || 
+          (link.href !== '/dashboard' && pathname.startsWith(link.href));
+          
         return (
           <Link
             key={link.name}
             href={link.href}
             className={clsx(
-              "flex h-[48px] grow items-center justify-center gap-2 rounded-md bg-gray-50 p-3 text-sm font-medium hover:bg-sky-100 hover:text-blue-600 md:flex-none md:justify-start md:p-2 md:px-3",
-              {
-                'bg-sky-100 text-blue-600': pathname === link.href || 
-                  (link.href !== '/dashboard' && pathname.startsWith(link.href)),
-              }
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+              isActive
+                ? "bg-blue-50 text-blue-700 shadow-sm"
+                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
             )}
           >
-            <LinkIcon className="w-6" />
-            <p className="block">{link.name}</p>
+            <div className={clsx(
+              "rounded-md p-1.5",
+              isActive ? "bg-blue-100 text-blue-700" : "text-gray-500"
+            )}>
+              <LinkIcon className="w-5 h-5" />
+            </div>
+            <span>{link.name}</span>
+            
+            {/* Active indicator */}
+            {isActive && (
+              <span className="ml-auto h-2 w-2 rounded-full bg-blue-500"></span>
+            )}
           </Link>
         );
       })}
-    </>
+    </div>
   );
 }

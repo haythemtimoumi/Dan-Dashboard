@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function DashboardPage() {
   return (
-    <main className="space-y-8 px-4 py-6">
+    <main className="space-y-8">
       <StockChangesExpertView />
     </main>
   );
