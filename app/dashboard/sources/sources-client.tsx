@@ -119,6 +119,8 @@ export default function SourcesClient({ initialDate }: { initialDate?: string })
                 stocks={stocks} 
                 source="rule1" 
                 date={currentDate} 
+                sortBy={sortBy}
+                sortOrder={sortOrder}
               />
             </TabsContent>
 
@@ -127,6 +129,8 @@ export default function SourcesClient({ initialDate }: { initialDate?: string })
                 stocks={stocks} 
                 source="manual" 
                 date={currentDate} 
+                sortBy={sortBy}
+                sortOrder={sortOrder}
               />
             </TabsContent>
           </Tabs>
@@ -136,7 +140,7 @@ export default function SourcesClient({ initialDate }: { initialDate?: string })
   );
 }
 
-function StockTabContent({ stocks, source, date }: { stocks: Stock[]; source: string; date: string }) {
+function StockTabContent({ stocks, source, date, sortBy, sortOrder }: { stocks: Stock[]; source: string; date: string; sortBy: string; sortOrder: string }) {
   if (stocks.length === 0) {
     return (
       <div className="mt-6 text-center p-4 border rounded-lg bg-gray-50">
