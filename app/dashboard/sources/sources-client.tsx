@@ -16,6 +16,8 @@ export default function SourcesClient({ initialDate }: { initialDate?: string })
   const [currentDate, setCurrentDate] = useState<string>(
     initialDate ? formatDateFromURL(initialDate) : getDefaultDate()
   );
+  const [sortBy, setSortBy] = useState<string>('sentiment_score');
+  const [sortOrder, setSortOrder] = useState<string>('desc');
   const router = useRouter();
 
   function getDefaultDate(): string {
@@ -72,6 +74,22 @@ export default function SourcesClient({ initialDate }: { initialDate?: string })
   const handleSourceChange = (source: 'rule1' | 'manual') => {
     setCurrentSource(source);
   };
+  
+  // Handle sorting changes
+  const handleSortChange = (field: string, order: string) => {
+    setSortBy(field);
+    setSortOrder(order);
+  };
+  
+  // Listen for URL changes to update sorting
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlSortBy = params.get('sortBy');
+    const urlSortOrder = params.get('sortOrder');
+    
+    if (urlSortBy) setSortBy(urlSortBy);
+    if (urlSortOrder) setSortOrder(urlSortOrder);
+  }, []);
 
   return (
     <>
@@ -140,7 +158,7 @@ function StockTabContent({ stocks, source, date }: { stocks: Stock[]; source: st
           Showing {stocks.length} stocks
         </span>
       </div>
-      <StocksTable stocks={stocks} />
+      <StocksTable stocks={stocks} sortBy={sortBy} sortOrder={sortOrder} />
     </div>
   );
 }

@@ -75,13 +75,30 @@ export default function StocksTable({
   sortBy?: string;
   sortOrder?: string;
 }) {
+  // Sort stocks based on sortBy and sortOrder
+  const sortedStocks = [...stocks].sort((a, b) => {
+    const valueA = a[sortBy as keyof StocksTable];
+    const valueB = b[sortBy as keyof StocksTable];
+    
+    if (typeof valueA === 'number' && typeof valueB === 'number') {
+      return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+    }
+    
+    if (typeof valueA === 'string' && typeof valueB === 'string') {
+      return sortOrder === 'asc' 
+        ? valueA.localeCompare(valueB) 
+        : valueB.localeCompare(valueA);
+    }
+    
+    return 0;
+  });
   return (
     <div className="mt-6 flow-root">
       <div className="inline-block min-w-full align-middle">
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0 overflow-hidden shadow-sm">
           <div className="md:hidden">
-            {stocks?.length > 0 ? (
-              stocks.map((stock) => (
+            {sortedStocks?.length > 0 ? (
+              sortedStocks.map((stock) => (
                 <div
                   key={stock.id}
                   className={clsx(
@@ -206,8 +223,8 @@ export default function StocksTable({
               </tr>
             </thead>
             <tbody className="bg-white">
-              {stocks?.length > 0 ? (
-                stocks.map((stock) => (
+              {sortedStocks?.length > 0 ? (
+                sortedStocks.map((stock) => (
                   <tr
                     key={stock.id}
                     className={clsx(

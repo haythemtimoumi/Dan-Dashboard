@@ -124,6 +124,8 @@ export default function HighlightedStocksWithDateRange({
   const [startDateObj, setStartDateObj] = useState<Date | null>(parseDate(startDate));
   const [endDateObj, setEndDateObj] = useState<Date | null>(parseDate(endDate));
   const [dateError, setDateError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>('sentiment_score');
+  const [sortOrder, setSortOrder] = useState<string>('desc');
 
   // Parse date string to Date object
   function parseDate(dateString: string): Date | null {
@@ -228,10 +230,64 @@ export default function HighlightedStocksWithDateRange({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handle sorting
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      // Toggle sort order if already sorting by this field
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new sort field and default to descending
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+  };
+
+  // Sort stocks
+  const sortedStocks = [...stocks].sort((a, b) => {
+    const valueA = a[sortBy as keyof Stock];
+    const valueB = b[sortBy as keyof Stock];
+    
+    if (typeof valueA === 'number' && typeof valueB === 'number') {
+      return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+    }
+    
+    if (typeof valueA === 'string' && typeof valueB === 'string') {
+      return sortOrder === 'asc' 
+        ? valueA.localeCompare(valueB) 
+        : valueB.localeCompare(valueA);
+    }
+    
+    return 0;
+  });
+
   // Calculate pagination
-  const totalPages = Math.ceil(stocks.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedStocks.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedStocks = stocks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedStocks = sortedStocks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  
+  // Sortable header component
+  const SortableHeader = ({ label, field }: { label: string; field: string }) => (
+    <th 
+      scope="col" 
+      className="px-3 py-4 font-medium text-blue-900 cursor-pointer hover:text-blue-700"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        {sortBy === field && (
+          sortOrder === 'asc' ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+          )
+        )}
+      </div>
+    </th>
+  );
 
   if (loading) {
     return (
@@ -438,33 +494,15 @@ export default function HighlightedStocksWithDateRange({
                 <table className="min-w-full text-gray-900 border-collapse">
                   <thead className="rounded-lg text-left text-sm font-normal">
                     <tr className="bg-blue-50">
-                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Ticker
-                      </th>
-                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Sentiment
-                      </th>
-                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Signal
-                      </th>
-                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Rule1 Score
-                      </th>
-                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Moat Score
-                      </th>
-                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Management Score
-                      </th>
-                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Sticker Price
-                      </th>
-                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Last Price
-                      </th>
-                      <th scope="col" className="px-3 py-4 font-medium text-blue-900">
-                        Percentage Upside
-                      </th>
+                      <SortableHeader label="Ticker" field="ticker" />
+                      <SortableHeader label="Sentiment" field="sentiment_score" />
+                      <SortableHeader label="Signal" field="signal_score" />
+                      <SortableHeader label="Rule1 Score" field="rule1_score" />
+                      <SortableHeader label="Moat Score" field="moat_score" />
+                      <SortableHeader label="Management Score" field="management_score" />
+                      <SortableHeader label="Sticker Price" field="buy_price" />
+                      <SortableHeader label="Last Price" field="current_ratio" />
+                      <SortableHeader label="Percentage Upside" field="pe" />
                       <th scope="col" className="px-3 py-4 font-medium text-blue-900">
                         Source
                       </th>
