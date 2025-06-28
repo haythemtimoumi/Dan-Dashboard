@@ -125,9 +125,9 @@ export default function StockHistoryChart({ stockId }: { stockId: string }) {
     const metricLabels: Record<string, string> = {
       sentiment_score: 'Sentiment Score',
       signal_score: 'Signal Score',
-      pe: 'PE Ratio',
-      buy_price: 'Buy Price',
-      current_ratio: 'Current Ratio'
+      pe: 'Percentage Upside',
+      buy_price: 'Sticker Price',
+      current_ratio: 'Last Price'
     };
 
     const metricColors: Record<string, { bg: string, border: string }> = {
@@ -258,9 +258,9 @@ export default function StockHistoryChart({ stockId }: { stockId: string }) {
             >
               <option value="sentiment_score">Sentiment Score</option>
               <option value="signal_score">Signal Score</option>
-              <option value="pe">PE Ratio</option>
-              <option value="buy_price">Buy Price</option>
-              <option value="current_ratio">Current Ratio</option>
+              <option value="pe">Percentage Upside</option>
+              <option value="buy_price">Sticker Price</option>
+              <option value="current_ratio">Last Price</option>
             </select>
           </div>
         </div>
