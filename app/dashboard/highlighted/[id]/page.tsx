@@ -100,37 +100,39 @@ export default async function HighlightedStockDetailPage({ params }: { params: {
               </Link>
             </div>
             
-            <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 shadow-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="h-2 w-2 rounded-full bg-green-400"></div>
-                  <span className="text-xs font-medium text-blue-100/80">Sentiment Score</span>
+            <div className="mt-6 bg-white/10 backdrop-blur-md rounded-xl px-6 py-4 border border-white/20 shadow-lg">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 divide-x divide-white/20">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="h-2 w-2 rounded-full bg-green-400"></div>
+                    <span className="text-xs font-medium text-blue-100/80">Sentiment</span>
+                  </div>
+                  <div className="text-lg font-bold">{stock.sentiment_score}</div>
                 </div>
-                <div className="text-xl font-bold">{stock.sentiment_score}</div>
-              </div>
-              
-              <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 shadow-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="h-2 w-2 rounded-full bg-blue-400"></div>
-                  <span className="text-xs font-medium text-blue-100/80">Signal Score</span>
+                
+                <div className="text-center pl-6">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="h-2 w-2 rounded-full bg-blue-400"></div>
+                    <span className="text-xs font-medium text-blue-100/80">Signal</span>
+                  </div>
+                  <div className="text-lg font-bold">{stock.signal_score}</div>
                 </div>
-                <div className="text-xl font-bold">{stock.signal_score}</div>
-              </div>
-              
-              <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 shadow-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
-                  <span className="text-xs font-medium text-blue-100/80">Sticker Price</span>
+                
+                <div className="text-center pl-6">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
+                    <span className="text-xs font-medium text-blue-100/80">Price</span>
+                  </div>
+                  <div className="text-lg font-bold">{formatCurrency(stock.buy_price)}</div>
                 </div>
-                <div className="text-xl font-bold">{formatCurrency(stock.buy_price)}</div>
-              </div>
-              
-              <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 shadow-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="h-2 w-2 rounded-full bg-purple-400"></div>
-                  <span className="text-xs font-medium text-blue-100/80">Upside</span>
+                
+                <div className="text-center pl-6">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="h-2 w-2 rounded-full bg-purple-400"></div>
+                    <span className="text-xs font-medium text-blue-100/80">Upside</span>
+                  </div>
+                  <div className="text-lg font-bold">{stock.pe}%</div>
                 </div>
-                <div className="text-xl font-bold">{stock.pe}%</div>
               </div>
             </div>
           </div>
