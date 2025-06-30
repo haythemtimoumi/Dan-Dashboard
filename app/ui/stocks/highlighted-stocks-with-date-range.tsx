@@ -74,9 +74,9 @@ export default function HighlightedStocksWithDateRange({
         // Format dates for API
         const formattedStart = formatDateToString(startDateObj);
         
-        // Add one day to end date to include all records for that day
+        // Set to end of the selected day (23:59:59.999)
         const adjustedEndDate = new Date(endDateObj);
-        adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+        adjustedEndDate.setHours(23, 59, 59, 999);
         const formattedEnd = formatDateToString(adjustedEndDate);
         
         // Use the API URL from environment variable
