@@ -86,8 +86,12 @@ export default async function HighlightedStockDetailPage({ params }: { params: {
                     </div>
                   </div>
                 </div>
-                <div className="text-blue-100/90 text-lg">
-                  <span className="font-medium">{stock.guru}</span> • Updated {formatDate(stock.created_at)}
+                <div className="text-blue-100/90 text-base space-y-1">
+                  <div><span className="font-medium">{stock.guru}</span> • Updated {formatDate(stock.created_at)}</div>
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <span>Target: <span className="font-semibold text-emerald-300">{formatCurrency(stock.buy_price)}</span></span>
+                    <span>Upside: <span className="font-semibold text-purple-300">{stock.pe}%</span></span>
+                  </div>
                 </div>
               </div>
               
@@ -138,88 +142,7 @@ export default async function HighlightedStockDetailPage({ params }: { params: {
           </div>
         </div>
         
-        {/* Compact Information Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-          {/* Company Overview - Compact */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <div className="h-6 w-6 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                Company Overview
-              </h3>
-            </div>
-            <div className="p-3 space-y-2">
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                <span className="text-xs font-medium text-gray-600">Symbol</span>
-                <span className="text-sm font-bold text-gray-900">{stock.ticker}</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                <span className="text-xs font-medium text-gray-600">Analyst</span>
-                <span className="text-xs font-semibold text-gray-900">{stock.guru}</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                <span className="text-xs font-medium text-gray-600">Source</span>
-                <span className={clsx("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold", 
-                  getSourceBadgeColor(stock.source)
-                )}>
-                  {stock.source.charAt(0).toUpperCase() + stock.source.slice(1)}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Performance Metrics - Compact */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <div className="h-6 w-6 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                Performance Metrics
-              </h3>
-            </div>
-            <div className="p-3 space-y-2">
-              <div className="p-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
-                <span className="text-xs font-medium text-gray-600 block mb-1">Sentiment Score</span>
-                <div className="text-lg font-bold text-green-700">{stock.sentiment_score}</div>
-              </div>
-              <div className="p-2 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-100">
-                <span className="text-xs font-medium text-gray-600 block mb-1">Signal Score</span>
-                <div className="text-lg font-bold text-blue-700">{stock.signal_score}</div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Financial Summary - Compact */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-50 to-green-50 p-3 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <div className="h-6 w-6 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                Financial Summary
-              </h3>
-            </div>
-            <div className="p-3 space-y-2">
-              <div className="p-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-100">
-                <span className="text-xs font-medium text-gray-600 block mb-1">Target Price</span>
-                <div className="text-lg font-bold text-emerald-700">{formatCurrency(stock.buy_price)}</div>
-              </div>
-              <div className="p-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-100">
-                <span className="text-xs font-medium text-gray-600 block mb-1">Upside Potential</span>
-                <div className="text-lg font-bold text-purple-700">{stock.pe}%</div>
-              </div>
-            </div>
-          </div>
-        </div>
+
           
         {/* Large Screenshot Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6">
