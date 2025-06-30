@@ -54,77 +54,31 @@ export default async function HighlightedStockDetailPage({ params }: { params: {
     
     return (
       <main>
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-6 text-white mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-xl">
-                  {stock.ticker.substring(0, 2)}
-                </div>
-                <h1 className={`${lusitana.className} text-2xl md:text-3xl font-bold`}>
-                  {stock.ticker}
-                </h1>
-                {stock.highlight && (
-                  <span className="bg-yellow-400 text-yellow-900 text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
-                    Featured
-                  </span>
-                )}
-              </div>
-              <p className="text-blue-100 max-w-2xl">
-                {stock.guru} • {stock.source.charAt(0).toUpperCase() + stock.source.slice(1)} • Updated {formatDate(stock.created_at)}
-              </p>
-            </div>
-            <Link
-              href="/dashboard/highlighted"
-              className="flex items-center gap-2 rounded-lg bg-white/20 backdrop-blur-sm px-4 py-2 text-sm font-medium text-white hover:bg-white/30 transition-colors"
-            >
-              <ArrowLeftIcon className="w-4 h-4" />
-              Back to List
-            </Link>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5 text-sm font-medium flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-              Sentiment: {stock.sentiment_score}
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5 text-sm font-medium flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Price: {formatCurrency(stock.buy_price)}
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-          <div className="p-4">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Basic Information - Compact */}
-              <div>
-                <h2 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Basic Information
-                </h2>
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-100">
-                  <div className="space-y-2">
-                    <div className="bg-white p-2 rounded border">
-                      <p className="text-xs font-medium text-gray-500">Ticker</p>
-                      <p className="text-sm font-bold text-gray-800">{stock.ticker}</p>
-                    </div>
-                    <div className="bg-white p-2 rounded border">
-                      <p className="text-xs font-medium text-gray-500">Guru</p>
-                      <p className="text-sm text-gray-800">{stock.guru}</p>
-                    </div>
-                    <div className="bg-white p-2 rounded border">
-                      <p className="text-xs font-medium text-gray-500">Source</p>
-                      <span className={clsx("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", 
+        <div className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-2xl shadow-2xl p-8 text-white mb-8 overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
+          
+          <div className="relative z-10">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-sm flex items-center justify-center text-white font-bold text-2xl border border-white/20 shadow-lg">
+                    {stock.ticker.substring(0, 2)}
+                  </div>
+                  <div>
+                    <h1 className={`${lusitana.className} text-3xl lg:text-4xl font-bold mb-1`}>
+                      {stock.ticker}
+                    </h1>
+                    <div className="flex items-center gap-3">
+                      {stock.highlight && (
+                        <span className="bg-gradient-to-r from-yellow-400 to-amber-400 text-amber-900 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                          </svg>
+                          Featured
+                        </span>
+                      )}
+                      <span className={clsx("inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold shadow-lg", 
                         getSourceBadgeColor(stock.source)
                       )}>
                         {stock.source.charAt(0).toUpperCase() + stock.source.slice(1)}
@@ -132,109 +86,213 @@ export default async function HighlightedStockDetailPage({ params }: { params: {
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* Performance Scores - Compact */}
-              <div>
-                <h2 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  Performance Scores
-                </h2>
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 rounded-lg border border-indigo-100">
-                  <div className="space-y-2">
-                    <div className="bg-white p-2 rounded border">
-                      <p className="text-xs font-medium text-gray-500">Sentiment Score</p>
-                      <span className={clsx(
-                        getSentimentColor(stock.sentiment_score),
-                        "text-sm font-bold rounded px-2 py-0.5 inline-flex items-center gap-1"
-                      )}>
-                        {stock.sentiment_score}
-                      </span>
-                    </div>
-                    <div className="bg-white p-2 rounded border">
-                      <p className="text-xs font-medium text-gray-500">Signal Score</p>
-                      <span className={clsx(
-                        getSentimentColor(stock.signal_score),
-                        "text-sm font-bold rounded px-2 py-0.5 inline-flex items-center gap-1"
-                      )}>
-                        {stock.signal_score}
-                      </span>
-                    </div>
-                  </div>
+                <div className="text-blue-100/90 text-lg">
+                  <span className="font-medium">{stock.guru}</span> • Updated {formatDate(stock.created_at)}
                 </div>
               </div>
               
-              {/* Financial Data & Timeline - Compact */}
-              <div>
-                <h2 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Financial Data
-                </h2>
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-100">
-                  <div className="space-y-2">
-                    <div className="bg-white p-2 rounded border">
-                      <p className="text-xs font-medium text-gray-500">Percentage Upside</p>
-                      <p className="text-sm font-medium text-gray-800">{stock.pe}%</p>
-                    </div>
-                    <div className="bg-white p-2 rounded border">
-                      <p className="text-xs font-medium text-gray-500">Sticker Price</p>
-                      <p className="text-sm font-medium text-green-700">{formatCurrency(stock.buy_price)}</p>
-                    </div>
-                    <div className="bg-white p-2 rounded border">
-                      <p className="text-xs font-medium text-gray-500">Last Updated</p>
-                      <p className="text-sm font-medium text-gray-800">{formatDate(stock.created_at)}</p>
-                    </div>
-                  </div>
+              <Link
+                href="/dashboard/highlighted"
+                className="flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-md px-6 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-all duration-200 border border-white/20 shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                <ArrowLeftIcon className="w-4 h-4" />
+                Back to List
+              </Link>
+            </div>
+            
+            <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 shadow-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="h-2 w-2 rounded-full bg-green-400"></div>
+                  <span className="text-xs font-medium text-blue-100/80">Sentiment Score</span>
                 </div>
+                <div className="text-xl font-bold">{stock.sentiment_score}</div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 shadow-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="h-2 w-2 rounded-full bg-blue-400"></div>
+                  <span className="text-xs font-medium text-blue-100/80">Signal Score</span>
+                </div>
+                <div className="text-xl font-bold">{stock.signal_score}</div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 shadow-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
+                  <span className="text-xs font-medium text-blue-100/80">Sticker Price</span>
+                </div>
+                <div className="text-xl font-bold">{formatCurrency(stock.buy_price)}</div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 shadow-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="h-2 w-2 rounded-full bg-purple-400"></div>
+                  <span className="text-xs font-medium text-blue-100/80">Upside</span>
+                </div>
+                <div className="text-xl font-bold">{stock.pe}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Enhanced Information Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Company Overview */}
+          <div className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                Company Overview
+              </h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <span className="text-sm font-medium text-gray-600">Symbol</span>
+                <span className="text-lg font-bold text-gray-900">{stock.ticker}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <span className="text-sm font-medium text-gray-600">Analyst</span>
+                <span className="text-sm font-semibold text-gray-900">{stock.guru}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <span className="text-sm font-medium text-gray-600">Source</span>
+                <span className={clsx("inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold", 
+                  getSourceBadgeColor(stock.source)
+                )}>
+                  {stock.source.charAt(0).toUpperCase() + stock.source.slice(1)}
+                </span>
               </div>
             </div>
           </div>
           
-          {/* Charts Section - Side by Side */}
-          <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Dynamic Stock History Chart */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-              <StockHistoryChart stockId={id} />
-            </div>
-            
-            {/* Static Chart Image Section */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-              <div className="p-4">
-                <h2 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+          {/* Performance Metrics */}
+          <div className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-indigo-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  Stock Chart Visualization
-                </h2>
-                <div className="bg-gradient-to-r from-gray-50 to-slate-50 p-3 rounded-lg border border-gray-200">
-                  <div className="flex justify-center">
-                    {/* Only render Image if screenshot is available */}
-                    {(stock.screenshot || latestHistory?.screenshot) ? (
-                      <Image 
-                        src={stock.screenshot || latestHistory?.screenshot || ''} 
-                        alt={`${stock.ticker} chart`} 
-                        width={400} 
-                        height={250} 
-                        className="rounded-md w-full h-auto"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-[250px] w-full bg-gray-100 rounded-lg border border-dashed border-gray-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p className="text-gray-600 text-sm font-medium">No chart image available</p>
-                        <p className="text-gray-500 text-xs mt-1">Chart visualization data is not available</p>
-                      </div>
-                    )}
+                </div>
+                Performance Metrics
+              </h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-gray-600">Sentiment Score</span>
+                  <div className="flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
                   </div>
                 </div>
+                <div className="text-2xl font-bold text-green-700">{stock.sentiment_score}</div>
+              </div>
+              <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-gray-600">Signal Score</span>
+                  <div className="flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-blue-700">{stock.signal_score}</div>
               </div>
             </div>
           </div>
+          
+          {/* Financial Summary */}
+          <div className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-emerald-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-emerald-50 to-green-50 p-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                Financial Summary
+              </h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="p-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-100">
+                <span className="text-sm font-medium text-gray-600 block mb-1">Target Price</span>
+                <div className="text-2xl font-bold text-emerald-700">{formatCurrency(stock.buy_price)}</div>
+              </div>
+              <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-100">
+                <span className="text-sm font-medium text-gray-600 block mb-1">Upside Potential</span>
+                <div className="text-2xl font-bold text-purple-700">{stock.pe}%</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-xl">
+                <span className="text-xs font-medium text-gray-500 block mb-1">Last Updated</span>
+                <div className="text-sm font-semibold text-gray-700">{formatDate(stock.created_at)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+          
+        {/* Enhanced Charts Section */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Dynamic Stock History Chart */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-slate-50 to-gray-50 p-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                Interactive Price History
+              </h3>
+            </div>
+            <StockHistoryChart stockId={id} />
+          </div>
+          
+          {/* Static Chart Image Section */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                  </svg>
+                </div>
+                Technical Analysis Chart
+              </h3>
+            </div>
+            <div className="p-6">
+              <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl border border-gray-200 overflow-hidden">
+                {(stock.screenshot || latestHistory?.screenshot) ? (
+                  <Image 
+                    src={stock.screenshot || latestHistory?.screenshot || ''} 
+                    alt={`${stock.ticker} technical analysis chart`} 
+                    width={500} 
+                    height={300} 
+                    className="w-full h-auto hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-[300px] w-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl">
+                    <div className="bg-white rounded-full p-4 shadow-lg mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-700 mb-2">Chart Not Available</h4>
+                    <p className="text-gray-500 text-sm text-center max-w-xs">Technical analysis chart is currently unavailable for this stock</p>
+                    <button className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Refresh Chart
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
       </main>
     );
