@@ -124,16 +124,6 @@ export default async function HighlightedStockDetailPage({ params }: { params: {
           
         {/* Large Screenshot Section */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-100">
-            <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                </svg>
-              </div>
-              Technical Analysis Chart
-            </h3>
-          </div>
           <div className="p-6">
             <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl border border-gray-200 overflow-hidden">
               {(stock.screenshot || latestHistory?.screenshot) ? (
