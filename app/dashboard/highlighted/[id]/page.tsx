@@ -54,87 +54,65 @@ export default async function HighlightedStockDetailPage({ params }: { params: {
     
     return (
       <main>
-        <div className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-2xl shadow-2xl p-8 text-white mb-8 overflow-hidden">
-          {/* Background Overlay */}
+        <div className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-xl shadow-xl p-6 text-white mb-6 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
           
           <div className="relative z-10">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-              <div className="flex-1">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-sm flex items-center justify-center text-white font-bold text-2xl border border-white/20 shadow-lg">
-                    {stock.ticker.substring(0, 2)}
-                  </div>
-                  <div>
-                    <h1 className={`${lusitana.className} text-3xl lg:text-4xl font-bold mb-1`}>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/20">
+                  {stock.ticker.substring(0, 2)}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-1">
+                    <h1 className={`${lusitana.className} text-2xl lg:text-3xl font-bold`}>
                       {stock.ticker}
                     </h1>
-                    <div className="flex items-center gap-3">
-                      {stock.highlight && (
-                        <span className="bg-gradient-to-r from-yellow-400 to-amber-400 text-amber-900 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                          </svg>
-                          Featured
-                        </span>
-                      )}
-                      <span className={clsx("inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold shadow-lg", 
-                        getSourceBadgeColor(stock.source)
-                      )}>
-                        {stock.source.charAt(0).toUpperCase() + stock.source.slice(1)}
+                    {stock.highlight && (
+                      <span className="bg-gradient-to-r from-yellow-400 to-amber-400 text-amber-900 text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        Featured
                       </span>
-                    </div>
+                    )}
+                    <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold", 
+                      getSourceBadgeColor(stock.source)
+                    )}>
+                      {stock.source.charAt(0).toUpperCase() + stock.source.slice(1)}
+                    </span>
                   </div>
-                </div>
-                <div className="text-blue-100/90 text-base space-y-1">
-                  <div><span className="font-medium">{stock.guru}</span> • Updated {formatDate(stock.created_at)}</div>
-                  <div className="flex flex-wrap gap-4 text-sm">
-                    <span>Target: <span className="font-semibold text-emerald-300">{formatCurrency(stock.buy_price)}</span></span>
-                    <span>Upside: <span className="font-semibold text-purple-300">{stock.pe}%</span></span>
+                  <div className="text-blue-100/90 text-sm">
+                    <span className="font-medium">{stock.guru}</span> • {formatDate(stock.created_at)}
                   </div>
                 </div>
               </div>
               
               <Link
                 href="/dashboard/highlighted"
-                className="flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-md px-6 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-all duration-200 border border-white/20 shadow-lg hover:shadow-xl hover:scale-105"
+                className="flex items-center gap-2 rounded-lg bg-white/10 backdrop-blur-md px-4 py-2 text-sm font-medium text-white hover:bg-white/20 transition-all duration-200 border border-white/20"
               >
                 <ArrowLeftIcon className="w-4 h-4" />
-                Back to List
+                Back
               </Link>
             </div>
             
-            <div className="mt-6 bg-white/10 backdrop-blur-md rounded-xl px-6 py-4 border border-white/20 shadow-lg">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 divide-x divide-white/20">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <div className="h-2 w-2 rounded-full bg-green-400"></div>
-                    <span className="text-xs font-medium text-blue-100/80">Sentiment</span>
-                  </div>
+            <div className="mt-4 bg-white/10 backdrop-blur-md rounded-lg px-4 py-3 border border-white/20">
+              <div className="flex justify-between items-center text-center divide-x divide-white/20">
+                <div className="flex-1">
+                  <div className="text-xs text-blue-100/70 mb-1">Sentiment</div>
                   <div className="text-lg font-bold">{stock.sentiment_score}</div>
                 </div>
-                
-                <div className="text-center pl-6">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <div className="h-2 w-2 rounded-full bg-blue-400"></div>
-                    <span className="text-xs font-medium text-blue-100/80">Signal</span>
-                  </div>
+                <div className="flex-1">
+                  <div className="text-xs text-blue-100/70 mb-1">Signal</div>
                   <div className="text-lg font-bold">{stock.signal_score}</div>
                 </div>
-                
-                <div className="text-center pl-6">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
-                    <span className="text-xs font-medium text-blue-100/80">Price</span>
-                  </div>
+                <div className="flex-1">
+                  <div className="text-xs text-blue-100/70 mb-1">Target</div>
                   <div className="text-lg font-bold">{formatCurrency(stock.buy_price)}</div>
                 </div>
-                
-                <div className="text-center pl-6">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <div className="h-2 w-2 rounded-full bg-purple-400"></div>
-                    <span className="text-xs font-medium text-blue-100/80">Upside</span>
-                  </div>
+                <div className="flex-1">
+                  <div className="text-xs text-blue-100/70 mb-1">Upside</div>
                   <div className="text-lg font-bold">{stock.pe}%</div>
                 </div>
               </div>
