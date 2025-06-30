@@ -191,23 +191,26 @@ export default function StocksWithDateRange({
 
   // Sort stocks with improved handling for null/undefined values
   const sortedStocks = [...stocks].sort((a, b) => {
-    const valueA = a[sortBy as keyof Stock];
-    const valueB = b[sortBy as keyof Stock];
+    let valueA = a[sortBy as keyof Stock];
+    let valueB = b[sortBy as keyof Stock];
     
-    // Debug sorting values
-    if (sortBy === 'rule1_score' || sortBy === 'moat_score' || sortBy === 'management_score') {
-      console.log(`Comparing ${a.ticker} (${valueA}) with ${b.ticker} (${valueB}) for ${sortBy}`);
+    // Handle null/undefined/empty string values - always sort them to the end
+    const isAEmpty = valueA === null || valueA === undefined || valueA === '' || valueA === 0;
+    const isBEmpty = valueB === null || valueB === undefined || valueB === '' || valueB === 0;
+    
+    if (isAEmpty && isBEmpty) return 0;
+    if (isAEmpty) return 1; // A goes to end
+    if (isBEmpty) return -1; // B goes to end
+    
+    // Convert to numbers if they are numeric strings or actual numbers
+    if (typeof valueA === 'string' && !isNaN(Number(valueA))) {
+      valueA = Number(valueA);
+    }
+    if (typeof valueB === 'string' && !isNaN(Number(valueB))) {
+      valueB = Number(valueB);
     }
     
-    // Handle null/undefined values - always sort them to the end
-    if (valueA === null || valueA === undefined) {
-      return sortOrder === 'asc' ? 1 : -1; // null values at end
-    }
-    if (valueB === null || valueB === undefined) {
-      return sortOrder === 'asc' ? -1 : 1; // null values at end
-    }
-    
-    // Handle numbers
+    // Handle numbers (including negative numbers)
     if (typeof valueA === 'number' && typeof valueB === 'number') {
       return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
     }
@@ -219,8 +222,12 @@ export default function StocksWithDateRange({
         : valueB.localeCompare(valueA);
     }
     
-    // Default case
-    return 0;
+    // Mixed types - convert to string for comparison
+    const strA = String(valueA);
+    const strB = String(valueB);
+    return sortOrder === 'asc' 
+      ? strA.localeCompare(strB) 
+      : strB.localeCompare(strA);
   });
 
   // Use all sorted stocks without pagination
