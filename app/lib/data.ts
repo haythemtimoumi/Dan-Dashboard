@@ -191,11 +191,11 @@ export async function fetchFilteredStocks(
     }
     
     if (endDate) {
-      // Add one day to include the end date fully
+      // Set to end of the selected day (23:59:59.999)
       const endDateTime = new Date(endDate);
-      endDateTime.setDate(endDateTime.getDate() + 1);
+      endDateTime.setHours(23, 59, 59, 999);
       filteredStocks = filteredStocks.filter(stock => 
-        new Date(stock.created_at).getTime() < endDateTime.getTime()
+        new Date(stock.created_at).getTime() <= endDateTime.getTime()
       );
     }
     
@@ -292,11 +292,11 @@ export async function fetchStocksPages(
     }
     
     if (endDate) {
-      // Add one day to include the end date fully
+      // Set to end of the selected day (23:59:59.999)
       const endDateTime = new Date(endDate);
-      endDateTime.setDate(endDateTime.getDate() + 1);
+      endDateTime.setHours(23, 59, 59, 999);
       filteredStocks = filteredStocks.filter(stock => 
-        new Date(stock.created_at).getTime() < endDateTime.getTime()
+        new Date(stock.created_at).getTime() <= endDateTime.getTime()
       );
     }
     
