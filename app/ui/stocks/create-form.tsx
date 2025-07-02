@@ -36,7 +36,7 @@ export default function Form() {
           <h2 className="text-lg font-semibold mb-4">Upload Stocks CSV File</h2>
           <p className="text-sm text-gray-600 mb-4">
             Upload a CSV file containing stock data. The CSV should have the following columns:
-            ticker, sentiment_score, signal_score, pe, buy_price, guru, source, highlight
+            ticker, sentiment_score, signal_score, pe, target_buy_price, guru, source, highlight
           </p>
           
           <div className="flex items-center justify-center w-full">

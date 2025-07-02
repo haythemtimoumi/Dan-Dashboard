@@ -112,10 +112,10 @@ export default function EditStockForm({
           )}
         </div>
 
-        {/* Buy Price */}
+        {/* Target Buy Price */}
         <div className="mb-4">
           <label htmlFor="buy_price" className="mb-2 block text-sm font-medium">
-            Buy Price
+            Target Buy Price
           </label>
           <input
             id="buy_price"
@@ -124,7 +124,7 @@ export default function EditStockForm({
             step="0.01"
             defaultValue={stock.buy_price}
             className="peer block w-full rounded-md border border-gray-200 py-2 text-sm outline-2 placeholder:text-gray-500"
-            placeholder="Enter buy price"
+            placeholder="Enter target buy price"
             aria-describedby="buy-price-error"
           />
           {state.errors?.buy_price && (
