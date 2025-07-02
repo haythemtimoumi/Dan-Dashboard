@@ -5,6 +5,7 @@ import StatusCard from '@/app/ui/scraper/StatusCard';
 import TickerGrid from '@/app/ui/scraper/TickerGrid';
 import TickerManager from '@/app/ui/scraper/TickerManager';
 import ThemeToggle from '@/app/ui/scraper/ThemeToggle';
+import ConnectionStatus from '@/app/ui/scraper/ConnectionStatus';
 
 export default function ScraperManagementPage() {
   return (
@@ -13,6 +14,8 @@ export default function ScraperManagementPage() {
         <h1 className={`${lusitana.className} text-2xl text-gray-900 dark:text-white`}>Stock Scraper Management</h1>
         <ThemeToggle />
       </div>
+      
+      <ConnectionStatus />
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <StatusCard />
