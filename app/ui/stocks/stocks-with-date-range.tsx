@@ -653,6 +653,8 @@ export default function StocksWithDateRange({
                     <thead>
                       <tr className="bg-gradient-to-r from-slate-50 via-blue-50/50 to-indigo-50/50 border-b border-gray-200/50">
                       <SortableHeader label="Ticker" field="ticker" />
+                      <SortableHeader label="Source" field="source" />
+                      <SortableHeader label="Date" field="created_at" />
                       <SortableHeader label="Sentiment" field="sentiment_score" />
                       <SortableHeader label="Signal" field="signal_score" />
                       <SortableHeader label="Rule1 Score" field="rule1_score" />
@@ -708,6 +710,18 @@ export default function StocksWithDateRange({
                               <p className="font-bold text-gray-900 text-base">{stock.ticker}</p>
                               <p className="text-sm text-gray-600 font-medium">{stock.guru}</p>
                             </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={clsx("inline-flex items-center rounded-xl px-3 py-2 text-xs font-bold shadow-sm", 
+                            getSourceBadgeColor(stock.source)
+                          )}>
+                            {stock.source}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-600 font-medium">
+                            {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : <span className="text-gray-400">No date</span>}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

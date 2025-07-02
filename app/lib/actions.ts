@@ -44,6 +44,7 @@ export type State = {
   message?: string | null;
 };
 
+
 export async function createStock(prevState: State, formData: FormData) {
   // Validate form using Zod
   const validatedFields = StockFormSchema.safeParse({
