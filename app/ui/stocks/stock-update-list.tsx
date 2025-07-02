@@ -166,27 +166,27 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
           )}
           
           {/* Card Content */}
-          <div className="p-6">
+          <div className="p-4">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-2xl font-black text-white mb-1 tracking-tight">{currentStock.ticker}</h1>
-                <p className="text-blue-300 text-sm font-medium">{currentStock.guru}</p>
+                <h1 className="text-xl font-black text-white mb-0.5 tracking-tight">{currentStock.ticker}</h1>
+                <p className="text-blue-300 text-xs font-medium">{currentStock.guru}</p>
               </div>
               <div className="text-right">
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-lg font-black rounded-xl px-4 py-2 shadow-xl shadow-blue-500/25">
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-black rounded-lg px-3 py-1.5 shadow-lg shadow-blue-500/25">
                   +{currentStock.pe}%
                 </div>
-                <p className="text-xs text-blue-400 mt-1 font-semibold tracking-wide uppercase">Upside</p>
+                <p className="text-[9px] text-blue-400 mt-0.5 font-semibold tracking-wide uppercase">Upside</p>
               </div>
             </div>
             
             {/* Metrics Grid */}
-            <div className="grid grid-cols-4 gap-3 mb-6">
-              <div className="backdrop-blur-md bg-blue-500/15 p-3 rounded-xl border border-blue-400/25 hover:border-blue-400/40 hover:bg-blue-500/20 transition-all duration-300 group">
-                <p className="text-[10px] font-bold text-blue-300 mb-1 uppercase tracking-wider">Sentiment</p>
+            <div className="grid grid-cols-5 gap-2 mb-4">
+              <div className="backdrop-blur-md bg-blue-500/15 p-2 rounded-lg border border-blue-400/25 hover:border-blue-400/40 hover:bg-blue-500/20 transition-all duration-300 group">
+                <p className="text-[8px] font-bold text-blue-300 mb-0.5 uppercase tracking-wider">Sentiment</p>
                 <p className={clsx(
-                  "text-lg font-black group-hover:scale-110 transition-transform duration-300",
+                  "text-sm font-black group-hover:scale-110 transition-transform duration-300",
                   getSentimentColor(currentStock.sentiment_score).includes('green') ? 'text-blue-400' :
                   getSentimentColor(currentStock.sentiment_score).includes('red') ? 'text-red-400' : 'text-yellow-400'
                 )}>
@@ -194,10 +194,10 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
                 </p>
               </div>
               
-              <div className="backdrop-blur-md bg-indigo-500/15 p-3 rounded-xl border border-indigo-400/25 hover:border-indigo-400/40 hover:bg-indigo-500/20 transition-all duration-300 group">
-                <p className="text-[10px] font-bold text-indigo-300 mb-1 uppercase tracking-wider">Signal</p>
+              <div className="backdrop-blur-md bg-indigo-500/15 p-2 rounded-lg border border-indigo-400/25 hover:border-indigo-400/40 hover:bg-indigo-500/20 transition-all duration-300 group">
+                <p className="text-[8px] font-bold text-indigo-300 mb-0.5 uppercase tracking-wider">Signal</p>
                 <p className={clsx(
-                  "text-lg font-black group-hover:scale-110 transition-transform duration-300",
+                  "text-sm font-black group-hover:scale-110 transition-transform duration-300",
                   getSentimentColor(currentStock.signal_score).includes('green') ? 'text-blue-400' :
                   getSentimentColor(currentStock.signal_score).includes('red') ? 'text-red-400' : 'text-yellow-400'
                 )}>
@@ -205,52 +205,52 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
                 </p>
               </div>
               
-              <div className="backdrop-blur-md bg-cyan-500/15 p-3 rounded-xl border border-cyan-400/25 hover:border-cyan-400/40 hover:bg-cyan-500/20 transition-all duration-300 group">
-                <p className="text-[10px] font-bold text-cyan-300 mb-1 uppercase tracking-wider">Rule1</p>
-                <p className="text-lg font-black text-cyan-400 group-hover:scale-110 transition-transform duration-300">
+              <div className="backdrop-blur-md bg-cyan-500/15 p-2 rounded-lg border border-cyan-400/25 hover:border-cyan-400/40 hover:bg-cyan-500/20 transition-all duration-300 group">
+                <p className="text-[8px] font-bold text-cyan-300 mb-0.5 uppercase tracking-wider">Rule1</p>
+                <p className="text-sm font-black text-cyan-400 group-hover:scale-110 transition-transform duration-300">
                   {currentStock.rule1_score !== null ? currentStock.rule1_score : '—'}
                 </p>
               </div>
               
-              <div className="backdrop-blur-md bg-sky-500/15 p-3 rounded-xl border border-sky-400/25 hover:border-sky-400/40 hover:bg-sky-500/20 transition-all duration-300 group">
-                <p className="text-[10px] font-bold text-sky-300 mb-1 uppercase tracking-wider">Moat</p>
-                <p className="text-lg font-black text-sky-400 group-hover:scale-110 transition-transform duration-300">
+              <div className="backdrop-blur-md bg-sky-500/15 p-2 rounded-lg border border-sky-400/25 hover:border-sky-400/40 hover:bg-sky-500/20 transition-all duration-300 group">
+                <p className="text-[8px] font-bold text-sky-300 mb-0.5 uppercase tracking-wider">Moat</p>
+                <p className="text-sm font-black text-sky-400 group-hover:scale-110 transition-transform duration-300">
                   {currentStock.moat_score !== null ? currentStock.moat_score : '—'}
+                </p>
+              </div>
+              
+              <div className="backdrop-blur-md bg-emerald-500/15 p-2 rounded-lg border border-emerald-400/25 hover:border-emerald-400/40 hover:bg-emerald-500/20 transition-all duration-300 group">
+                <p className="text-[8px] font-bold text-emerald-300 mb-0.5 uppercase tracking-wider">Buy Price</p>
+                <p className="text-sm font-black text-emerald-400 group-hover:scale-110 transition-transform duration-300">
+                  {formatCurrency(currentStock.buy_price).replace('$', '')}
                 </p>
               </div>
             </div>
             
             {/* Financial Metrics */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="backdrop-blur-md bg-blue-600/10 p-3 rounded-xl border border-blue-400/20 hover:bg-blue-600/15 hover:border-blue-400/30 transition-all duration-300 group">
-                <p className="text-[10px] font-bold text-blue-400 mb-1 uppercase tracking-wider">Management</p>
-                <p className="text-sm font-black text-white group-hover:text-blue-300 transition-colors duration-300">
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <div className="backdrop-blur-md bg-blue-600/10 p-2 rounded-lg border border-blue-400/20 hover:bg-blue-600/15 hover:border-blue-400/30 transition-all duration-300 group">
+                <p className="text-[8px] font-bold text-blue-400 mb-0.5 uppercase tracking-wider">Management</p>
+                <p className="text-xs font-black text-white group-hover:text-blue-300 transition-colors duration-300">
                   {currentStock.management_score !== null ? currentStock.management_score : '—'}
                 </p>
               </div>
               
-              <div className="backdrop-blur-md bg-blue-600/10 p-3 rounded-xl border border-blue-400/20 hover:bg-blue-600/15 hover:border-blue-400/30 transition-all duration-300 group">
-                <p className="text-[10px] font-bold text-blue-400 mb-1 uppercase tracking-wider">Sticker</p>
-                <p className="text-sm font-black text-blue-400 group-hover:text-blue-300 transition-colors duration-300">
-                  {formatCurrency(currentStock.buy_price)}
-                </p>
-              </div>
-              
-              <div className="backdrop-blur-md bg-blue-600/10 p-3 rounded-xl border border-blue-400/20 hover:bg-blue-600/15 hover:border-blue-400/30 transition-all duration-300 group">
-                <p className="text-[10px] font-bold text-blue-400 mb-1 uppercase tracking-wider">Current</p>
-                <p className="text-sm font-black text-white group-hover:text-blue-300 transition-colors duration-300">
+              <div className="backdrop-blur-md bg-blue-600/10 p-2 rounded-lg border border-blue-400/20 hover:bg-blue-600/15 hover:border-blue-400/30 transition-all duration-300 group">
+                <p className="text-[8px] font-bold text-blue-400 mb-0.5 uppercase tracking-wider">Current</p>
+                <p className="text-xs font-black text-white group-hover:text-blue-300 transition-colors duration-300">
                   {currentStock.current_ratio || '—'}
                 </p>
               </div>
             </div>
             
             {/* Footer */}
-            <div className="flex items-center justify-between pt-4 border-t border-blue-400/20">
-              <div className="flex items-center gap-3">
-                <span className="backdrop-blur-md bg-blue-500/20 border border-blue-400/30 text-blue-300 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide">
+            <div className="flex items-center justify-between pt-3 border-t border-blue-400/20">
+              <div className="flex items-center gap-2">
+                <span className="backdrop-blur-md bg-blue-500/20 border border-blue-400/30 text-blue-300 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide">
                   {currentStock.source}
                 </span>
-                <span className="text-xs text-blue-400 font-medium">
+                <span className="text-[9px] text-blue-400 font-medium">
                   {(currentStock.date || currentStock.created_at) ? 
                     new Date(currentStock.date || currentStock.created_at).toLocaleDateString('en-US') : 
                     'No date'
@@ -260,7 +260,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
               
               <button
                 onClick={() => router.push(`/dashboard/highlighted/${currentStock.id}`)}
-                className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-wide transition-all duration-300 shadow-xl shadow-blue-500/25 hover:scale-105 hover:shadow-blue-400/30"
+                className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 text-white px-4 py-1.5 rounded-lg font-bold text-[9px] uppercase tracking-wide transition-all duration-300 shadow-lg shadow-blue-500/25 hover:scale-105 hover:shadow-blue-400/30"
               >
                 Analyze
               </button>
@@ -269,25 +269,25 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
         </div>
         
         {/* Navigation */}
-        <div className="flex justify-center items-center gap-6 mt-8">
+        <div className="flex justify-center items-center gap-4 mt-6">
           <button
             onClick={handlePrevious}
             disabled={currentIndex === 0}
             className={clsx(
-              "flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all duration-300",
+              "flex items-center gap-1.5 px-4 py-2 rounded-lg font-bold text-[9px] uppercase tracking-wide transition-all duration-300",
               currentIndex === 0
                 ? "backdrop-blur-md bg-blue-900/20 text-blue-600 cursor-not-allowed border border-blue-400/20"
-                : "backdrop-blur-md bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 hover:text-white shadow-xl hover:shadow-blue-500/20 border border-blue-400/30 hover:scale-105 hover:border-blue-400/50"
+                : "backdrop-blur-md bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 hover:text-white shadow-lg hover:shadow-blue-500/20 border border-blue-400/30 hover:scale-105 hover:border-blue-400/50"
             )}
           >
-            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
             </svg>
             Prev
           </button>
           
-          <div className="backdrop-blur-md bg-gradient-to-r from-blue-500/25 to-indigo-500/25 border border-blue-400/30 px-4 py-2 rounded-xl">
-            <span className="text-xs font-black text-blue-300 uppercase tracking-wider">
+          <div className="backdrop-blur-md bg-gradient-to-r from-blue-500/25 to-indigo-500/25 border border-blue-400/30 px-3 py-1.5 rounded-lg">
+            <span className="text-[9px] font-black text-blue-300 uppercase tracking-wider">
               {currentIndex + 1} / {stocks.length}
             </span>
           </div>
@@ -296,14 +296,14 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
             onClick={handleNext}
             disabled={currentIndex === stocks.length - 1}
             className={clsx(
-              "flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wide transition-all duration-300",
+              "flex items-center gap-1.5 px-4 py-2 rounded-lg font-bold text-[9px] uppercase tracking-wide transition-all duration-300",
               currentIndex === stocks.length - 1
                 ? "backdrop-blur-md bg-blue-900/20 text-blue-600 cursor-not-allowed border border-blue-400/20"
-                : "backdrop-blur-md bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 hover:text-white shadow-xl hover:shadow-blue-500/20 border border-blue-400/30 hover:scale-105 hover:border-blue-400/50"
+                : "backdrop-blur-md bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 hover:text-white shadow-lg hover:shadow-blue-500/20 border border-blue-400/30 hover:scale-105 hover:border-blue-400/50"
             )}
           >
             Next
-            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
             </svg>
           </button>
