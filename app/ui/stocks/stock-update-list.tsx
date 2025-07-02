@@ -228,11 +228,18 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
             </div>
             
             {/* Financial Metrics */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
+            <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="backdrop-blur-md bg-blue-600/10 p-2 rounded-lg border border-blue-400/20 hover:bg-blue-600/15 hover:border-blue-400/30 transition-all duration-300 group">
                 <p className="text-[8px] font-bold text-blue-400 mb-0.5 uppercase tracking-wider">Management</p>
                 <p className="text-xs font-black text-white group-hover:text-blue-300 transition-colors duration-300">
                   {currentStock.management_score !== null ? currentStock.management_score : '—'}
+                </p>
+              </div>
+              
+              <div className="backdrop-blur-md bg-purple-600/10 p-2 rounded-lg border border-purple-400/20 hover:bg-purple-600/15 hover:border-purple-400/30 transition-all duration-300 group">
+                <p className="text-[8px] font-bold text-purple-400 mb-0.5 uppercase tracking-wider">Sticker</p>
+                <p className="text-xs font-black text-purple-400 group-hover:text-purple-300 transition-colors duration-300">
+                  {formatCurrency(currentStock.buy_price * 2).replace('$', '')}
                 </p>
               </div>
               
