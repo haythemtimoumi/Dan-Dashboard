@@ -144,34 +144,18 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
   const currentStock = stocks[currentIndex];
 
   return (
-    <div className="flex justify-center items-center min-h-[600px] px-4">
-      <div className="max-w-4xl w-full mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Today&apos;s Stock Spotlight</h2>
-          <p className="text-gray-600">
-            Showing stock {currentIndex + 1} of {stocks.length} • Sorted by Percentage Upside
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Date: {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
-        </div>
-        
+    <div className="min-h-screen px-4 py-8">
+      <div className="max-w-7xl w-full mx-auto">
         {/* Stock Card */}
-        <div className="rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden hover:shadow-3xl transition-all duration-300">
+        <div className="rounded-3xl bg-white shadow-2xl border border-gray-100 overflow-hidden hover:shadow-3xl transition-all duration-300">
           {/* Screenshot */}
           {currentStock.screenshot && (
-            <div className="relative h-64 md:h-80 bg-gray-100">
+            <div className="relative h-96 md:h-[500px] lg:h-[600px] bg-gray-100">
               <Image 
                 src={currentStock.screenshot} 
                 alt={`${currentStock.ticker} chart`}
                 fill
-                className="object-cover"
+                className="object-contain"
                 priority
               />
             </div>
@@ -283,7 +267,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
         </div>
         
         {/* Navigation */}
-        <div className="flex justify-center items-center gap-6 mt-8">
+        <div className="flex justify-center items-center gap-6 mt-12">
           <button
             onClick={handlePrevious}
             disabled={currentIndex === 0}
