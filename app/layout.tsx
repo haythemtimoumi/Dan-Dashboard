@@ -2,6 +2,8 @@ import { Metadata } from "next";
 
 import "@/app/ui/global.css"
 import {inter} from "@/app/ui/fonts"
+import QueryProvider from "@/app/providers/query-provider";
+import { Toaster } from 'react-hot-toast';
 
 
 export const metadata:Metadata={
@@ -20,7 +22,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>{children}</body>
+      <body className={`${inter.className} antialiased`}>
+        <QueryProvider>
+          {children}
+          <Toaster position="top-right" />
+        </QueryProvider>
+      </body>
     </html>
   );
 }

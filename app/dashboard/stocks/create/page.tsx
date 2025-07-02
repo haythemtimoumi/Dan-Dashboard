@@ -1,21 +1,25 @@
-import { Metadata } from 'next';
+'use client';
+
 import { lusitana } from '@/app/ui/fonts';
-import Form from '@/app/ui/stocks/create-form';
+import StatusCard from '@/app/ui/scraper/StatusCard';
+import TickerGrid from '@/app/ui/scraper/TickerGrid';
+import TickerManager from '@/app/ui/scraper/TickerManager';
+import ThemeToggle from '@/app/ui/scraper/ThemeToggle';
 
-export const metadata: Metadata = {
-  title: 'Create Stock',
-  description: 'Add a new stock to the system',
-};
-
-export default async function CreateStockPage() {
+export default function ScraperManagementPage() {
   return (
-    <div className="w-full">
+    <div className="w-full space-y-6">
       <div className="flex w-full items-center justify-between">
-        <h1 className={`${lusitana.className} text-2xl`}>Create Stock</h1>
+        <h1 className={`${lusitana.className} text-2xl text-gray-900 dark:text-white`}>Stock Scraper Management</h1>
+        <ThemeToggle />
       </div>
-      <div className="mt-4">
-        <Form />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <StatusCard />
+        <TickerManager />
       </div>
+      
+      <TickerGrid />
     </div>
   );
 }
