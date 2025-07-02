@@ -21,12 +21,8 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
       try {
         setLoading(true);
         
-        // Get current date in MM/DD/YYYY format
-        const today = new Date();
-        const formattedDate = `${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getDate().toString().padStart(2,'0')}/${today.getFullYear()}`;
-        
-        // Fetch stocks filtered by current date
-        const response = await fetch(`${API_URL}/stocks/filter-by-date?date=${formattedDate}`);
+        // Fetch highlighted stocks
+        const response = await fetch(`${API_URL}/stocks/highlighted`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch stocks: ${response.statusText}`);
@@ -34,8 +30,19 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
         
         const data = await response.json();
         
+        // Get current date for filtering
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        // Filter stocks by current date
+        const todayStocks = data.filter((stock: Stock) => {
+          const stockDate = stock.date ? new Date(stock.date) : new Date(stock.created_at);
+          const stockDateStr = stockDate.toISOString().split('T')[0];
+          return stockDateStr === todayStr;
+        });
+        
         // Sort by Percentage Upside (pe field) in descending order
-        const sortedStocks = [...data].sort((a, b) => {
+        const sortedStocks = [...todayStocks].sort((a, b) => {
           const valueA = a.pe || 0;
           const valueB = b.pe || 0;
           return valueB - valueA; // Descending order
