@@ -44,6 +44,26 @@ export type State = {
   message?: string | null;
 };
 
+export async function fetchHighlightedStocks() {
+  try {
+    const response = await fetch(`${API_URL}/api/stocks?highlight=true`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch highlighted stocks: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching highlighted stocks:', error);
+    throw new Error('Failed to load highlighted stock details. Please try again later.');
+  }
+}
+
 
 export async function createStock(prevState: State, formData: FormData) {
   // Validate form using Zod
