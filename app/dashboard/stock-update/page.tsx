@@ -20,7 +20,7 @@ export default function StockUpdatePage({
 
   return (
     <main>
-      <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-xl shadow-lg p-6 text-white mb-8">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-6 text-white mb-8">
         <h1 className={`${lusitana.className} text-2xl md:text-3xl font-bold`}>
           Stock Update
         </h1>
