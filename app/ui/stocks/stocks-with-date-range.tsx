@@ -768,6 +768,16 @@ export default function StocksWithDateRange({
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-bold text-gray-900">
+                            {stock.current_ratio || <span className="text-gray-400">—</span>}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-bold text-purple-700">
+                            {stock.pe}%
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={(e) => {
