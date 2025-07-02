@@ -31,7 +31,7 @@ A real-time dashboard for managing and monitoring a Python stock scraper system 
 
 ## API Integration
 
-**Base URL:** `http://162.248.100.66:5000`
+**Base URL:** `http://162.248.101.184:5000`
 
 ### Endpoints Used:
 - `GET /scraper-status` - Fetch current scraper status

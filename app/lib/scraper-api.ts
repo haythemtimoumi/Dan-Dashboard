@@ -1,4 +1,4 @@
-const SCRAPER_API_URL = 'http://162.248.100.66:5000';
+const SCRAPER_API_URL = 'http://162.248.101.184:5000';
 
 export interface ScraperStatus {
   status: 'running' | 'idle' | 'ready';
