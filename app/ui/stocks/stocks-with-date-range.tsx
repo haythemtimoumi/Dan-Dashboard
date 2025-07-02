@@ -661,17 +661,9 @@ export default function StocksWithDateRange({
                       <SortableHeader label="Moat Score" field="moat_score" />
                       <SortableHeader label="Management Score" field="management_score" />
                       <SortableHeader label="Target Buy Price" field="buy_price" />
-                      <th scope="col" className="px-4 py-4 font-medium text-gray-700">
-                        Sticker Price
-                      </th>
+                      <SortableHeader label="Sticker Price" field="buy_price" />
                       <SortableHeader label="Last Price" field="current_ratio" />
                       <SortableHeader label="Percentage Upside" field="pe" />
-                      <th scope="col" className="px-4 py-4 font-medium text-gray-700">
-                        Source
-                      </th>
-                      <th scope="col" className="px-4 py-4 font-medium text-gray-700">
-                        Date
-                      </th>
                       <th scope="col" className="relative py-3 pl-6 pr-3">
                         <span className="sr-only">Actions</span>
                       </th>
@@ -774,18 +766,6 @@ export default function StocksWithDateRange({
                           <span className="text-sm font-bold text-purple-700">
                             {stock.pe}%
                           </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={clsx("inline-flex items-center rounded-xl px-3 py-2 text-xs font-bold shadow-sm", 
-                            getSourceBadgeColor(stock.source)
-                          )}>
-                            {stock.source}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-600 font-medium">
-                            {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : <span className="text-gray-400">No date</span>}
-                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
