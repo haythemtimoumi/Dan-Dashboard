@@ -200,29 +200,19 @@ export default function HighlightedStocksWithDateRange({
   // Sortable header component
   const SortableHeader = ({ label, field }: { label: string; field: string }) => (
     <th 
-      scope="col" 
       className={clsx(
-        "px-4 py-4 font-medium cursor-pointer transition-colors duration-200",
-        sortBy === field ? "text-blue-700" : "text-gray-700 hover:text-blue-600"
+        "px-3 py-2 cursor-pointer hover:bg-gray-100 transition-colors",
+        sortBy === field ? "text-blue-600" : "text-gray-700"
       )}
       onClick={() => handleSort(field)}
     >
-      <div className="flex items-center gap-1.5 group">
-        <span>{label}</span>
-        <div className={clsx(
-          "transition-opacity duration-200",
-          sortBy === field ? "opacity-100" : "opacity-0 group-hover:opacity-50"
-        )}>
-          {sortBy === field && sortOrder === 'asc' ? (
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <path d="M12 19V5M5 12l7-7 7 7" />
-            </svg>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <path d="M12 5v14M5 12l7 7 7-7" />
-            </svg>
-          )}
-        </div>
+      <div className="flex items-center gap-1">
+        <span className="truncate">{label}</span>
+        {sortBy === field && (
+          <span className="text-blue-600">
+            {sortOrder === 'asc' ? '↑' : '↓'}
+          </span>
+        )}
       </div>
     </th>
   );
@@ -276,130 +266,91 @@ export default function HighlightedStocksWithDateRange({
   }
 
   return (
-    <div className="mt-6 flow-root">
+    <div className="flow-root">
       <div className="inline-block min-w-full align-middle">
-        <div className="rounded-xl bg-white p-6 shadow-lg border border-gray-100">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                </svg>
-                <span>Featured Stocks</span>
-              </h2>
-              <p className="text-gray-500 mt-1">
-                Showing data from {formatDateToString(startDateObj)} to {formatDateToString(endDateObj)}
-              </p>
+        <div className="bg-white border border-gray-200 rounded-lg">
+          <div className="flex justify-between items-center p-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <span className="text-lg font-semibold text-gray-900">Highlighted Stocks</span>
+              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
+                {stocks.length}
+              </span>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span className="text-blue-800 font-medium">{stocks.length} highlighted stocks</span>
+            <div className="text-sm text-gray-500">
+              {formatDateToString(startDateObj)} - {formatDateToString(endDateObj)}
             </div>
           </div>
           
           {/* Date filter */}
-          <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100 shadow-sm">
-            <h3 className="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="p-4 bg-gray-50 border-b border-gray-200">
+            <div className="flex items-center gap-2 mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              Filter Featured Stocks by Date
-            </h3>
-            <form onSubmit={handleDateFilterChange} className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="col-span-1">
-                <label htmlFor="startDate" className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
-                  <span>Start Date</span>
-                </label>
+              <span className="text-sm font-medium text-gray-700">Date Filter</span>
+            </div>
+            <form onSubmit={handleDateFilterChange} className="flex flex-wrap items-end gap-3">
+              <div className="flex-1 min-w-32">
+                <label className="block text-xs text-gray-600 mb-1">Start Date</label>
                 <div className="relative">
                   <DatePicker
-                    id="startDate"
                     selected={startDateObj}
                     onChange={(date) => setStartDateObj(date)}
                     dateFormat="MM/dd/yyyy"
-                    className={clsx(
-                      "block w-full rounded-lg border py-2.5 px-4 pl-10 text-sm shadow-sm focus:ring-2 focus:ring-blue-500/30 bg-white",
-                      dateError ? "border-red-300 focus:border-red-500" : "border-gray-200 focus:border-blue-500"
-                    )}
-                    placeholderText="Select start date"
-                    showPopperArrow={false}
+                    className="w-full rounded border border-gray-300 py-2 px-3 pl-8 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     showMonthDropdown
                     showYearDropdown
                     dropdownMode="select"
-                    todayButton="Today"
                   />
-                  <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-500" />
+                  <CalendarIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 </div>
               </div>
               
-              <div className="col-span-1">
-                <label htmlFor="endDate" className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
-                  <span>End Date</span>
-                </label>
+              <div className="flex-1 min-w-32">
+                <label className="block text-xs text-gray-600 mb-1">End Date</label>
                 <div className="relative">
                   <DatePicker
-                    id="endDate"
                     selected={endDateObj}
                     onChange={(date) => setEndDateObj(date)}
                     dateFormat="MM/dd/yyyy"
-                    className={clsx(
-                      "block w-full rounded-lg border py-2.5 px-4 pl-10 text-sm shadow-sm focus:ring-2 focus:ring-blue-500/30 bg-white",
-                      dateError ? "border-red-300 focus:border-red-500" : "border-gray-200 focus:border-blue-500"
-                    )}
-                    placeholderText="Select end date"
-                    showPopperArrow={false}
+                    className="w-full rounded border border-gray-300 py-2 px-3 pl-8 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     minDate={startDateObj || undefined}
                     showMonthDropdown
                     showYearDropdown
                     dropdownMode="select"
-                    todayButton="Today"
                   />
-                  <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-500" />
+                  <CalendarIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 </div>
               </div>
               
-              <div className="col-span-1 flex items-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const today = new Date();
-                    setStartDateObj(today);
-                    setEndDateObj(today);
-                    
-                    // Auto-submit the form to apply the filter immediately
-                    setTimeout(() => {
-                      const formattedToday = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-                      const params = new URLSearchParams();
-                      params.set('startDate', formattedToday);
-                      params.set('endDate', formattedToday);
-                      router.push(`${pathname}?${params.toString()}`);
-                    }, 100);
-                  }}
-                  className="rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700 flex-grow shadow-sm transition-all duration-200 hover:shadow"
-                >
-                  <span className="flex items-center justify-center">
-                    <CalendarIcon className="h-4 w-4 mr-2" />
-                    Today&apos;s Data
-                  </span>
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 shadow-sm transition-all duration-200 hover:shadow flex items-center justify-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                  Apply Filter
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const today = new Date();
+                  setStartDateObj(today);
+                  setEndDateObj(today);
+                  setTimeout(() => {
+                    const formattedToday = today.toISOString().split('T')[0];
+                    const params = new URLSearchParams();
+                    params.set('startDate', formattedToday);
+                    params.set('endDate', formattedToday);
+                    router.push(`${pathname}?${params.toString()}`);
+                  }, 100);
+                }}
+                className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+              >
+                Today
+              </button>
+              <button
+                type="submit"
+                className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+              >
+                Apply
+              </button>
             </form>
             
             {dateError && (
-              <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="mt-2 text-red-600 text-xs">
                 {dateError}
               </div>
             )}
@@ -489,11 +440,11 @@ export default function HighlightedStocksWithDateRange({
                           <p className="text-lg font-semibold">{stock.current_ratio}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs text-gray-500 mb-1">Dividend</p>
+                          <p className="text-xs text-gray-500 mb-1">Last Saved Composite GR</p>
                           <p className="text-lg font-semibold">{stock.dividend || '-'}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs text-gray-500 mb-1">Cash Per Share</p>
+                          <p className="text-xs text-gray-500 mb-1">Analyst Estimated Long-Term GR</p>
                           <p className="text-lg font-semibold">{stock.cash_per_share || '-'}</p>
                         </div>
                       </div>
@@ -527,10 +478,10 @@ export default function HighlightedStocksWithDateRange({
               </div>
               
               {/* Desktop view */}
-              <div className="hidden md:block overflow-hidden rounded-xl border border-gray-200">
-                <table className="min-w-full text-gray-900 border-collapse">
+              <div className="hidden md:block overflow-x-auto">
+                <table className="min-w-full text-gray-900 text-sm">
                   <thead>
-                    <tr className="bg-gradient-to-r from-blue-50 to-indigo-50 text-left text-sm font-medium">
+                    <tr className="bg-gray-50 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200">
                       <SortableHeader label="Ticker" field="ticker" />
                       <SortableHeader label="Sentiment" field="sentiment_score" />
                       <SortableHeader label="Signal" field="signal_score" />
@@ -538,105 +489,90 @@ export default function HighlightedStocksWithDateRange({
                       <SortableHeader label="Moat Score" field="moat_score" />
                       <SortableHeader label="Management Score" field="management_score" />
                       <SortableHeader label="Target Buy Price" field="buy_price" />
-                      <th scope="col" className="px-4 py-4 font-medium text-gray-700">
-                        Sticker Price
-                      </th>
+                      <th className="px-3 py-2 text-gray-700">Sticker Price</th>
                       <SortableHeader label="Last Price" field="current_ratio" />
-                      <SortableHeader label="Percentage Upside" field="pe" />
-                      <SortableHeader label="Dividend" field="dividend" />
-                      <SortableHeader label="Cash Per Share" field="cash_per_share" />
-                      <th scope="col" className="px-4 py-4 font-medium text-gray-700">
-                        Source
-                      </th>
-                      <th scope="col" className="px-4 py-4 font-medium text-gray-700">
-                        Date
-                      </th>
-                      <th scope="col" className="px-4 py-4 font-medium text-gray-700">
-                        Actions
-                      </th>
+                      <SortableHeader label="% Upside" field="pe" />
+                      <SortableHeader label="Composite GR" field="dividend" />
+                      <SortableHeader label="Est. Long-Term GR" field="cash_per_share" />
+                      <th className="px-3 py-2 text-gray-700">Source</th>
+                      <th className="px-3 py-2 text-gray-700">Date</th>
+                      <th className="px-3 py-2 text-gray-700">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
                     {paginatedStocks.map((stock) => (
                       <tr
                         key={stock.id}
-                        className="w-full text-sm hover:bg-blue-50 transition-all duration-200 cursor-pointer"
+                        className="hover:bg-gray-50 cursor-pointer transition-colors"
                         onClick={(e) => {
                           e.preventDefault();
                           router.push(`/dashboard/highlighted/${stock.id}`);
                         }}
                       >
-                        <td className="px-4 py-3.5 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium text-xs">
-                              {stock.ticker.substring(0, 2)}
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-800">{stock.ticker}</p>
-                              <p className="text-xs text-gray-500">{stock.guru}</p>
-                            </div>
-                          </div>
+                        <td className="px-3 py-2">
+                          <div className="font-medium text-gray-900">{stock.ticker}</div>
+                          <div className="text-xs text-gray-500">{stock.guru}</div>
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap">
-                          <p className={clsx(
+                        <td className="px-3 py-2 text-center">
+                          <span className={clsx(
                             getSentimentColor(stock.sentiment_score),
-                            "font-medium rounded-full px-2.5 py-1 text-xs inline-flex items-center justify-center w-14"
+                            "px-2 py-1 rounded text-xs font-medium"
                           )}>
                             {stock.sentiment_score}
-                          </p>
+                          </span>
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap">
-                          <p className={clsx(
+                        <td className="px-3 py-2 text-center">
+                          <span className={clsx(
                             getSentimentColor(stock.signal_score),
-                            "font-medium rounded-full px-2.5 py-1 text-xs inline-flex items-center justify-center w-14"
+                            "px-2 py-1 rounded text-xs font-medium"
                           )}>
                             {stock.signal_score}
-                          </p>
+                          </span>
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
+                        <td className="px-3 py-2 text-center">
                           {stock.rule1_score !== null ? stock.rule1_score : '-'}
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
+                        <td className="px-3 py-2 text-center">
                           {stock.moat_score !== null ? stock.moat_score : '-'}
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
+                        <td className="px-3 py-2 text-center">
                           {stock.management_score !== null ? stock.management_score : '-'}
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
+                        <td className="px-3 py-2 text-right">
                           {formatCurrency(stock.buy_price)}
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
+                        <td className="px-3 py-2 text-right">
                           {formatCurrency(stock.buy_price * 2)}
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
+                        <td className="px-3 py-2 text-right">
                           {stock.current_ratio}
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
-                          {stock.pe}
+                        <td className="px-3 py-2 text-center">
+                          {stock.pe}%
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
+                        <td className="px-3 py-2 text-center">
                           {stock.dividend || '-'}
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
+                        <td className="px-3 py-2 text-center">
                           {stock.cash_per_share || '-'}
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className={clsx("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium", 
+                        <td className="px-3 py-2">
+                          <span className={clsx("px-2 py-1 rounded text-xs", 
                             getSourceBadgeColor(stock.source)
                           )}>
                             {stock.source}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap text-gray-500 text-sm">
-                          {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : 'No date'}
+                        <td className="px-3 py-2 text-xs text-gray-500">
+                          {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString() : '-'}
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap">
+                        <td className="px-3 py-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(`/dashboard/highlighted/${stock.id}`);
                             }}
-                            className="rounded-lg bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-200 transition-colors"
+                            className="text-blue-600 hover:text-blue-800 text-xs font-medium"
                           >
                             View
                           </button>
