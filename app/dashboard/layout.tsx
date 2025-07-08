@@ -6,12 +6,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="w-full flex-none md:w-72">
         <SideNav />
       </div>
-      <div className="flex-grow p-4 md:overflow-y-auto md:p-8 lg:p-10 xl:p-12">
-        <div className="max-w-7xl mx-auto">
+      <div className="flex-grow p-2 md:overflow-y-auto md:p-4">
+        <div className="max-w-none">
           {children}
         </div>
-        <footer className="mt-12 text-center text-sm text-gray-500 pb-6">
-          <p>© {new Date().getFullYear()} Dan Dashboard. All rights reserved.</p>
+        <footer className="mt-6 text-center text-xs text-gray-400 pb-4">
+          <p>© {new Date().getFullYear()} Dan Dashboard</p>
         </footer>
       </div>
     </div>
