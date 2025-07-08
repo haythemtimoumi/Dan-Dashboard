@@ -488,6 +488,14 @@ export default function HighlightedStocksWithDateRange({
                           <p className="text-xs text-gray-500 mb-1">Last Price</p>
                           <p className="text-lg font-semibold">{stock.current_ratio}</p>
                         </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Dividend</p>
+                          <p className="text-lg font-semibold">{stock.dividend || '-'}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Cash Per Share</p>
+                          <p className="text-lg font-semibold">{stock.cash_per_share || '-'}</p>
+                        </div>
                       </div>
                       
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
@@ -535,6 +543,8 @@ export default function HighlightedStocksWithDateRange({
                       </th>
                       <SortableHeader label="Last Price" field="current_ratio" />
                       <SortableHeader label="Percentage Upside" field="pe" />
+                      <SortableHeader label="Dividend" field="dividend" />
+                      <SortableHeader label="Cash Per Share" field="cash_per_share" />
                       <th scope="col" className="px-4 py-4 font-medium text-gray-700">
                         Source
                       </th>
@@ -603,6 +613,12 @@ export default function HighlightedStocksWithDateRange({
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap font-medium">
                           {stock.pe}
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
+                          {stock.dividend || '-'}
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap font-medium">
+                          {stock.cash_per_share || '-'}
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span className={clsx("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium", 
