@@ -23,12 +23,12 @@ export default function DatePickerInput({
         onChange={onChange}
         dateFormat="MM/dd/yyyy"
         placeholderText={placeholder}
-        className="block w-full rounded-md border border-gray-200 py-2 pl-3 pr-10 text-sm outline-2 placeholder:text-gray-500"
+        className="block w-full rounded-lg backdrop-blur-md bg-blue-900/30 border border-blue-400/30 py-2.5 pl-3 pr-10 text-sm text-white placeholder:text-blue-300 focus:border-blue-400/50 focus:bg-blue-900/40 focus:outline-none transition-all duration-300"
         wrapperClassName="w-full"
       />
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
         <svg
-          className="h-5 w-5 text-gray-400"
+          className="h-5 w-5 text-blue-300"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"

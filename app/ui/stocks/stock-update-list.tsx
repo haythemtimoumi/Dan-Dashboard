@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Stock } from '@/app/lib/definitions';
 import { formatCurrency, getSentimentColor, getSourceBadgeColor } from '@/app/lib/utils';
+import DatePickerInput from '@/app/ui/date-picker';
 import clsx from 'clsx';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stocksapidashboard.duckdns.org/api';
@@ -15,9 +16,12 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
   useEffect(() => {
     const fetchStocks = async () => {
+      if (!selectedDate) return;
+      
       try {
         setLoading(true);
         
@@ -30,19 +34,18 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
         
         const data = await response.json();
         
-        // Get current date for filtering
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+        // Get selected date for filtering
+        const selectedDateStr = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD format
         
-        // Filter stocks by current date
-        const todayStocks = data.filter((stock: Stock) => {
+        // Filter stocks by selected date
+        const filteredStocks = data.filter((stock: Stock) => {
           const stockDate = stock.date ? new Date(stock.date) : new Date(stock.created_at);
           const stockDateStr = stockDate.toISOString().split('T')[0];
-          return stockDateStr === todayStr;
+          return stockDateStr === selectedDateStr;
         });
         
         // Sort by Percentage Upside (pe field) in descending order
-        const sortedStocks = [...todayStocks].sort((a, b) => {
+        const sortedStocks = [...filteredStocks].sort((a, b) => {
           const valueA = a.pe || 0;
           const valueB = b.pe || 0;
           return valueB - valueA; // Descending order
@@ -60,7 +63,11 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
     };
 
     fetchStocks();
-  }, []);
+  }, [selectedDate]);
+
+  const handleDateChange = (date: Date | null) => {
+    setSelectedDate(date);
+  };
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
@@ -133,7 +140,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-gray-700 mb-2">No Stocks Found</h3>
-            <p className="text-gray-500">No stocks are available for today&apos;s date. Please check back later.</p>
+            <p className="text-gray-500">No stocks are available for the selected date. Try selecting a different date.</p>
           </div>
         </div>
       </div>
@@ -146,6 +153,37 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 px-3 py-6">
       <div className="max-w-6xl w-full mx-auto">
+        {/* Date Selector */}
+        <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-6 mb-6 hover:bg-blue-900/20 hover:border-blue-400/30 transition-all duration-700">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-white mb-1">Stock Analysis</h2>
+              <p className="text-blue-300 text-sm">Select a date to view highlighted stocks sorted by upside potential</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="backdrop-blur-md bg-blue-500/20 border border-blue-400/30 rounded-lg px-3 py-2">
+                <span className="text-blue-300 text-xs font-semibold uppercase tracking-wider">Date Filter</span>
+              </div>
+              <div className="min-w-[200px]">
+                <DatePickerInput
+                  selectedDate={selectedDate}
+                  onChange={handleDateChange}
+                  placeholder="Select date..."
+                />
+              </div>
+            </div>
+          </div>
+          {stocks.length > 0 && (
+            <div className="mt-4 flex items-center gap-2">
+              <div className="backdrop-blur-md bg-emerald-500/20 border border-emerald-400/30 rounded-lg px-3 py-1.5">
+                <span className="text-emerald-300 text-xs font-bold">{stocks.length} stocks found</span>
+              </div>
+              <div className="backdrop-blur-md bg-blue-500/20 border border-blue-400/30 rounded-lg px-3 py-1.5">
+                <span className="text-blue-300 text-xs font-bold">Sorted by upside %</span>
+              </div>
+            </div>
+          )}
+        </div>
         {/* Stock Card */}
         <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-3xl shadow-2xl overflow-hidden hover:bg-blue-900/20 hover:border-blue-400/30 transition-all duration-700 hover:shadow-blue-500/20">
           {/* Screenshot */}
