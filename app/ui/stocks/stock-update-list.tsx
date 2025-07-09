@@ -192,16 +192,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
     setSelectedDate(new Date());
   };
 
-  // Get recent dates for quick access
-  const getRecentDates = () => {
-    const dates = [];
-    for (let i = 0; i < 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      dates.push(date);
-    }
-    return dates;
-  };
+
 
   // Always render the date selector with quick navigation
   const dateSelector = (
@@ -238,27 +229,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
             </button>
           </div>
         </div>
-        
-        {/* Recent Dates Quick Access */}
-        <div className="flex items-center gap-2 overflow-x-auto">
-          <span className="text-blue-300 text-xs font-semibold whitespace-nowrap">Quick:</span>
-          {getRecentDates().map((date, index) => {
-            const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
-            return (
-              <button
-                key={index}
-                onClick={() => setSelectedDate(date)}
-                className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap transition-all ${
-                  isSelected
-                    ? 'bg-blue-500/30 border border-blue-400/50 text-white'
-                    : 'bg-blue-500/10 border border-blue-400/20 text-blue-300 hover:bg-blue-500/20'
-                }`}
-              >
-                {index === 0 ? 'Today' : index === 1 ? 'Yesterday' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-              </button>
-            );
-          })}
-        </div>
+
         
         {stocks.length > 0 && (
           <div className="flex items-center justify-between">
