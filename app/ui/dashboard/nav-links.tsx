@@ -16,11 +16,11 @@ import clsx from 'clsx';
 // Map of links to display in the side navigation.
 const links = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'All Stocks', href: '/dashboard/stocks', icon: TableCellsIcon },
+  // { name: 'All Stocks', href: '/dashboard/stocks', icon: TableCellsIcon },
   { name: 'Highlighted Stocks', href: '/dashboard/highlighted', icon: StarIcon },
   { name: 'Stock Update', href: '/dashboard/stock-update', icon: ArrowPathIcon },
-  { name: 'Recent Changes', href: '/dashboard/recent-changes', icon: ChartBarIcon },
-  { name: 'rule1 vs manual', href: '/dashboard/sources', icon: ScaleIcon },
+  // { name: 'Recent Changes', href: '/dashboard/recent-changes', icon: ChartBarIcon },
+  // { name: 'rule1 vs manual', href: '/dashboard/sources', icon: ScaleIcon },
   { name: 'Add New Stock', href: '/dashboard/stocks/create', icon: PlusCircleIcon },
 ];
 
