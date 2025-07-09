@@ -17,6 +17,36 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
+
+  // Auto-refresh every 30 seconds when enabled
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(() => {
+      if (selectedDate) {
+        const fetchStocks = async () => {
+          try {
+            const response = await fetch(`${API_URL}/stocks/highlighted`);
+            if (response.ok) {
+              const data = await response.json();
+              const selectedDateStr = selectedDate.toISOString().split('T')[0];
+              const filteredStocks = data.filter((stock: Stock) => {
+                const stockDate = stock.date ? new Date(stock.date) : new Date(stock.created_at);
+                const stockDateStr = stockDate.toISOString().split('T')[0];
+                return stockDateStr === selectedDateStr;
+              });
+              const sortedStocks = [...filteredStocks].sort((a, b) => (b.pe || 0) - (a.pe || 0));
+              setStocks(sortedStocks);
+            }
+          } catch (err) {
+            console.error('Auto-refresh failed:', err);
+          }
+        };
+        fetchStocks();
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, selectedDate]);
 
   useEffect(() => {
     const fetchStocks = async () => {
@@ -162,9 +192,20 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
     setSelectedDate(new Date());
   };
 
+  // Get recent dates for quick access
+  const getRecentDates = () => {
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
   // Always render the date selector with quick navigation
   const dateSelector = (
-    <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-4 mb-6">
+    <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-4 mb-6 relative z-10">
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Stock Analysis</h2>
@@ -174,7 +215,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div className="min-w-[160px]">
+            <div className="min-w-[160px] relative z-50">
               <DatePickerInput selectedDate={selectedDate} onChange={handleDateChange} placeholder="Select date..." />
             </div>
             <button onClick={goToNextDay} className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-lg transition-all">
@@ -185,8 +226,40 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
             <button onClick={goToToday} className="px-3 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 rounded-lg text-emerald-300 text-xs font-semibold transition-all">
               Today
             </button>
+            <button 
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className={`px-3 py-2 border rounded-lg text-xs font-semibold transition-all ${
+                autoRefresh 
+                  ? 'bg-green-500/20 border-green-400/30 text-green-300' 
+                  : 'bg-gray-500/20 border-gray-400/30 text-gray-300 hover:bg-gray-500/30'
+              }`}
+            >
+              {autoRefresh ? 'Auto ✓' : 'Manual'}
+            </button>
           </div>
         </div>
+        
+        {/* Recent Dates Quick Access */}
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <span className="text-blue-300 text-xs font-semibold whitespace-nowrap">Quick:</span>
+          {getRecentDates().map((date, index) => {
+            const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+            return (
+              <button
+                key={index}
+                onClick={() => setSelectedDate(date)}
+                className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap transition-all ${
+                  isSelected
+                    ? 'bg-blue-500/30 border border-blue-400/50 text-white'
+                    : 'bg-blue-500/10 border border-blue-400/20 text-blue-300 hover:bg-blue-500/20'
+                }`}
+              >
+                {index === 0 ? 'Today' : index === 1 ? 'Yesterday' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </button>
+            );
+          })}
+        </div>
+        
         {stocks.length > 0 && (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -209,16 +282,24 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
   if (stocks.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 px-3 py-6">
-        <div className="max-w-6xl w-full mx-auto">
+        <div className="max-w-6xl w-full mx-auto relative z-0">
           {dateSelector}
-          <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-8 text-center">
+          <div className="mt-20 backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-8 text-center">
             <div className="inline-flex items-center justify-center h-20 w-20 bg-blue-500/20 rounded-full mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">No Stocks Found</h3>
-            <p className="text-blue-300">No stocks are available for the selected date. Try selecting a different date.</p>
+            <p className="text-blue-300 mb-4">No stocks are available for the selected date.</p>
+            <div className="flex justify-center gap-2">
+              <button onClick={goToPreviousDay} className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-lg text-blue-300 text-sm transition-all">
+                Try Yesterday
+              </button>
+              <button onClick={goToToday} className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 rounded-lg text-emerald-300 text-sm transition-all">
+                Go to Today
+              </button>
+            </div>
           </div>
         </div>
       </div>
