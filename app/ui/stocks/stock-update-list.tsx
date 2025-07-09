@@ -129,18 +129,53 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
     );
   }
 
+  // Always render the date selector
+  const dateSelector = (
+    <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-6 mb-6 hover:bg-blue-900/20 hover:border-blue-400/30 transition-all duration-700">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-white mb-1">Stock Analysis</h2>
+          <p className="text-blue-300 text-sm">Select a date to view highlighted stocks sorted by upside potential</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="backdrop-blur-md bg-blue-500/20 border border-blue-400/30 rounded-lg px-3 py-2">
+            <span className="text-blue-300 text-xs font-semibold uppercase tracking-wider">Date Filter</span>
+          </div>
+          <div className="min-w-[200px]">
+            <DatePickerInput
+              selectedDate={selectedDate}
+              onChange={handleDateChange}
+              placeholder="Select date..."
+            />
+          </div>
+        </div>
+      </div>
+      {stocks.length > 0 && (
+        <div className="mt-4 flex items-center gap-2">
+          <div className="backdrop-blur-md bg-emerald-500/20 border border-emerald-400/30 rounded-lg px-3 py-1.5">
+            <span className="text-emerald-300 text-xs font-bold">{stocks.length} stocks found</span>
+          </div>
+          <div className="backdrop-blur-md bg-blue-500/20 border border-blue-400/30 rounded-lg px-3 py-1.5">
+            <span className="text-blue-300 text-xs font-bold">Sorted by upside %</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   if (stocks.length === 0) {
     return (
-      <div className="flex justify-center items-center min-h-[600px]">
-        <div className="max-w-md w-full mx-auto">
-          <div className="rounded-2xl bg-gray-50 p-8 text-center shadow-xl border border-gray-100">
-            <div className="inline-flex items-center justify-center h-20 w-20 bg-gray-100 rounded-full mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 px-3 py-6">
+        <div className="max-w-6xl w-full mx-auto">
+          {dateSelector}
+          <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-8 text-center">
+            <div className="inline-flex items-center justify-center h-20 w-20 bg-blue-500/20 rounded-full mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">No Stocks Found</h3>
-            <p className="text-gray-500">No stocks are available for the selected date. Try selecting a different date.</p>
+            <h3 className="text-lg font-semibold text-white mb-2">No Stocks Found</h3>
+            <p className="text-blue-300">No stocks are available for the selected date. Try selecting a different date.</p>
           </div>
         </div>
       </div>
@@ -153,37 +188,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 px-3 py-6">
       <div className="max-w-6xl w-full mx-auto">
-        {/* Date Selector */}
-        <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-6 mb-6 hover:bg-blue-900/20 hover:border-blue-400/30 transition-all duration-700">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-white mb-1">Stock Analysis</h2>
-              <p className="text-blue-300 text-sm">Select a date to view highlighted stocks sorted by upside potential</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="backdrop-blur-md bg-blue-500/20 border border-blue-400/30 rounded-lg px-3 py-2">
-                <span className="text-blue-300 text-xs font-semibold uppercase tracking-wider">Date Filter</span>
-              </div>
-              <div className="min-w-[200px]">
-                <DatePickerInput
-                  selectedDate={selectedDate}
-                  onChange={handleDateChange}
-                  placeholder="Select date..."
-                />
-              </div>
-            </div>
-          </div>
-          {stocks.length > 0 && (
-            <div className="mt-4 flex items-center gap-2">
-              <div className="backdrop-blur-md bg-emerald-500/20 border border-emerald-400/30 rounded-lg px-3 py-1.5">
-                <span className="text-emerald-300 text-xs font-bold">{stocks.length} stocks found</span>
-              </div>
-              <div className="backdrop-blur-md bg-blue-500/20 border border-blue-400/30 rounded-lg px-3 py-1.5">
-                <span className="text-blue-300 text-xs font-bold">Sorted by upside %</span>
-              </div>
-            </div>
-          )}
-        </div>
+        {dateSelector}
         {/* Stock Card */}
         <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-3xl shadow-2xl overflow-hidden hover:bg-blue-900/20 hover:border-blue-400/30 transition-all duration-700 hover:shadow-blue-500/20">
           {/* Screenshot */}
