@@ -81,6 +81,18 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
     }
   };
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') handlePrevious();
+      if (e.key === 'ArrowRight') handleNext();
+      if (e.key === 'ArrowUp') goToPreviousDay();
+      if (e.key === 'ArrowDown') goToNextDay();
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentIndex, stocks.length, selectedDate]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[600px]">
@@ -129,37 +141,68 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
     );
   }
 
-  // Always render the date selector
+  // Quick date navigation
+  const goToPreviousDay = () => {
+    if (selectedDate) {
+      const prevDay = new Date(selectedDate);
+      prevDay.setDate(prevDay.getDate() - 1);
+      setSelectedDate(prevDay);
+    }
+  };
+
+  const goToNextDay = () => {
+    if (selectedDate) {
+      const nextDay = new Date(selectedDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      setSelectedDate(nextDay);
+    }
+  };
+
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  // Always render the date selector with quick navigation
   const dateSelector = (
-    <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-6 mb-6 hover:bg-blue-900/20 hover:border-blue-400/30 transition-all duration-700">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-white mb-1">Stock Analysis</h2>
-          <p className="text-blue-300 text-sm">Select a date to view highlighted stocks sorted by upside potential</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="backdrop-blur-md bg-blue-500/20 border border-blue-400/30 rounded-lg px-3 py-2">
-            <span className="text-blue-300 text-xs font-semibold uppercase tracking-wider">Date Filter</span>
+    <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-4 mb-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white">Stock Analysis</h2>
+          <div className="flex items-center gap-2">
+            <button onClick={goToPreviousDay} className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-lg transition-all">
+              <svg className="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="min-w-[160px]">
+              <DatePickerInput selectedDate={selectedDate} onChange={handleDateChange} placeholder="Select date..." />
+            </div>
+            <button onClick={goToNextDay} className="p-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-lg transition-all">
+              <svg className="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <button onClick={goToToday} className="px-3 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 rounded-lg text-emerald-300 text-xs font-semibold transition-all">
+              Today
+            </button>
           </div>
-          <div className="min-w-[200px]">
-            <DatePickerInput
-              selectedDate={selectedDate}
-              onChange={handleDateChange}
-              placeholder="Select date..."
-            />
-          </div>
         </div>
+        {stocks.length > 0 && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="bg-emerald-500/20 border border-emerald-400/30 rounded-lg px-2 py-1 text-emerald-300 text-xs font-bold">
+                {stocks.length} stocks
+              </span>
+              <span className="bg-blue-500/20 border border-blue-400/30 rounded-lg px-2 py-1 text-blue-300 text-xs font-bold">
+                Best: +{stocks[0]?.pe || 0}%
+              </span>
+            </div>
+            <div className="text-blue-300 text-xs">
+              Viewing {currentIndex + 1} of {stocks.length}
+            </div>
+          </div>
+        )}
       </div>
-      {stocks.length > 0 && (
-        <div className="mt-4 flex items-center gap-2">
-          <div className="backdrop-blur-md bg-emerald-500/20 border border-emerald-400/30 rounded-lg px-3 py-1.5">
-            <span className="text-emerald-300 text-xs font-bold">{stocks.length} stocks found</span>
-          </div>
-          <div className="backdrop-blur-md bg-blue-500/20 border border-blue-400/30 rounded-lg px-3 py-1.5">
-            <span className="text-blue-300 text-xs font-bold">Sorted by upside %</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 
@@ -189,6 +232,30 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 px-3 py-6">
       <div className="max-w-6xl w-full mx-auto">
         {dateSelector}
+        
+        {/* Stock Overview List */}
+        {stocks.length > 0 && (
+          <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-4 mb-6">
+            <h3 className="text-white font-semibold mb-3">Quick Navigation</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-32 overflow-y-auto">
+              {stocks.map((stock, index) => (
+                <button
+                  key={stock.id}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`p-2 rounded-lg text-xs font-semibold transition-all ${
+                    index === currentIndex
+                      ? 'bg-blue-500/30 border border-blue-400/50 text-white'
+                      : 'bg-blue-500/10 border border-blue-400/20 text-blue-300 hover:bg-blue-500/20'
+                  }`}
+                >
+                  <div className="truncate">{stock.ticker}</div>
+                  <div className="text-[10px] text-emerald-300">+{stock.pe}%</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Stock Card */}
         <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-3xl shadow-2xl overflow-hidden hover:bg-blue-900/20 hover:border-blue-400/30 transition-all duration-700 hover:shadow-blue-500/20">
           {/* Screenshot */}
@@ -315,6 +382,13 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
                 Analyze
               </button>
             </div>
+          </div>
+        </div>
+        
+        {/* Keyboard Shortcuts Help */}
+        <div className="backdrop-blur-2xl bg-blue-900/10 border border-blue-400/20 rounded-2xl shadow-2xl p-3 mb-4">
+          <div className="text-center text-blue-300 text-xs">
+            <span className="font-semibold">Keyboard Shortcuts:</span> ← → Navigate stocks | ↑ ↓ Change dates
           </div>
         </div>
         
