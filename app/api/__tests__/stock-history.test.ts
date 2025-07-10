@@ -35,7 +35,7 @@ jest.mock('@/app/lib/stock-data', () => ({
 
 describe('Stock History API', () => {
   it('should return 400 for invalid ID format', async () => {
-    const request = new NextRequest(new URL('https://stocksapidashboard.duckdns.org/api/stocks/abc/history'));
+    const request = new NextRequest(new URL('https://stockdashboard.ddnsfree.com/api/stocks/abc/history'));
     const response = await GET(request, { params: { id: 'abc' } });
     const data = await response.json();
     
@@ -44,7 +44,7 @@ describe('Stock History API', () => {
   });
   
   it('should return 404 for non-existent stock', async () => {
-    const request = new NextRequest(new URL('https://stocksapidashboard.duckdns.org/api/stocks/999/history'));
+    const request = new NextRequest(new URL('https://stockdashboard.ddnsfree.com/api/stocks/999/history'));
     const response = await GET(request, { params: { id: '999' } });
     const data = await response.json();
     
@@ -53,7 +53,7 @@ describe('Stock History API', () => {
   });
   
   it('should return historical data for stock with ID 15289', async () => {
-    const request = new NextRequest(new URL('https://stocksapidashboard.duckdns.org/api/stocks/15289/history'));
+    const request = new NextRequest(new URL('https://stockdashboard.ddnsfree.com/api/stocks/15289/history'));
     const response = await GET(request, { params: { id: '15289' } });
     const data = await response.json();
     
@@ -75,7 +75,7 @@ describe('Stock History API', () => {
   it('should respect date range parameters', async () => {
     const fromDate = '2023-01-01';
     const toDate = '2023-01-05';
-    const url = `https://stocksapidashboard.duckdns.org/api/stocks/1/history?from=${fromDate}&to=${toDate}`;
+    const url = `https://stockdashboard.ddnsfree.com/api/stocks/1/history?from=${fromDate}&to=${toDate}`;
     const request = new NextRequest(new URL(url));
     const response = await GET(request, { params: { id: '1' } });
     const data = await response.json();

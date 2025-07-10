@@ -8,7 +8,7 @@ import { formatCurrency, getSentimentColor, getSourceBadgeColor } from '@/app/li
 import DatePickerInput from '@/app/ui/date-picker';
 import clsx from 'clsx';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stocksapidashboard.duckdns.org/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
 
 export default function StockUpdateList({ currentPage }: { currentPage: number }) {
   const router = useRouter();

@@ -15,7 +15,7 @@ import {
 // In development, use the direct API URL
 // In production, use our proxy API to avoid mixed content issues
 const isProduction = process.env.NODE_ENV === 'production';
-const directApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stocksapidashboard.duckdns.org/api';
+const directApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://dan-dashboard-chi.vercel.app/');
 
 // In production, we'll use our proxy API route
@@ -24,7 +24,7 @@ const API_URL = isProduction ? '/api/proxy' : directApiUrl;
 // Function to create API URLs based on environment
 function createApiUrl(path: string, params?: Record<string, string>) {
   const base = isProduction 
-    ? 'https://stocksapidashboard.duckdns.org' 
+    ? 'https://stockdashboard.ddnsfree.com' 
     : directApiUrl;
 
   // Ensure path starts with /api

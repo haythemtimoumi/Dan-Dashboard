@@ -19,7 +19,7 @@ describe('Stock History API', () => {
 
   it('should handle a valid stock ID', async () => {
     // Use a known valid stock ID (1 should exist in the mock data)
-    const request = new Request('https://stocksapidashboard.duckdns.org/api/stocks/1/history');
+    const request = new Request('https://stockdashboard.ddnsfree.com/api/stocks/1/history');
     const params = { id: '1' };
     
     const response = await GET(request, { params });
@@ -41,7 +41,7 @@ describe('Stock History API', () => {
   });
 
   it('should handle an invalid stock ID format', async () => {
-    const request = new Request('https://stocksapidashboard.duckdns.org/api/stocks/invalid/history');
+    const request = new Request('https://stockdashboard.ddnsfree.com/api/stocks/invalid/history');
     const params = { id: 'invalid' };
     
     const response = await GET(request, { params });
@@ -54,7 +54,7 @@ describe('Stock History API', () => {
 
   it('should handle date filtering correctly', async () => {
     // Test with from and to date parameters
-    const url = 'https://stocksapidashboard.duckdns.org/api/stocks/1/history?from=2023-01-01&to=2023-12-31';
+    const url = 'https://stockdashboard.ddnsfree.com/api/stocks/1/history?from=2023-01-01&to=2023-12-31';
     const request = new Request(url);
     const params = { id: '1' };
     
@@ -66,7 +66,7 @@ describe('Stock History API', () => {
 
   it('should handle a non-existent stock ID', async () => {
     // Use a stock ID that doesn't exist in the mock data
-    const request = new Request('https://stocksapidashboard.duckdns.org/api/stocks/9999/history');
+    const request = new Request('https://stockdashboard.ddnsfree.com/api/stocks/9999/history');
     const params = { id: '9999' };
     
     const response = await GET(request, { params });

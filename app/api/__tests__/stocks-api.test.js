@@ -118,7 +118,7 @@ describe('Stock API Routes', () => {
   test('GET /api/stocks/filter-by-date-source returns stocks filtered by date and source', async () => {
     // Create a mock request with search params
     const mockRequest = {
-      url: 'https://stocksapidashboard.duckdns.org/api/stocks/filter-by-date-source?date=06%2F20%2F2023&source=Rule1'
+      url: 'https://stockdashboard.ddnsfree.com/api/stocks/filter-by-date-source?date=06%2F20%2F2023&source=Rule1'
     };
     
     const response = await getStocksByDateAndSource(mockRequest);
@@ -146,7 +146,7 @@ describe('Stock API Routes', () => {
   test('GET /api/stocks/filter-by-date-source with no stocks returns proper metadata', async () => {
     // Create a mock request with search params for a date that likely has no stocks
     const mockRequest = {
-      url: 'https://stocksapidashboard.duckdns.org/api/stocks/filter-by-date-source?date=01%2F01%2F2000&source=Rule1'
+      url: 'https://stockdashboard.ddnsfree.com/api/stocks/filter-by-date-source?date=01%2F01%2F2000&source=Rule1'
     };
     
     const response = await getStocksByDateAndSource(mockRequest);

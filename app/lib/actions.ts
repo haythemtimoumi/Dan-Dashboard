@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { StockForm } from './definitions';
 
-const API_URL = 'https://stocksapidashboard.duckdns.org';
+const API_URL = 'https://stockdashboard.ddnsfree.com';
 
 const StockFormSchema = z.object({
   id: z.string().optional(),

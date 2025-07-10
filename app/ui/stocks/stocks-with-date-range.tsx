@@ -12,7 +12,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import '@/app/ui/datepicker-custom.css';
 
 // Use the backend API URL running on port 3000
-const API_URL = 'https://stocksapidashboard.duckdns.org/api';
+const API_URL = 'https://stockdashboard.ddnsfree.com/api';
 
 // No pagination - show all items
 
@@ -124,7 +124,7 @@ export default function StocksWithDateRange({
         console.error('Error fetching stocks:', err);
         // Provide more specific error message for network errors (likely CORS or API unreachable)
         if (err instanceof TypeError && err.message.includes('fetch')) {
-          setError('Unable to connect to the API server at https://stocksapidashboard.duckdns.org. Please ensure the backend is running and CORS is properly configured.');
+          setError('Unable to connect to the API server at https://stockdashboard.ddnsfree.com. Please ensure the backend is running and CORS is properly configured.');
         } else {
           setError('Failed to load stocks. Please try again later.');
         }
