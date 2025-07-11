@@ -2,7 +2,7 @@ import { Stock } from './definitions';
 
 export const formatCurrency = (amount: number) => {
   if (isNaN(amount) || amount === null || amount === undefined) {
-    return '$0.00';
+    return '$0';
   }
   // Check if the amount is already in dollars (less than 10000)
   // This handles cases where the amount is stored directly as dollars
@@ -10,6 +10,8 @@ export const formatCurrency = (amount: number) => {
   return (amount / divisor).toLocaleString('en-US', {
     style: 'currency',
     currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   });
 };
 
