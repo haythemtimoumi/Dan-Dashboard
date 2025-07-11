@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { scraperApi, TickerResponse, ScraperStatus } from '@/app/lib/scraper-api';
-import { PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ArrowPathIcon, PencilSquareIcon, DocumentTextIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 export default function TickerManager() {
@@ -25,12 +25,12 @@ export default function TickerManager() {
     mutationFn: (tickers: string[]) => scraperApi.updateTickers(tickers),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickers'] });
-      toast.success('Tickers updated successfully');
+      toast.success('✅ Tickers updated successfully!');
       setNewTickers('');
       setIsExpanded(false);
     },
     onError: () => {
-      toast.error('Failed to update tickers');
+      toast.error('❌ Failed to update tickers');
     },
   });
 
@@ -64,65 +64,102 @@ export default function TickerManager() {
   };
 
   const canUpdate = status?.can_update_tickers ?? false;
+  const tickerCount = newTickers.split(/[\s,\n]+/).filter(t => t.trim().length > 0).length;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Ticker Management</h3>
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          disabled={!canUpdate}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            canUpdate 
-              ? 'bg-blue-600 text-white hover:bg-blue-700' 
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          <PlusIcon className="h-4 w-4" />
-          {isExpanded ? 'Cancel' : 'Manage Tickers'}
-        </button>
-      </div>
-
-      {!canUpdate && (
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 rounded-lg mb-4">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            Ticker updates are disabled while the scraper is running.
-          </p>
-        </div>
-      )}
-
-      {isExpanded && canUpdate && (
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Add/Replace Tickers (one per line or comma-separated)
-            </label>
-            <textarea
-              value={newTickers}
-              onChange={(e) => setNewTickers(e.target.value)}
-              placeholder="AAPL, GOOGL, MSFT&#10;TSLA&#10;NVDA"
-              className="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-            />
+    <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+      {/* Header */}
+      <div className="p-6 pb-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md">
+              <PencilSquareIcon className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Ticker Management</h3>
+              <p className="text-sm text-gray-600">Add or replace stock symbols</p>
+            </div>
           </div>
           
-          <div className="flex gap-3">
-            <button
-              onClick={handleAddTickers}
-              disabled={updateMutation.isPending || !newTickers.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              {updateMutation.isPending && <ArrowPathIcon className="h-4 w-4 animate-spin" />}
-              Add to Existing
-            </button>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            disabled={!canUpdate}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-200 shadow-md ${
+              canUpdate 
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg transform hover:-translate-y-0.5' 
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {!canUpdate ? <LockClosedIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
+            {isExpanded ? 'Cancel' : 'Manage Tickers'}
+          </button>
+        </div>
+
+        {!canUpdate && (
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-4 rounded-lg">
+            <div className="flex items-center gap-2">
+              <LockClosedIcon className="h-5 w-5 text-amber-600" />
+              <p className="text-amber-800 font-medium text-sm">
+                Ticker updates are locked while the scraper is running
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {isExpanded && canUpdate && (
+        <div className="bg-white/70 backdrop-blur-sm border-t border-gray-200 p-6">
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <DocumentTextIcon className="h-5 w-5 text-gray-600" />
+                <label className="text-sm font-semibold text-gray-700">
+                  Enter Ticker Symbols
+                </label>
+                {tickerCount > 0 && (
+                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                    {tickerCount} symbols
+                  </span>
+                )}
+              </div>
+              <textarea
+                value={newTickers}
+                onChange={(e) => setNewTickers(e.target.value)}
+                placeholder="Enter symbols separated by commas or new lines:\n\nAAPL, GOOGL, MSFT\nTSLA\nNVDA, META"
+                className="w-full h-32 p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm bg-white text-gray-900 placeholder-gray-400 transition-all duration-200 resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                💡 Tip: Use commas, spaces, or new lines to separate ticker symbols
+              </p>
+            </div>
             
-            <button
-              onClick={handleReplaceTickers}
-              disabled={updateMutation.isPending || !newTickers.trim()}
-              className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              {updateMutation.isPending && <ArrowPathIcon className="h-4 w-4 animate-spin" />}
-              Replace All
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleAddTickers}
+                disabled={updateMutation.isPending || !newTickers.trim()}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none"
+              >
+                {updateMutation.isPending ? (
+                  <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                ) : (
+                  <PlusIcon className="h-5 w-5" />
+                )}
+                Add to Existing
+              </button>
+              
+              <button
+                onClick={handleReplaceTickers}
+                disabled={updateMutation.isPending || !newTickers.trim()}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-600 hover:to-red-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none"
+              >
+                {updateMutation.isPending ? (
+                  <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                ) : (
+                  <ArrowPathIcon className="h-5 w-5" />
+                )}
+                Replace All
+              </button>
+            </div>
           </div>
         </div>
       )}

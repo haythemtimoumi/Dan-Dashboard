@@ -1,9 +1,10 @@
-const SCRAPER_API_URL = 'http://162.248.101.184:5000';
+const SCRAPER_API_URL = 'https://scraperbackend.freeddns.org';
 
 export interface ScraperStatus {
   status: 'running' | 'idle' | 'ready';
   is_running: boolean;
-  next_run_in_hours: number;
+  next_run_in_hours_minutes: string;
+  next_scheduled_run: string;
   last_run: string | null;
   can_update_tickers: boolean;
 }
@@ -17,8 +18,9 @@ export interface TickerResponse {
 const mockStatus: ScraperStatus = {
   status: 'idle',
   is_running: false,
-  next_run_in_hours: 22,
-  last_run: '2025-07-02T02:55:32Z',
+  next_run_in_hours_minutes: '0h:25m',
+  next_scheduled_run: '2025-07-12 00:00:00',
+  last_run: '2025-07-11 00:00:00',
   can_update_tickers: true,
 };
 
