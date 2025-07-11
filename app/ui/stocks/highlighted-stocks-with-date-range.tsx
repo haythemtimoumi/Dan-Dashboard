@@ -485,21 +485,81 @@ export default function HighlightedStocksWithDateRange({
                 <table className="min-w-full text-gray-900 text-sm">
                   <thead>
                     <tr className="bg-gradient-to-r from-gray-50 to-blue-50 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider border-b border-gray-200">
-                      <SortableHeader label="Ticker" field="ticker" />
-                      <SortableHeader label="Sentiment" field="sentiment_score" />
-                      <SortableHeader label="Signal" field="signal_score" />
-                      <SortableHeader label="Rule1" field="rule1_score" />
-                      <SortableHeader label="Moat" field="moat_score" />
-                      <SortableHeader label="Mgmt" field="management_score" />
-                      <SortableHeader label="Buy" field="buy_price" />
-                      <th className="px-2 py-2 text-gray-700">Sticker</th>
-                      <SortableHeader label="Price" field="current_ratio" />
-                      <SortableHeader label="Upside" field="pe" />
-                      <SortableHeader label="Comp" field="dividend" />
-                      <SortableHeader label="Growth" field="cash_per_share" />
-                      <SortableHeader label="PBT" field="guru" />
-                      <th className="px-2 py-2 text-gray-700">Source</th>
-                      <th className="px-2 py-2 text-gray-700">Date</th>
+                      <th className="px-2 py-2 text-left text-gray-700 cursor-pointer" onClick={() => handleSort('ticker')}>
+                        <div className="flex items-center gap-1">
+                          <span>Ticker</span>
+                          {sortBy === 'ticker' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('sentiment_score')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Sentiment</span>
+                          {sortBy === 'sentiment_score' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('signal_score')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Signal</span>
+                          {sortBy === 'signal_score' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('rule1_score')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Rule1</span>
+                          {sortBy === 'rule1_score' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('moat_score')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Moat</span>
+                          {sortBy === 'moat_score' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('management_score')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Mgmt</span>
+                          {sortBy === 'management_score' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-right text-gray-700 cursor-pointer" onClick={() => handleSort('buy_price')}>
+                        <div className="flex items-center justify-end gap-1">
+                          <span>Buy</span>
+                          {sortBy === 'buy_price' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-right text-gray-700">Sticker</th>
+                      <th className="px-2 py-2 text-right text-gray-700 cursor-pointer" onClick={() => handleSort('current_ratio')}>
+                        <div className="flex items-center justify-end gap-1">
+                          <span>Price</span>
+                          {sortBy === 'current_ratio' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('pe')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Upside</span>
+                          {sortBy === 'pe' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('dividend')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Comp</span>
+                          {sortBy === 'dividend' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('cash_per_share')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Growth</span>
+                          {sortBy === 'cash_per_share' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('guru')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>PBT</span>
+                          {sortBy === 'guru' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-left text-gray-700">Source</th>
+                      <th className="px-2 py-2 text-left text-gray-700">Date</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">

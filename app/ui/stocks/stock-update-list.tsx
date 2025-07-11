@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Stock } from '@/app/lib/definitions';
@@ -99,17 +99,33 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
     setSelectedDate(date);
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     }
-  };
+  }, [currentIndex]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentIndex < stocks.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
-  };
+  }, [currentIndex, stocks.length]);
+
+  const goToPreviousDay = useCallback(() => {
+    if (selectedDate) {
+      const prevDay = new Date(selectedDate);
+      prevDay.setDate(prevDay.getDate() - 1);
+      setSelectedDate(prevDay);
+    }
+  }, [selectedDate]);
+
+  const goToNextDay = useCallback(() => {
+    if (selectedDate) {
+      const nextDay = new Date(selectedDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      setSelectedDate(nextDay);
+    }
+  }, [selectedDate]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -121,7 +137,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
     };
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentIndex, stocks.length, selectedDate]);
+  }, [goToNextDay, goToPreviousDay, handleNext, handlePrevious]);
 
   if (loading) {
     return (
@@ -170,23 +186,6 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
       </div>
     );
   }
-
-  // Quick date navigation
-  const goToPreviousDay = () => {
-    if (selectedDate) {
-      const prevDay = new Date(selectedDate);
-      prevDay.setDate(prevDay.getDate() - 1);
-      setSelectedDate(prevDay);
-    }
-  };
-
-  const goToNextDay = () => {
-    if (selectedDate) {
-      const nextDay = new Date(selectedDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      setSelectedDate(nextDay);
-    }
-  };
 
   const goToToday = () => {
     setSelectedDate(new Date());
