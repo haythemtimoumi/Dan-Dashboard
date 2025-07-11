@@ -201,7 +201,7 @@ export default function HighlightedStocksWithDateRange({
   const SortableHeader = ({ label, field }: { label: string; field: string }) => (
     <th 
       className={clsx(
-        "px-3 py-3 cursor-pointer hover:bg-white/50 transition-all duration-200",
+        "px-2 py-2 cursor-pointer hover:bg-white/50 transition-all duration-200 text-xs",
         sortBy === field ? "text-blue-600 bg-white/30" : "text-gray-700"
       )}
       onClick={() => handleSort(field)}
@@ -488,18 +488,18 @@ export default function HighlightedStocksWithDateRange({
                       <SortableHeader label="Ticker" field="ticker" />
                       <SortableHeader label="Sentiment" field="sentiment_score" />
                       <SortableHeader label="Signal" field="signal_score" />
-                      <SortableHeader label="Rule1 Score" field="rule1_score" />
-                      <SortableHeader label="Moat Score" field="moat_score" />
-                      <SortableHeader label="Management Score" field="management_score" />
-                      <SortableHeader label="Target Buy Price" field="buy_price" />
-                      <th className="px-3 py-2 text-gray-700">Sticker Price</th>
-                      <SortableHeader label="Last Price" field="current_ratio" />
-                      <SortableHeader label="% Upside" field="pe" />
-                      <SortableHeader label="Composite GR" field="dividend" />
-                      <SortableHeader label="Est. Long-Term GR" field="cash_per_share" />
+                      <SortableHeader label="Rule1" field="rule1_score" />
+                      <SortableHeader label="Moat" field="moat_score" />
+                      <SortableHeader label="Mgmt" field="management_score" />
+                      <SortableHeader label="Buy" field="buy_price" />
+                      <th className="px-2 py-2 text-gray-700">Sticker</th>
+                      <SortableHeader label="Price" field="current_ratio" />
+                      <SortableHeader label="Upside" field="pe" />
+                      <SortableHeader label="Comp" field="dividend" />
+                      <SortableHeader label="Growth" field="cash_per_share" />
                       <SortableHeader label="PBT" field="guru" />
-                      <th className="px-3 py-2 text-gray-700">Source</th>
-                      <th className="px-3 py-2 text-gray-700">Date</th>
+                      <th className="px-2 py-2 text-gray-700">Source</th>
+                      <th className="px-2 py-2 text-gray-700">Date</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
@@ -512,63 +512,63 @@ export default function HighlightedStocksWithDateRange({
                           router.push(`/dashboard/highlighted/${stock.id}`);
                         }}
                       >
-                        <td className="px-3 py-2">
-                          <div className="font-medium text-gray-900">{stock.ticker}</div>
+                        <td className="px-2 py-2">
+                          <div className="font-medium text-gray-900 text-sm">{stock.ticker}</div>
                         </td>
-                        <td className="px-3 py-2 text-center">
+                        <td className="px-2 py-2 text-center">
                           <span className={clsx(
                             getSentimentColor(stock.sentiment_score),
-                            "px-2 py-1 rounded text-xs font-medium"
+                            "px-1.5 py-0.5 rounded text-xs font-medium"
                           )}>
                             {stock.sentiment_score}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-center">
+                        <td className="px-2 py-2 text-center">
                           <span className={clsx(
                             getSentimentColor(stock.signal_score),
-                            "px-2 py-1 rounded text-xs font-medium"
+                            "px-1.5 py-0.5 rounded text-xs font-medium"
                           )}>
                             {stock.signal_score}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-center">
+                        <td className="px-2 py-2 text-center text-sm">
                           {stock.rule1_score !== null ? stock.rule1_score : '-'}
                         </td>
-                        <td className="px-3 py-2 text-center">
+                        <td className="px-2 py-2 text-center text-sm">
                           {stock.moat_score !== null ? stock.moat_score : '-'}
                         </td>
-                        <td className="px-3 py-2 text-center">
+                        <td className="px-2 py-2 text-center text-sm">
                           {stock.management_score !== null ? stock.management_score : '-'}
                         </td>
-                        <td className="px-3 py-2 text-right">
+                        <td className="px-2 py-2 text-right text-sm">
                           {formatCurrency(stock.buy_price)}
                         </td>
-                        <td className="px-3 py-2 text-right">
+                        <td className="px-2 py-2 text-right text-sm">
                           {formatCurrency(stock.buy_price * 2)}
                         </td>
-                        <td className="px-3 py-2 text-right">
+                        <td className="px-2 py-2 text-right text-sm">
                           {stock.current_ratio}
                         </td>
-                        <td className="px-3 py-2 text-center">
+                        <td className="px-2 py-2 text-center text-sm">
                           {stock.pe}%
                         </td>
-                        <td className="px-3 py-2 text-center">
+                        <td className="px-2 py-2 text-center text-sm">
                           {stock.dividend || '-'}
                         </td>
-                        <td className="px-3 py-2 text-center">
+                        <td className="px-2 py-2 text-center text-sm">
                           {stock.cash_per_share || '-'}
                         </td>
-                        <td className="px-3 py-2 text-center">
-                          <span className="text-sm font-medium text-gray-700">{stock.guru || '-'}</span>
+                        <td className="px-2 py-2 text-center text-sm">
+                          {stock.guru || '-'}
                         </td>
-                        <td className="px-3 py-2">
-                          <span className={clsx("px-2 py-1 rounded text-xs", 
+                        <td className="px-2 py-2">
+                          <span className={clsx("px-1.5 py-0.5 rounded text-xs", 
                             getSourceBadgeColor(stock.source)
                           )}>
                             {stock.source}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-xs text-gray-500">
+                        <td className="px-2 py-2 text-xs text-gray-500">
                           {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString() : '-'}
                         </td>
                       </tr>
