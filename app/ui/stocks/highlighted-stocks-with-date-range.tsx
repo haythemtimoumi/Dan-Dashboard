@@ -201,8 +201,8 @@ export default function HighlightedStocksWithDateRange({
   const SortableHeader = ({ label, field }: { label: string; field: string }) => (
     <th 
       className={clsx(
-        "px-3 py-2 cursor-pointer hover:bg-gray-100 transition-colors",
-        sortBy === field ? "text-blue-600" : "text-gray-700"
+        "px-3 py-3 cursor-pointer hover:bg-white/50 transition-all duration-200",
+        sortBy === field ? "text-blue-600 bg-white/30" : "text-gray-700"
       )}
       onClick={() => handleSort(field)}
     >
@@ -268,26 +268,36 @@ export default function HighlightedStocksWithDateRange({
   return (
     <div className="flow-root">
       <div className="inline-block min-w-full align-middle">
-        <div className="bg-white border border-gray-200 rounded-lg">
-          <div className="flex justify-between items-center p-4 border-b border-gray-200">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div className="flex justify-between items-center p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <span className="text-lg font-semibold text-gray-900">Highlighted Stocks</span>
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
-                {stocks.length}
+              <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Featured Stocks</h1>
+                <p className="text-sm text-gray-500">Highlighted investment opportunities</p>
+              </div>
+              <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-semibold">
+                {stocks.length} stocks
               </span>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
               {formatDateToString(startDateObj)} - {formatDateToString(endDateObj)}
             </div>
           </div>
           
           {/* Date filter */}
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="text-sm font-medium text-gray-700">Date Filter</span>
+          <div className="p-6 bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span className="text-sm font-semibold text-gray-800">Filter by Date Range</span>
             </div>
             <form onSubmit={handleDateFilterChange} className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-32">
@@ -404,7 +414,6 @@ export default function HighlightedStocksWithDateRange({
                         </div>
                         <div>
                           <p className="text-lg font-semibold text-gray-800">{stock.ticker}</p>
-                          <p className="text-xs text-gray-500">{stock.guru}</p>
                         </div>
                       </div>
                       <div className={clsx(
@@ -447,6 +456,10 @@ export default function HighlightedStocksWithDateRange({
                           <p className="text-xs text-gray-500 mb-1">Analyst Estimated Long-Term GR</p>
                           <p className="text-lg font-semibold">{stock.cash_per_share || '-'}</p>
                         </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">PBT</p>
+                          <p className="text-lg font-semibold">{stock.guru || '-'}</p>
+                        </div>
                       </div>
                       
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
@@ -460,17 +473,7 @@ export default function HighlightedStocksWithDateRange({
                             {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : 'No date'}
                           </span>
                         </div>
-                        <div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/dashboard/highlighted/${stock.id}`);
-                            }}
-                            className="rounded-lg bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-200 transition-colors"
-                          >
-                            View Details
-                          </button>
-                        </div>
+
                       </div>
                     </div>
                   </div>
@@ -481,7 +484,7 @@ export default function HighlightedStocksWithDateRange({
               <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full text-gray-900 text-sm">
                   <thead>
-                    <tr className="bg-gray-50 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200">
+                    <tr className="bg-gradient-to-r from-gray-50 to-blue-50 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider border-b border-gray-200">
                       <SortableHeader label="Ticker" field="ticker" />
                       <SortableHeader label="Sentiment" field="sentiment_score" />
                       <SortableHeader label="Signal" field="signal_score" />
@@ -494,16 +497,16 @@ export default function HighlightedStocksWithDateRange({
                       <SortableHeader label="% Upside" field="pe" />
                       <SortableHeader label="Composite GR" field="dividend" />
                       <SortableHeader label="Est. Long-Term GR" field="cash_per_share" />
+                      <SortableHeader label="PBT" field="guru" />
                       <th className="px-3 py-2 text-gray-700">Source</th>
                       <th className="px-3 py-2 text-gray-700">Date</th>
-                      <th className="px-3 py-2 text-gray-700">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
                     {paginatedStocks.map((stock) => (
                       <tr
                         key={stock.id}
-                        className="hover:bg-gray-50 cursor-pointer transition-colors"
+                        className="hover:bg-blue-50/50 cursor-pointer transition-all duration-200 border-b border-gray-100 last:border-b-0"
                         onClick={(e) => {
                           e.preventDefault();
                           router.push(`/dashboard/highlighted/${stock.id}`);
@@ -511,7 +514,6 @@ export default function HighlightedStocksWithDateRange({
                       >
                         <td className="px-3 py-2">
                           <div className="font-medium text-gray-900">{stock.ticker}</div>
-                          <div className="text-xs text-gray-500">{stock.guru}</div>
                         </td>
                         <td className="px-3 py-2 text-center">
                           <span className={clsx(
@@ -556,6 +558,9 @@ export default function HighlightedStocksWithDateRange({
                         <td className="px-3 py-2 text-center">
                           {stock.cash_per_share || '-'}
                         </td>
+                        <td className="px-3 py-2 text-center">
+                          <span className="text-sm font-medium text-gray-700">{stock.guru || '-'}</span>
+                        </td>
                         <td className="px-3 py-2">
                           <span className={clsx("px-2 py-1 rounded text-xs", 
                             getSourceBadgeColor(stock.source)
@@ -565,17 +570,6 @@ export default function HighlightedStocksWithDateRange({
                         </td>
                         <td className="px-3 py-2 text-xs text-gray-500">
                           {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-3 py-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/dashboard/highlighted/${stock.id}`);
-                            }}
-                            className="text-blue-600 hover:text-blue-800 text-xs font-medium"
-                          >
-                            View
-                          </button>
                         </td>
                       </tr>
                     ))}
