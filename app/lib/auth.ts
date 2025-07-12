@@ -28,12 +28,12 @@ export const auth = {
 
   getToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('authToken');
+    return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
   },
 
   getUser(): User | null {
     if (typeof window === 'undefined') return null;
-    const userStr = localStorage.getItem('user');
+    const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   },
 
@@ -50,6 +50,9 @@ export const auth = {
     if (typeof window === 'undefined') return;
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('rememberMe');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('user');
   }
 };
 

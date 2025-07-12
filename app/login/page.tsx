@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -27,8 +28,17 @@ export default function LoginPage() {
 
       if (response.ok) {
         const { token, user } = await response.json();
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('user', JSON.stringify(user));
+        
+        if (rememberMe) {
+          localStorage.setItem('authToken', token);
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('rememberMe', 'true');
+        } else {
+          sessionStorage.setItem('authToken', token);
+          sessionStorage.setItem('user', JSON.stringify(user));
+          localStorage.removeItem('rememberMe');
+        }
+        
         toast.success('Login successful!');
         router.push('/dashboard');
       } else {
@@ -91,6 +101,19 @@ export default function LoginPage() {
                   {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                 </button>
               </div>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                Remember me
+              </label>
             </div>
 
             <button
