@@ -385,7 +385,7 @@ export default function HighlightedStocksWithDateRange({
                     selected={startDateObj}
                     onChange={(date) => setStartDateObj(date)}
                     dateFormat="MM/dd/yyyy"
-                    className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-white dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-black dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     showMonthDropdown
                     showYearDropdown
                     dropdownMode="select"
@@ -401,7 +401,7 @@ export default function HighlightedStocksWithDateRange({
                     selected={endDateObj}
                     onChange={(date) => setEndDateObj(date)}
                     dateFormat="MM/dd/yyyy"
-                    className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-white dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-black dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     minDate={startDateObj || undefined}
                     showMonthDropdown
                     showYearDropdown
