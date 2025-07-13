@@ -311,18 +311,18 @@ export default function PortfolioListWithDateRange({
           </div>
           
           {/* Date filter */}
-          <div className="p-6 bg-gradient-to-r from-gray-50 to-green-50 border-b border-gray-200">
+          <div className="p-6 bg-gradient-to-r from-gray-50 to-green-50 dark:from-gray-800 dark:to-gray-700 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-4">
-              <div className="h-6 w-6 bg-green-100 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="h-6 w-6 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600 dark:text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <span className="text-sm font-semibold text-gray-800">Filter by Date Range</span>
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Filter by Date Range</span>
             </div>
             <form onSubmit={handleDateFilterChange} className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-32">
-                <label className="block text-xs text-gray-600 mb-1">Start Date</label>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Start Date</label>
                 <div className="relative">
                   <DatePicker
                     selected={startDateObj}
@@ -338,7 +338,7 @@ export default function PortfolioListWithDateRange({
               </div>
               
               <div className="flex-1 min-w-32">
-                <label className="block text-xs text-gray-600 mb-1">End Date</label>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">End Date</label>
                 <div className="relative">
                   <DatePicker
                     selected={endDateObj}
