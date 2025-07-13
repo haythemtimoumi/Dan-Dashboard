@@ -94,9 +94,7 @@ export default function PortfolioListWithDateRange({
   };
 
   const openCommentModal = (stockId: string) => {
-    const stock = stocks.find(s => s.id === stockId);
-    const key = stock?.ticker || stockId;
-    setCurrentComment(stockComments[key] || '');
+    setCurrentComment('');
     setShowCommentModal(stockId);
   };
 
