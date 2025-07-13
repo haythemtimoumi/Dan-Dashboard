@@ -10,6 +10,7 @@ import {
   PlusCircleIcon,
   ChartBarIcon,
   ArrowPathIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -18,6 +19,7 @@ const links = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   // { name: 'All Stocks', href: '/dashboard/stocks', icon: TableCellsIcon },
   { name: 'Highlighted Stocks', href: '/dashboard/highlighted', icon: StarIcon },
+  { name: 'Portfolio List', href: '/dashboard/portfolio-list', icon: DocumentTextIcon },
   { name: 'Stock Update', href: '/dashboard/stock-update', icon: ArrowPathIcon },
   // { name: 'Recent Changes', href: '/dashboard/recent-changes', icon: ChartBarIcon },
   // { name: 'rule1 vs manual', href: '/dashboard/sources', icon: ScaleIcon },
