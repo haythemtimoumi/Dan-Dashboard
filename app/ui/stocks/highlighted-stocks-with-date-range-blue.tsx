@@ -275,7 +275,7 @@ export default function HighlightedStocksWithDateRange({
                 </svg>
                 <span>Featured Stocks</span>
               </h2>
-              <p className="text-gray-500 mt-1">
+              <p className="text-white mt-1">
                 Showing data from {formatDateToString(startDateObj)} to {formatDateToString(endDateObj)}
               </p>
             </div>
