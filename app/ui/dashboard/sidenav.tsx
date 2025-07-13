@@ -9,7 +9,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 export default function SideNav() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   return (
-    <div className={`flex h-full flex-col bg-white dark:bg-gray-800 transition-all duration-200 ${isCollapsed ? 'w-16' : 'w-64'}`}>
+    <div className={`flex h-full flex-col bg-white dark:bg-gray-800 transition-all duration-200 ${isCollapsed ? 'w-20' : 'w-64'}`}>
       <div className="flex h-16 items-center justify-between px-4 border-b border-gray-100 dark:border-gray-700">
         <Link className="flex items-center" href="/">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
