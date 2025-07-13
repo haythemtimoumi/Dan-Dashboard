@@ -765,56 +765,55 @@ export default function HighlightedStocksWithDateRange({
           )}
         </div>
       </div>
-    </div>
-    
-    {/* Comment Modal */}
-    {showCommentModal && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCommentModal(null)}>
-        <div className="bg-white rounded-lg p-6 w-96 max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
-          <h3 className="text-lg font-semibold mb-4">Add Comment</h3>
-          
-          <textarea
-            value={currentComment}
-            onChange={(e) => setCurrentComment(e.target.value)}
-            placeholder="Enter your comment..."
-            className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            rows={3}
-          />
-          
-          {commentHistory.length > 0 && (
-            <div className="mt-3">
-              <p className="text-sm text-gray-600 mb-2">Recent comments:</p>
-              <div className="max-h-32 overflow-y-auto space-y-1">
-                {commentHistory.map((comment, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentComment(comment)}
-                    className="block w-full text-left text-xs bg-gray-50 hover:bg-gray-100 rounded px-2 py-1 transition-colors"
-                  >
-                    {comment}
-                  </button>
-                ))}
+      
+      {/* Comment Modal */}
+      {showCommentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCommentModal(null)}>
+          <div className="bg-white rounded-lg p-6 w-96 max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Add Comment</h3>
+            
+            <textarea
+              value={currentComment}
+              onChange={(e) => setCurrentComment(e.target.value)}
+              placeholder="Enter your comment..."
+              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              rows={3}
+            />
+            
+            {commentHistory.length > 0 && (
+              <div className="mt-3">
+                <p className="text-sm text-gray-600 mb-2">Recent comments:</p>
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {commentHistory.map((comment, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentComment(comment)}
+                      className="block w-full text-left text-xs bg-gray-50 hover:bg-gray-100 rounded px-2 py-1 transition-colors"
+                    >
+                      {comment}
+                    </button>
+                  ))}
+                </div>
               </div>
+            )}
+            
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => handleCommentSave(showCommentModal, currentComment)}
+                className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setShowCommentModal(null)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
             </div>
-          )}
-          
-          <div className="flex gap-2 mt-4">
-            <button
-              onClick={() => handleCommentSave(showCommentModal, currentComment)}
-              className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setShowCommentModal(null)}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400 transition-colors"
-            >
-              Cancel
-            </button>
           </div>
         </div>
-      </div>
-    )}
-  </div>
+      )}
+    </div>
   );
 }
