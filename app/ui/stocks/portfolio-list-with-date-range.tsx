@@ -32,7 +32,7 @@ export default function PortfolioListWithDateRange({
   const [sortOrder, setSortOrder] = useState<string>('desc');
   const [stockColors, setStockColors] = useState<{[key: string]: string}>({});
   const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
-  const [commentHistory, setCommentHistory] = useState<{[ticker: string]: {text: string, date: string}[]}>({});
+  const [commentHistory, setCommentHistory] = useState<{[ticker: string]: {text: string, date: string, color?: string}[]}>({});
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [currentComment, setCurrentComment] = useState<string>('');
   const [showColorModal, setShowColorModal] = useState<string | null>(null);
@@ -81,7 +81,8 @@ export default function PortfolioListWithDateRange({
     if (comment.trim()) {
       const tickerHistory = commentHistory[key] || [];
       if (!tickerHistory.some(h => h.text === comment.trim())) {
-        const newHistoryItem = { text: comment.trim(), date: new Date().toISOString() };
+        const currentColor = stockColors[key] || '';
+        const newHistoryItem = { text: comment.trim(), date: new Date().toISOString(), color: currentColor };
         const updatedTickerHistory = [newHistoryItem, ...tickerHistory].slice(0, 5); // Keep last 5 per ticker
         const newHistory = { ...commentHistory, [key]: updatedTickerHistory };
         setCommentHistory(newHistory);
@@ -795,9 +796,27 @@ export default function PortfolioListWithDateRange({
                       <label className="block text-sm font-medium text-gray-700 mb-3">Recent Comments for {ticker}</label>
                       <div className="max-h-32 overflow-y-auto space-y-2">
                         {tickerHistory.map((item, index) => (
-                          <div key={index} className="group flex items-start gap-3 p-3 bg-gray-50 hover:bg-green-50 rounded-xl transition-all duration-200 cursor-pointer" onClick={() => setCurrentComment(item.text)}>
-                            <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 group-hover:text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div key={index} className={clsx(
+                            "group flex items-start gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer",
+                            item.color === 'red' && 'bg-red-50 hover:bg-red-100 border border-red-200',
+                            item.color === 'green' && 'bg-green-50 hover:bg-green-100 border border-green-200',
+                            item.color === 'yellow' && 'bg-yellow-50 hover:bg-yellow-100 border border-yellow-200',
+                            !item.color && 'bg-gray-50 hover:bg-green-50'
+                          )} onClick={() => setCurrentComment(item.text)}>
+                            <div className={clsx(
+                              "h-8 w-8 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow",
+                              item.color === 'red' && 'bg-red-100',
+                              item.color === 'green' && 'bg-green-100',
+                              item.color === 'yellow' && 'bg-yellow-100',
+                              !item.color && 'bg-white'
+                            )}>
+                              <svg xmlns="http://www.w3.org/2000/svg" className={clsx(
+                                "h-4 w-4 transition-colors",
+                                item.color === 'red' && 'text-red-500 group-hover:text-red-600',
+                                item.color === 'green' && 'text-green-500 group-hover:text-green-600',
+                                item.color === 'yellow' && 'text-yellow-500 group-hover:text-yellow-600',
+                                !item.color && 'text-gray-400 group-hover:text-green-500'
+                              )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                               </svg>
                             </div>
