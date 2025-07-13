@@ -274,13 +274,13 @@ export default function PortfolioListWithDateRange({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-red-800 dark:text-red-400 mb-2">Error Loading Portfolio</h2>
+        <h2 className="text-xl font-bold text-red-800 dark:text-red-400 mb-2">{t('errorLoadingPortfolio')}</h2>
         <p className="text-red-700 dark:text-red-300 max-w-md mx-auto">{error}</p>
         <button 
           onClick={() => window.location.reload()}
           className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
         >
-          Try Again
+          {t('tryAgain')}
         </button>
       </div>
     );
@@ -298,11 +298,11 @@ export default function PortfolioListWithDateRange({
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Portfolio List</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Manual portfolio stocks</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('portfolioList')}</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('manualPortfolioStocks')}</p>
               </div>
               <span className="bg-gradient-to-r from-green-100 to-blue-100 text-green-800 px-3 py-1.5 rounded-full text-sm font-semibold">
-                {stocks.length} stocks
+                {stocks.length} {t('stocks')}
               </span>
             </div>
             <div className="text-sm text-black dark:text-black bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
@@ -318,11 +318,11 @@ export default function PortfolioListWithDateRange({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Filter by Date Range</span>
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t('filterByDateRange')}</span>
             </div>
             <form onSubmit={handleDateFilterChange} className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-32">
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Start Date</label>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">{t('startDate')}</label>
                 <div className="relative">
                   <DatePicker
                     selected={startDateObj}
@@ -338,7 +338,7 @@ export default function PortfolioListWithDateRange({
               </div>
               
               <div className="flex-1 min-w-32">
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">End Date</label>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">{t('endDate')}</label>
                 <div className="relative">
                   <DatePicker
                     selected={endDateObj}
@@ -370,13 +370,13 @@ export default function PortfolioListWithDateRange({
                 }}
                 className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
-                Today
+                {t('today')}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
-                Apply
+                {t('apply')}
               </button>
             </form>
             
@@ -394,7 +394,7 @@ export default function PortfolioListWithDateRange({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">No Portfolio Stocks Found</h3>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('noPortfolioStocksFound')}</h3>
               <p className="text-gray-500 max-w-md mx-auto">No manual portfolio stocks were found for the selected date range. Try selecting a wider date range or different dates.</p>
             </div>
           ) : (
