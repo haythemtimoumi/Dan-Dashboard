@@ -270,7 +270,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
         <div className="lg:col-span-2">
           <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
             {currentStock.screenshot && (
-              <div className="relative h-[300px] md:h-[400px] bg-gray-50">
+              <div className="relative h-[400px] md:h-[500px] lg:h-[600px] bg-gray-50">
                 <Image 
                   src={currentStock.screenshot} 
                   alt={`${currentStock.ticker} chart`}
