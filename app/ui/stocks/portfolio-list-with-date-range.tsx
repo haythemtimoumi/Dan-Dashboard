@@ -64,7 +64,7 @@ export default function PortfolioListWithDateRange({
         adjustedEndDate.setHours(23, 59, 59, 999);
         const formattedEnd = formatDateToString(adjustedEndDate);
         
-        const response = await fetch(`${API_URL}/stocks/portfolio-list?startDate=${formattedStart}&endDate=${formattedEnd}`);
+        const response = await fetch(`${API_URL}/stocks/highlighted/filter?startDate=${formattedStart}&endDate=${formattedEnd}&source=manual`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch portfolio stocks: ${response.statusText}`);
