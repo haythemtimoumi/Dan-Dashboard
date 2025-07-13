@@ -32,7 +32,7 @@ export default function PortfolioListWithDateRange({
   const [sortOrder, setSortOrder] = useState<string>('desc');
   const [stockColors, setStockColors] = useState<{[key: string]: string}>({});
   const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
-  const [commentHistory, setCommentHistory] = useState<string[]>([]);
+  const [commentHistory, setCommentHistory] = useState<{text: string, date: string}[]>([]);
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [currentComment, setCurrentComment] = useState<string>('');
 
@@ -43,7 +43,15 @@ export default function PortfolioListWithDateRange({
     const savedHistory = localStorage.getItem('commentHistory');
     if (savedColors) setStockColors(JSON.parse(savedColors));
     if (savedComments) setStockComments(JSON.parse(savedComments));
-    if (savedHistory) setCommentHistory(JSON.parse(savedHistory));
+    if (savedHistory) {
+      const parsed = JSON.parse(savedHistory);
+      // Handle old format (string array) and new format (object array)
+      if (parsed.length > 0 && typeof parsed[0] === 'string') {
+        setCommentHistory(parsed.map((text: string) => ({ text, date: new Date().toISOString() })));
+      } else {
+        setCommentHistory(parsed);
+      }
+    }
   }, []);
 
   // Save color change to localStorage
@@ -60,8 +68,9 @@ export default function PortfolioListWithDateRange({
     localStorage.setItem('stockComments', JSON.stringify(newComments));
     
     // Add to history if not empty and not already exists
-    if (comment.trim() && !commentHistory.includes(comment.trim())) {
-      const newHistory = [comment.trim(), ...commentHistory].slice(0, 10); // Keep last 10
+    if (comment.trim() && !commentHistory.some(h => h.text === comment.trim())) {
+      const newHistoryItem = { text: comment.trim(), date: new Date().toISOString() };
+      const newHistory = [newHistoryItem, ...commentHistory].slice(0, 10); // Keep last 10
       setCommentHistory(newHistory);
       localStorage.setItem('commentHistory', JSON.stringify(newHistory));
     }
@@ -73,6 +82,12 @@ export default function PortfolioListWithDateRange({
   const openCommentModal = (stockId: string) => {
     setCurrentComment(stockComments[stockId] || '');
     setShowCommentModal(stockId);
+  };
+
+  const deleteHistoryItem = (index: number) => {
+    const newHistory = commentHistory.filter((_, i) => i !== index);
+    setCommentHistory(newHistory);
+    localStorage.setItem('commentHistory', JSON.stringify(newHistory));
   };
 
   function parseDate(dateString: string): Date | null {
@@ -706,14 +721,23 @@ export default function PortfolioListWithDateRange({
               <div className="mt-3">
                 <p className="text-sm text-gray-600 mb-2">Recent comments:</p>
                 <div className="max-h-32 overflow-y-auto space-y-1">
-                  {commentHistory.map((comment, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentComment(comment)}
-                      className="block w-full text-left text-xs bg-gray-50 hover:bg-gray-100 rounded px-2 py-1 transition-colors"
-                    >
-                      {comment}
-                    </button>
+                  {commentHistory.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 rounded px-2 py-1 transition-colors">
+                      <button
+                        onClick={() => setCurrentComment(item.text)}
+                        className="flex-1 text-left text-xs"
+                      >
+                        <div>{item.text}</div>
+                        <div className="text-gray-400 text-xs">{new Date(item.date).toLocaleDateString()}</div>
+                      </button>
+                      <button
+                        onClick={() => deleteHistoryItem(index)}
+                        className="text-red-500 hover:text-red-700 text-xs p-1"
+                        title="Delete"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
