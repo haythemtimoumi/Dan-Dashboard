@@ -12,7 +12,7 @@ export default function SideNav() {
         <div className="w-8 text-black">
           <StockLogo />
         </div>
-        <span className="ml-3 text-xl font-bold text-black">Dan</span>
+        <span className="ml-3 text-xl font-bold text-black">StockScreener</span>
       </Link>
       
       <div className="flex-1 px-4 py-6">

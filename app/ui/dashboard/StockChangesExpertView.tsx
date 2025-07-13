@@ -51,7 +51,7 @@ export default function StockChangesView() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-black">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-black">StockScreener</h1>
         <p className="text-gray-600 mt-1">Track stock metric changes</p>
       </div>
 
