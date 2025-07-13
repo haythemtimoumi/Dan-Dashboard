@@ -8,7 +8,7 @@ To ensure the API works correctly, you need to set up the proper environment var
 2. Add the following environment variable:
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=https://stockdashboard.ddnsfree.com
 ```
 
 **Note:** When your frontend is running on a different port (e.g., 3001) than your backend API (e.g., 3000), you need to use an absolute URL with the correct port for the backend.
@@ -17,7 +17,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3000
 
 The application uses a properly formatted URL for API calls. The URL can be either:
 
-1. An absolute URL (recommended for separate backend): `http://localhost:3000`
+1. An absolute URL (recommended for separate backend): `https://stockdashboard.ddnsfree.com`
    - Must include:
      - Protocol (http:// or https://)
      - Host (localhost or your domain)

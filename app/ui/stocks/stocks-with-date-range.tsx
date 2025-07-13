@@ -124,7 +124,7 @@ export default function StocksWithDateRange({
         console.error('Error fetching stocks:', err);
         // Provide more specific error message for network errors (likely CORS or API unreachable)
         if (err instanceof TypeError && err.message.includes('fetch')) {
-          setError('Unable to connect to the API server at http://localhost:3000. Please ensure the backend is running and CORS is properly configured.');
+          setError('Unable to connect to the API server at https://stockdashboard.ddnsfree.com. Please ensure the backend is running and CORS is properly configured.');
         } else {
           setError('Failed to load stocks. Please try again later.');
         }

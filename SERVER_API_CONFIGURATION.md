@@ -25,7 +25,7 @@ Add these environment variables to your project:
 
 1. Create a `.env.local` file in your project root:
 ```
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
+NEXT_PUBLIC_BASE_URL=https://stockdashboard.ddnsfree.com
 NEXT_PUBLIC_API_URL=https://stockdashboard.ddnsfree.com/api
 ```
 
