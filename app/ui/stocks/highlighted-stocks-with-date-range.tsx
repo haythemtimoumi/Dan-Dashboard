@@ -379,7 +379,7 @@ export default function HighlightedStocksWithDateRange({
             </div>
             <form onSubmit={handleDateFilterChange} className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-32">
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Start Date</label>
+                <label className="block text-xs text-black dark:text-black mb-1">Start Date</label>
                 <div className="relative">
                   <DatePicker
                     selected={startDateObj}
@@ -395,7 +395,7 @@ export default function HighlightedStocksWithDateRange({
               </div>
               
               <div className="flex-1 min-w-32">
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">End Date</label>
+                <label className="block text-xs text-black dark:text-black mb-1">End Date</label>
                 <div className="relative">
                   <DatePicker
                     selected={endDateObj}
