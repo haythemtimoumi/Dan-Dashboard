@@ -39,13 +39,18 @@ export default function HighlightedStocksWithDateRange({
   const [sortOrder, setSortOrder] = useState<string>('desc');
   const [stockColors, setStockColors] = useState<{[key: string]: string}>({});
   const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
+  const [commentHistory, setCommentHistory] = useState<string[]>([]);
+  const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
+  const [currentComment, setCurrentComment] = useState<string>('');
 
   // Load data from localStorage on component mount
   useEffect(() => {
     const savedColors = localStorage.getItem('stockColors');
     const savedComments = localStorage.getItem('stockComments');
+    const savedHistory = localStorage.getItem('commentHistory');
     if (savedColors) setStockColors(JSON.parse(savedColors));
     if (savedComments) setStockComments(JSON.parse(savedComments));
+    if (savedHistory) setCommentHistory(JSON.parse(savedHistory));
   }, []);
 
   // Save color change to localStorage
@@ -56,10 +61,25 @@ export default function HighlightedStocksWithDateRange({
   };
 
   // Save comment change to localStorage
-  const handleCommentChange = (stockId: string, comment: string) => {
+  const handleCommentSave = (stockId: string, comment: string) => {
     const newComments = { ...stockComments, [stockId]: comment };
     setStockComments(newComments);
     localStorage.setItem('stockComments', JSON.stringify(newComments));
+    
+    // Add to history if not empty and not already exists
+    if (comment.trim() && !commentHistory.includes(comment.trim())) {
+      const newHistory = [comment.trim(), ...commentHistory].slice(0, 10); // Keep last 10
+      setCommentHistory(newHistory);
+      localStorage.setItem('commentHistory', JSON.stringify(newHistory));
+    }
+    
+    setShowCommentModal(null);
+    setCurrentComment('');
+  };
+
+  const openCommentModal = (stockId: string) => {
+    setCurrentComment(stockComments[stockId] || '');
+    setShowCommentModal(stockId);
   };
 
   // Parse date string to Date object
@@ -524,14 +544,18 @@ export default function HighlightedStocksWithDateRange({
                                 )}></span>
                               </div>
                             )}
-                            <input
-                              type="text"
-                              value={stockComments[stock.id] || ''}
-                              onChange={(e) => handleCommentChange(stock.id, e.target.value)}
-                              placeholder="Add comment..."
-                              className="text-xs border rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              onClick={(e) => e.stopPropagation()}
-                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCommentModal(stock.id);
+                              }}
+                              className={clsx(
+                                "text-xs border rounded px-2 py-1 w-full text-left focus:outline-none focus:ring-1 focus:ring-blue-500",
+                                stockComments[stock.id] ? "text-gray-900" : "text-gray-400"
+                              )}
+                            >
+                              {stockComments[stock.id] || "Add comment..."}
+                            </button>
                           </div>
                         )}
 
@@ -713,15 +737,22 @@ export default function HighlightedStocksWithDateRange({
                             <option value="yellow" style={{backgroundColor: '#fef3c7'}}>🟡 Yellow</option>
                           </select>
                         </td>
-                        <td className="px-2 py-2">
-                          <input
-                            type="text"
-                            value={stockComments[stock.id] || ''}
-                            onChange={(e) => handleCommentChange(stock.id, e.target.value)}
-                            placeholder="Add comment..."
-                            className="text-xs border rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            onClick={(e) => e.stopPropagation()}
-                          />
+                        <td className="px-2 py-2 text-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openCommentModal(stock.id);
+                            }}
+                            className={clsx(
+                              "p-1 rounded hover:bg-gray-100 transition-colors",
+                              stockComments[stock.id] ? "text-blue-600" : "text-gray-400"
+                            )}
+                            title={stockComments[stock.id] || "Add comment"}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -735,5 +766,55 @@ export default function HighlightedStocksWithDateRange({
         </div>
       </div>
     </div>
+    
+    {/* Comment Modal */}
+    {showCommentModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCommentModal(null)}>
+        <div className="bg-white rounded-lg p-6 w-96 max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+          <h3 className="text-lg font-semibold mb-4">Add Comment</h3>
+          
+          <textarea
+            value={currentComment}
+            onChange={(e) => setCurrentComment(e.target.value)}
+            placeholder="Enter your comment..."
+            className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            rows={3}
+          />
+          
+          {commentHistory.length > 0 && (
+            <div className="mt-3">
+              <p className="text-sm text-gray-600 mb-2">Recent comments:</p>
+              <div className="max-h-32 overflow-y-auto space-y-1">
+                {commentHistory.map((comment, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentComment(comment)}
+                    className="block w-full text-left text-xs bg-gray-50 hover:bg-gray-100 rounded px-2 py-1 transition-colors"
+                  >
+                    {comment}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => handleCommentSave(showCommentModal, currentComment)}
+              className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setShowCommentModal(null)}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
   );
 }
