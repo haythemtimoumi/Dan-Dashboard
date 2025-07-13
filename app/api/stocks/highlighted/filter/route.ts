@@ -9,15 +9,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
-    const source = searchParams.get('source');
 
     // Filter stocks based on the highlight property
-    let highlightedStocks = stocks.filter(stock => {
-      if (source) {
-        return stock.highlight === true && stock.source === source;
-      }
-      return stock.highlight === true;
-    });
+    let highlightedStocks = stocks.filter(stock => stock.highlight === true);
     
     // Apply date filters if provided
     if (startDate && endDate) {

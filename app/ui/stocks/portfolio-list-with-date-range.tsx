@@ -64,14 +64,15 @@ export default function PortfolioListWithDateRange({
         adjustedEndDate.setHours(23, 59, 59, 999);
         const formattedEnd = formatDateToString(adjustedEndDate);
         
-        const response = await fetch(`${API_URL}/stocks/highlighted/filter?startDate=${formattedStart}&endDate=${formattedEnd}&source=manual`);
+        const response = await fetch(`${API_URL}/stocks/highlighted/filter?startDate=${formattedStart}&endDate=${formattedEnd}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch portfolio stocks: ${response.statusText}`);
         }
         
         const data = await response.json();
-        setStocks(data);
+        const manualStocks = data.filter((stock: Stock) => stock.source === 'manual');
+        setStocks(manualStocks);
         setError(null);
       } catch (err) {
         console.error('Error fetching portfolio stocks:', err);
