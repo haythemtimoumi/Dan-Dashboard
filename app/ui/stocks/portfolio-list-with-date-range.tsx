@@ -328,7 +328,7 @@ export default function PortfolioListWithDateRange({
                     selected={startDateObj}
                     onChange={(date) => setStartDateObj(date)}
                     dateFormat="MM/dd/yyyy"
-                    className="w-full rounded border border-gray-300 py-2 px-3 pl-8 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-white dark:text-white focus:ring-1 focus:ring-green-500 focus:border-green-500"
                     showMonthDropdown
                     showYearDropdown
                     dropdownMode="select"
@@ -344,7 +344,7 @@ export default function PortfolioListWithDateRange({
                     selected={endDateObj}
                     onChange={(date) => setEndDateObj(date)}
                     dateFormat="MM/dd/yyyy"
-                    className="w-full rounded border border-gray-300 py-2 px-3 pl-8 text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-white dark:text-white focus:ring-1 focus:ring-green-500 focus:border-green-500"
                     minDate={startDateObj || undefined}
                     showMonthDropdown
                     showYearDropdown
