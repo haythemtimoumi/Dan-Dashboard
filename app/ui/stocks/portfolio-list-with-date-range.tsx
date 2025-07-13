@@ -56,14 +56,18 @@ export default function PortfolioListWithDateRange({
 
   // Save color change to localStorage
   const handleColorChange = (stockId: string, color: string) => {
-    const newColors = { ...stockColors, [stockId]: color };
+    const stock = stocks.find(s => s.id === stockId);
+    const key = stock?.ticker || stockId;
+    const newColors = { ...stockColors, [key]: color };
     setStockColors(newColors);
     localStorage.setItem('stockColors', JSON.stringify(newColors));
   };
 
   // Save comment change to localStorage
   const handleCommentSave = (stockId: string, comment: string) => {
-    const newComments = { ...stockComments, [stockId]: comment };
+    const stock = stocks.find(s => s.id === stockId);
+    const key = stock?.ticker || stockId;
+    const newComments = { ...stockComments, [key]: comment };
     setStockComments(newComments);
     localStorage.setItem('stockComments', JSON.stringify(newComments));
     
@@ -80,7 +84,9 @@ export default function PortfolioListWithDateRange({
   };
 
   const openCommentModal = (stockId: string) => {
-    setCurrentComment(stockComments[stockId] || '');
+    const stock = stocks.find(s => s.id === stockId);
+    const key = stock?.ticker || stockId;
+    setCurrentComment(stockComments[key] || '');
     setShowCommentModal(stockId);
   };
 
@@ -460,7 +466,7 @@ export default function PortfolioListWithDateRange({
                           </div>
                           <div className="flex items-center gap-2">
                             <select
-                              value={stockColors[stock.id] || ''}
+                              value={stockColors[stock.ticker] || ''}
                               onChange={(e) => handleColorChange(stock.id, e.target.value)}
                               className="text-xs border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-green-500"
                               onClick={(e) => e.stopPropagation()}
@@ -472,15 +478,15 @@ export default function PortfolioListWithDateRange({
                             </select>
                           </div>
                         </div>
-                        {(stockComments[stock.id] || stockColors[stock.id]) && (
+                        {(stockComments[stock.ticker] || stockColors[stock.ticker]) && (
                           <div className="mt-2 pt-2 border-t border-gray-100">
-                            {stockColors[stock.id] && (
+                            {stockColors[stock.ticker] && (
                               <div className="flex items-center gap-1 mb-1">
                                 <span className="text-xs text-gray-500">Color:</span>
                                 <span className={clsx("inline-block w-3 h-3 rounded-full", 
-                                  stockColors[stock.id] === 'red' && 'bg-red-400',
-                                  stockColors[stock.id] === 'green' && 'bg-green-400',
-                                  stockColors[stock.id] === 'yellow' && 'bg-yellow-400'
+                                  stockColors[stock.ticker] === 'red' && 'bg-red-400',
+                                  stockColors[stock.ticker] === 'green' && 'bg-green-400',
+                                  stockColors[stock.ticker] === 'yellow' && 'bg-yellow-400'
                                 )}></span>
                               </div>
                             )}
@@ -491,10 +497,10 @@ export default function PortfolioListWithDateRange({
                               }}
                               className={clsx(
                                 "text-xs border rounded px-2 py-1 w-full text-left focus:outline-none focus:ring-1 focus:ring-green-500",
-                                stockComments[stock.id] ? "text-gray-900" : "text-gray-400"
+                                stockComments[stock.ticker] ? "text-gray-900" : "text-gray-400"
                               )}
                             >
-                              {stockComments[stock.id] || "Add comment..."}
+                              {stockComments[stock.ticker] || "Add comment..."}
                             </button>
                           </div>
                         )}
@@ -594,10 +600,10 @@ export default function PortfolioListWithDateRange({
                         key={stock.id}
                         className={clsx(
                           "cursor-pointer transition-all duration-200 border-b border-gray-100 last:border-b-0",
-                          stockColors[stock.id] === 'red' && 'bg-red-50 hover:bg-red-100',
-                          stockColors[stock.id] === 'green' && 'bg-green-50 hover:bg-green-100',
-                          stockColors[stock.id] === 'yellow' && 'bg-yellow-50 hover:bg-yellow-100',
-                          !stockColors[stock.id] && 'hover:bg-green-50/50'
+                          stockColors[stock.ticker] === 'red' && 'bg-red-50 hover:bg-red-100',
+                          stockColors[stock.ticker] === 'green' && 'bg-green-50 hover:bg-green-100',
+                          stockColors[stock.ticker] === 'yellow' && 'bg-yellow-50 hover:bg-yellow-100',
+                          !stockColors[stock.ticker] && 'hover:bg-green-50/50'
                         )}
                         onClick={(e) => {
                           e.preventDefault();
@@ -665,7 +671,7 @@ export default function PortfolioListWithDateRange({
                         </td>
                         <td className="px-2 py-2 text-center">
                           <select
-                            value={stockColors[stock.id] || ''}
+                            value={stockColors[stock.ticker] || ''}
                             onChange={(e) => handleColorChange(stock.id, e.target.value)}
                             className="text-xs border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-green-500"
                             onClick={(e) => e.stopPropagation()}
@@ -684,9 +690,9 @@ export default function PortfolioListWithDateRange({
                             }}
                             className={clsx(
                               "p-1 rounded hover:bg-gray-100 transition-colors",
-                              stockComments[stock.id] ? "text-green-600" : "text-gray-400"
+                              stockComments[stock.ticker] ? "text-green-600" : "text-gray-400"
                             )}
-                            title={stockComments[stock.id] || "Add comment"}
+                            title={stockComments[stock.ticker] || "Add comment"}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
