@@ -9,6 +9,7 @@ import { CalendarIcon } from '@heroicons/react/24/outline';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import '@/app/ui/datepicker-custom.css';
+import { useSettings } from '@/app/contexts/settings-context';
 
 // Get API URL from environment variable
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
@@ -27,6 +28,7 @@ export default function HighlightedStocksWithDateRange({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useSettings();
   
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -297,7 +299,7 @@ export default function HighlightedStocksWithDateRange({
     return (
       <div className="mt-6 flow-root">
         <div className="inline-block min-w-full align-middle">
-          <div className="rounded-xl bg-white p-6 shadow-lg border border-gray-100">
+          <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg border border-gray-100 dark:border-gray-700">
             <div className="flex justify-between items-center mb-6">
               <div className="animate-pulse flex items-center gap-2">
                 <div className="h-6 w-6 bg-blue-200 rounded-full"></div>
@@ -323,14 +325,14 @@ export default function HighlightedStocksWithDateRange({
 
   if (error) {
     return (
-      <div className="mt-6 rounded-xl bg-red-50 p-8 text-center shadow-md border border-red-100">
+      <div className="mt-6 rounded-xl bg-red-50 dark:bg-red-900/20 p-8 text-center shadow-md border border-red-100 dark:border-red-800">
         <div className="inline-flex items-center justify-center h-16 w-16 bg-red-100 rounded-full mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-red-800 mb-2">Error Loading Featured Stocks</h2>
-        <p className="text-red-700 max-w-md mx-auto">{error}</p>
+        <h2 className="text-xl font-bold text-red-800 dark:text-red-400 mb-2">Error Loading Featured Stocks</h2>
+        <p className="text-red-700 dark:text-red-300 max-w-md mx-auto">{error}</p>
         <button 
           onClick={() => window.location.reload()}
           className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
@@ -344,8 +346,8 @@ export default function HighlightedStocksWithDateRange({
   return (
     <div className="flow-root">
       <div className="inline-block min-w-full align-middle">
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-          <div className="flex justify-between items-center p-6 border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+          <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -353,14 +355,14 @@ export default function HighlightedStocksWithDateRange({
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Featured Stocks</h1>
-                <p className="text-sm text-gray-500">Highlighted investment opportunities</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Featured Stocks</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Highlighted investment opportunities</p>
               </div>
               <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-semibold">
                 {stocks.length} stocks
               </span>
             </div>
-            <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
+            <div className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
               {formatDateToString(startDateObj)} - {formatDateToString(endDateObj)}
             </div>
           </div>
