@@ -39,7 +39,7 @@ export default function HighlightedStocksWithDateRange({
   const [sortOrder, setSortOrder] = useState<string>('desc');
   const [stockColors, setStockColors] = useState<{[key: string]: string}>({});
   const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
-  const [commentHistory, setCommentHistory] = useState<{text: string, date: string}[]>([]);
+  const [commentHistory, setCommentHistory] = useState<{[ticker: string]: {text: string, date: string}[]}>({});
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [currentComment, setCurrentComment] = useState<string>('');
   const [showColorModal, setShowColorModal] = useState<string | null>(null);
@@ -48,17 +48,11 @@ export default function HighlightedStocksWithDateRange({
   useEffect(() => {
     const savedColors = localStorage.getItem('stockColors');
     const savedComments = localStorage.getItem('stockComments');
-    const savedHistory = localStorage.getItem('commentHistory');
+    const savedHistory = localStorage.getItem('tickerCommentHistory');
     if (savedColors) setStockColors(JSON.parse(savedColors));
     if (savedComments) setStockComments(JSON.parse(savedComments));
     if (savedHistory) {
-      const parsed = JSON.parse(savedHistory);
-      // Handle old format (string array) and new format (object array)
-      if (parsed.length > 0 && typeof parsed[0] === 'string') {
-        setCommentHistory(parsed.map((text: string) => ({ text, date: new Date().toISOString() })));
-      } else {
-        setCommentHistory(parsed);
-      }
+      setCommentHistory(JSON.parse(savedHistory));
     }
   }, []);
 
@@ -90,12 +84,16 @@ export default function HighlightedStocksWithDateRange({
     setStockComments(newComments);
     localStorage.setItem('stockComments', JSON.stringify(newComments));
     
-    // Add to history if not empty and not already exists
-    if (comment.trim() && !commentHistory.some(h => h.text === comment.trim())) {
-      const newHistoryItem = { text: comment.trim(), date: new Date().toISOString() };
-      const newHistory = [newHistoryItem, ...commentHistory].slice(0, 10); // Keep last 10
-      setCommentHistory(newHistory);
-      localStorage.setItem('commentHistory', JSON.stringify(newHistory));
+    // Add to ticker-specific history if not empty and not already exists
+    if (comment.trim()) {
+      const tickerHistory = commentHistory[key] || [];
+      if (!tickerHistory.some(h => h.text === comment.trim())) {
+        const newHistoryItem = { text: comment.trim(), date: new Date().toISOString() };
+        const updatedTickerHistory = [newHistoryItem, ...tickerHistory].slice(0, 5); // Keep last 5 per ticker
+        const newHistory = { ...commentHistory, [key]: updatedTickerHistory };
+        setCommentHistory(newHistory);
+        localStorage.setItem('tickerCommentHistory', JSON.stringify(newHistory));
+      }
     }
     
     setShowCommentModal(null);
@@ -109,10 +107,12 @@ export default function HighlightedStocksWithDateRange({
     setShowCommentModal(stockId);
   };
 
-  const deleteHistoryItem = (index: number) => {
-    const newHistory = commentHistory.filter((_, i) => i !== index);
+  const deleteHistoryItem = (ticker: string, index: number) => {
+    const tickerHistory = commentHistory[ticker] || [];
+    const updatedTickerHistory = tickerHistory.filter((_, i) => i !== index);
+    const newHistory = { ...commentHistory, [ticker]: updatedTickerHistory };
     setCommentHistory(newHistory);
-    localStorage.setItem('commentHistory', JSON.stringify(newHistory));
+    localStorage.setItem('tickerCommentHistory', JSON.stringify(newHistory));
   };
 
   // Parse date string to Date object
@@ -871,12 +871,14 @@ export default function HighlightedStocksWithDateRange({
                 
                 {(() => {
                   const stock = stocks.find(s => s.id === showCommentModal);
-                  const hasExistingComment = stock && stockComments[stock.ticker];
-                  return hasExistingComment && commentHistory.length > 0 && (
+                  const ticker = stock?.ticker;
+                  const hasExistingComment = ticker && stockComments[ticker];
+                  const tickerHistory = ticker ? (commentHistory[ticker] || []) : [];
+                  return hasExistingComment && tickerHistory.length > 0 && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">Recent Comments</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Recent Comments for {ticker}</label>
                       <div className="max-h-32 overflow-y-auto space-y-2">
-                        {commentHistory.slice(0, 5).map((item, index) => (
+                        {tickerHistory.map((item, index) => (
                           <div key={index} className="group flex items-start gap-3 p-3 bg-gray-50 hover:bg-blue-50 rounded-xl transition-all duration-200 cursor-pointer" onClick={() => setCurrentComment(item.text)}>
                             <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -890,7 +892,7 @@ export default function HighlightedStocksWithDateRange({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteHistoryItem(index);
+                                deleteHistoryItem(ticker, index);
                               }}
                               className="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-600 transition-all duration-200"
                               title="Delete"
