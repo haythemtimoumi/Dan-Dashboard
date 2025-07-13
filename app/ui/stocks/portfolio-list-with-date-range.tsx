@@ -89,8 +89,8 @@ export default function PortfolioListWithDateRange({
       }
     }
     
-    setShowCommentModal(null);
     setCurrentComment('');
+    setShowCommentModal(null);
   };
 
   const openCommentModal = (stockId: string) => {

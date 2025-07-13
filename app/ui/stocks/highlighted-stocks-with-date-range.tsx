@@ -96,8 +96,8 @@ export default function HighlightedStocksWithDateRange({
       }
     }
     
-    setShowCommentModal(null);
     setCurrentComment('');
+    setShowCommentModal(null);
   };
 
   const openCommentModal = (stockId: string) => {
