@@ -4,6 +4,16 @@
 
 @import './dashboard/nav-animations.css';
 
+@layer base {
+  html {
+    @apply transition-colors duration-200;
+  }
+  
+  .dark {
+    color-scheme: dark;
+  }
+}
+
 input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;

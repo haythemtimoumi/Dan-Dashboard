@@ -112,17 +112,17 @@ export default function StockBarChart({
   };
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-6">
+    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-black">{title}</h3>
-        <span className="text-sm text-gray-500">{data.length}</span>
+        <h3 className="font-semibold text-black dark:text-white">{title}</h3>
+        <span className="text-sm text-gray-500 dark:text-gray-400">{data.length}</span>
       </div>
       <div className="h-64">
         {data.length > 0 ? (
           <Bar data={chartData} options={options as any} />
         ) : (
           <div className="h-full flex items-center justify-center">
-            <p className="text-gray-400">No data</p>
+            <p className="text-gray-400 dark:text-gray-500">No data</p>
           </div>
         )}
       </div>
