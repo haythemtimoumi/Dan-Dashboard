@@ -37,6 +37,30 @@ export default function HighlightedStocksWithDateRange({
   const [dateError, setDateError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('sentiment_score');
   const [sortOrder, setSortOrder] = useState<string>('desc');
+  const [stockColors, setStockColors] = useState<{[key: string]: string}>({});
+  const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
+
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedColors = localStorage.getItem('stockColors');
+    const savedComments = localStorage.getItem('stockComments');
+    if (savedColors) setStockColors(JSON.parse(savedColors));
+    if (savedComments) setStockComments(JSON.parse(savedComments));
+  }, []);
+
+  // Save color change to localStorage
+  const handleColorChange = (stockId: string, color: string) => {
+    const newColors = { ...stockColors, [stockId]: color };
+    setStockColors(newColors);
+    localStorage.setItem('stockColors', JSON.stringify(newColors));
+  };
+
+  // Save comment change to localStorage
+  const handleCommentChange = (stockId: string, comment: string) => {
+    const newComments = { ...stockComments, [stockId]: comment };
+    setStockComments(newComments);
+    localStorage.setItem('stockComments', JSON.stringify(newComments));
+  };
 
   // Parse date string to Date object
   function parseDate(dateString: string): Date | null {
@@ -463,16 +487,53 @@ export default function HighlightedStocksWithDateRange({
                       </div>
                       
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                        <div className="flex items-center gap-2">
-                          <span className={clsx("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium", 
-                            getSourceBadgeColor(stock.source)
-                          )}>
-                            {stock.source}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : 'No date'}
-                          </span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={clsx("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium", 
+                              getSourceBadgeColor(stock.source)
+                            )}>
+                              {stock.source}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : 'No date'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={stockColors[stock.id] || ''}
+                              onChange={(e) => handleColorChange(stock.id, e.target.value)}
+                              className="text-xs border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <option value="">Color</option>
+                              <option value="red">🔴</option>
+                              <option value="green">🟢</option>
+                              <option value="yellow">🟡</option>
+                            </select>
+                          </div>
                         </div>
+                        {(stockComments[stock.id] || stockColors[stock.id]) && (
+                          <div className="mt-2 pt-2 border-t border-gray-100">
+                            {stockColors[stock.id] && (
+                              <div className="flex items-center gap-1 mb-1">
+                                <span className="text-xs text-gray-500">Color:</span>
+                                <span className={clsx("inline-block w-3 h-3 rounded-full", 
+                                  stockColors[stock.id] === 'red' && 'bg-red-400',
+                                  stockColors[stock.id] === 'green' && 'bg-green-400',
+                                  stockColors[stock.id] === 'yellow' && 'bg-yellow-400'
+                                )}></span>
+                              </div>
+                            )}
+                            <input
+                              type="text"
+                              value={stockComments[stock.id] || ''}
+                              onChange={(e) => handleCommentChange(stock.id, e.target.value)}
+                              placeholder="Add comment..."
+                              className="text-xs border rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        )}
 
                       </div>
                     </div>
@@ -560,13 +621,21 @@ export default function HighlightedStocksWithDateRange({
                       </th>
                       <th className="px-2 py-2 text-left text-gray-700">Source</th>
                       <th className="px-2 py-2 text-left text-gray-700">Date</th>
+                      <th className="px-2 py-2 text-center text-gray-700">Color</th>
+                      <th className="px-2 py-2 text-left text-gray-700">Comment</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
                     {paginatedStocks.map((stock) => (
                       <tr
                         key={stock.id}
-                        className="hover:bg-blue-50/50 cursor-pointer transition-all duration-200 border-b border-gray-100 last:border-b-0"
+                        className={clsx(
+                          "cursor-pointer transition-all duration-200 border-b border-gray-100 last:border-b-0",
+                          stockColors[stock.id] === 'red' && 'bg-red-50 hover:bg-red-100',
+                          stockColors[stock.id] === 'green' && 'bg-green-50 hover:bg-green-100',
+                          stockColors[stock.id] === 'yellow' && 'bg-yellow-50 hover:bg-yellow-100',
+                          !stockColors[stock.id] && 'hover:bg-blue-50/50'
+                        )}
                         onClick={(e) => {
                           e.preventDefault();
                           router.push(`/dashboard/highlighted/${stock.id}`);
@@ -630,6 +699,29 @@ export default function HighlightedStocksWithDateRange({
                         </td>
                         <td className="px-2 py-2 text-xs text-gray-500">
                           {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="px-2 py-2 text-center">
+                          <select
+                            value={stockColors[stock.id] || ''}
+                            onChange={(e) => handleColorChange(stock.id, e.target.value)}
+                            className="text-xs border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <option value="">-</option>
+                            <option value="red" style={{backgroundColor: '#fee2e2'}}>🔴 Red</option>
+                            <option value="green" style={{backgroundColor: '#dcfce7'}}>🟢 Green</option>
+                            <option value="yellow" style={{backgroundColor: '#fef3c7'}}>🟡 Yellow</option>
+                          </select>
+                        </td>
+                        <td className="px-2 py-2">
+                          <input
+                            type="text"
+                            value={stockComments[stock.id] || ''}
+                            onChange={(e) => handleCommentChange(stock.id, e.target.value)}
+                            placeholder="Add comment..."
+                            className="text-xs border rounded px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            onClick={(e) => e.stopPropagation()}
+                          />
                         </td>
                       </tr>
                     ))}
