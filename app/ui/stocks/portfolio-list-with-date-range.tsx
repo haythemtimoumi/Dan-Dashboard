@@ -35,8 +35,8 @@ export default function PortfolioListWithDateRange({
 
   // Load data from localStorage on component mount
   useEffect(() => {
-    const savedColors = localStorage.getItem('portfolioStockColors');
-    const savedComments = localStorage.getItem('portfolioStockComments');
+    const savedColors = localStorage.getItem('stockColors');
+    const savedComments = localStorage.getItem('stockComments');
     if (savedColors) setStockColors(JSON.parse(savedColors));
     if (savedComments) setStockComments(JSON.parse(savedComments));
   }, []);
@@ -45,14 +45,14 @@ export default function PortfolioListWithDateRange({
   const handleColorChange = (stockId: string, color: string) => {
     const newColors = { ...stockColors, [stockId]: color };
     setStockColors(newColors);
-    localStorage.setItem('portfolioStockColors', JSON.stringify(newColors));
+    localStorage.setItem('stockColors', JSON.stringify(newColors));
   };
 
   // Save comment change to localStorage
   const handleCommentChange = (stockId: string, comment: string) => {
     const newComments = { ...stockComments, [stockId]: comment };
     setStockComments(newComments);
-    localStorage.setItem('portfolioStockComments', JSON.stringify(newComments));
+    localStorage.setItem('stockComments', JSON.stringify(newComments));
   };
 
   function parseDate(dateString: string): Date | null {
