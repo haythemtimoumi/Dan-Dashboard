@@ -602,8 +602,8 @@ export default function HighlightedStocksWithDateRange({
                                 openCommentModal(stock.id);
                               }}
                               className={clsx(
-                                "text-xs border rounded px-2 py-1 w-full text-left focus:outline-none focus:ring-1 focus:ring-blue-500",
-                                stockComments[stock.ticker] ? "text-gray-900" : "text-gray-400"
+                                "text-xs border rounded-lg px-3 py-2 w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200",
+                                stockComments[stock.ticker] ? "text-gray-900 bg-blue-50 border-blue-200 hover:bg-blue-100" : "text-gray-400 hover:bg-gray-50"
                               )}
                             >
                               {stockComments[stock.ticker] || "Add comment..."}
@@ -842,57 +842,85 @@ export default function HighlightedStocksWithDateRange({
       
       {/* Comment Modal */}
       {showCommentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowCommentModal(null)}>
-          <div className="bg-white rounded-lg p-6 w-96 max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4">Add Comment</h3>
-            
-            <textarea
-              value={currentComment}
-              onChange={(e) => setCurrentComment(e.target.value)}
-              placeholder="Enter your comment..."
-              className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              rows={3}
-            />
-            
-            {commentHistory.length > 0 && (
-              <div className="mt-3">
-                <p className="text-sm text-gray-600 mb-2">Recent comments:</p>
-                <div className="max-h-32 overflow-y-auto space-y-1">
-                  {commentHistory.map((item, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 rounded px-2 py-1 transition-colors">
-                      <button
-                        onClick={() => setCurrentComment(item.text)}
-                        className="flex-1 text-left text-xs"
-                      >
-                        <div>{item.text}</div>
-                        <div className="text-gray-400 text-xs">{new Date(item.date).toLocaleDateString()}</div>
-                      </button>
-                      <button
-                        onClick={() => deleteHistoryItem(index)}
-                        className="text-red-500 hover:text-red-700 text-xs p-1"
-                        title="Delete"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCommentModal(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-100" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Add Comment</h3>
+                  <p className="text-sm text-gray-500">Share your thoughts about this stock</p>
                 </div>
               </div>
-            )}
-            
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => handleCommentSave(showCommentModal, currentComment)}
-                className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setShowCommentModal(null)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400 transition-colors"
-              >
-                Cancel
-              </button>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Comment</label>
+                  <textarea
+                    value={currentComment}
+                    onChange={(e) => setCurrentComment(e.target.value)}
+                    placeholder="What are your thoughts on this stock?"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-200"
+                    rows={4}
+                  />
+                </div>
+                
+                {(() => {
+                  const stock = stocks.find(s => s.id === showCommentModal);
+                  const hasExistingComment = stock && stockComments[stock.ticker];
+                  return hasExistingComment && commentHistory.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Recent Comments</label>
+                      <div className="max-h-32 overflow-y-auto space-y-2">
+                        {commentHistory.slice(0, 5).map((item, index) => (
+                          <div key={index} className="group flex items-start gap-3 p-3 bg-gray-50 hover:bg-blue-50 rounded-xl transition-all duration-200 cursor-pointer" onClick={() => setCurrentComment(item.text)}>
+                            <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-800 line-clamp-2">{item.text}</p>
+                              <p className="text-xs text-gray-500 mt-1">{new Date(item.date).toLocaleDateString()}</p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteHistoryItem(index);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-600 transition-all duration-200"
+                              title="Delete"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+              
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button
+                  onClick={() => handleCommentSave(showCommentModal, currentComment)}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl px-4 py-3 text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  Save Comment
+                </button>
+                <button
+                  onClick={() => setShowCommentModal(null)}
+                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
