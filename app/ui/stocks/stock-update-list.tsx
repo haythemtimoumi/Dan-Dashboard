@@ -175,29 +175,34 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
 
 
   const dateSelector = (
-    <div className="bg-white border border-gray-100 rounded-2xl p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold">Stock Update</h2>
-        <div className="flex items-center gap-3">
-          <button onClick={goToPreviousDay} className="p-2 hover:bg-gray-100 rounded-xl">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="bg-white border border-gray-100 rounded-xl p-4 mb-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-bold">Stock Update</h2>
+          {stocks.length > 0 && (
+            <span className="text-sm text-gray-500">({currentIndex + 1}/{stocks.length})</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={goToPreviousDay} className="p-1.5 hover:bg-gray-100 rounded-lg">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div className="min-w-[160px]">
+          <div className="min-w-[140px]">
             <DatePickerInput selectedDate={selectedDate} onChange={handleDateChange} placeholder="Select date..." />
           </div>
-          <button onClick={goToNextDay} className="p-2 hover:bg-gray-100 rounded-xl">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button onClick={goToNextDay} className="p-1.5 hover:bg-gray-100 rounded-lg">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
-          <button onClick={goToToday} className="px-3 py-2 bg-black text-white rounded-xl text-sm hover:bg-gray-800">
+          <button onClick={goToToday} className="px-2.5 py-1.5 bg-black text-white rounded-lg text-xs hover:bg-gray-800">
             Today
           </button>
           <button 
             onClick={() => setAutoRefresh(!autoRefresh)}
-            className={`px-3 py-2 rounded-xl text-sm ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs ${
               autoRefresh 
                 ? 'bg-black text-white' 
                 : 'bg-gray-100 hover:bg-gray-200'
@@ -207,31 +212,21 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
           </button>
         </div>
       </div>
-      
-      {stocks.length > 0 && (
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <div className="flex items-center gap-3">
-            <span>{stocks.length} stocks</span>
-            <span>Best: +{stocks[0]?.pe || 0}%</span>
-          </div>
-          <span>Viewing {currentIndex + 1} of {stocks.length}</span>
-        </div>
-      )}
     </div>
   );
 
   if (stocks.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {dateSelector}
-        <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center">
+        <div className="bg-white border border-gray-100 rounded-xl p-6 text-center">
           <h3 className="font-semibold mb-2">No Stocks Found</h3>
           <p className="text-gray-600 mb-4">No stocks available for selected date</p>
-          <div className="flex justify-center gap-3">
-            <button onClick={goToPreviousDay} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl">
+          <div className="flex justify-center gap-2">
+            <button onClick={goToPreviousDay} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm">
               Yesterday
             </button>
-            <button onClick={goToToday} className="px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800">
+            <button onClick={goToToday} className="px-3 py-1.5 bg-black text-white rounded-lg hover:bg-gray-800 text-sm">
               Today
             </button>
           </div>
@@ -244,182 +239,179 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
   const currentStock = stocks[currentIndex];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {dateSelector}
       
       {/* Stock Overview List */}
       {stocks.length > 0 && (
-        <div className="bg-white border border-gray-100 rounded-2xl p-6">
-          <h3 className="font-semibold mb-4">Quick Navigation</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-32 overflow-y-auto">
+        <div className="bg-white border border-gray-100 rounded-xl p-4">
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5 max-h-20 overflow-y-auto">
             {stocks.map((stock, index) => (
               <button
                 key={stock.id}
                 onClick={() => setCurrentIndex(index)}
-                className={`p-3 rounded-xl text-sm font-medium transition-all ${
+                className={`p-2 rounded-lg text-xs font-medium transition-all ${
                   index === currentIndex
                     ? 'bg-black text-white'
                     : 'bg-gray-100 hover:bg-gray-200'
                 }`}
               >
                 <div className="truncate">{stock.ticker}</div>
-                <div className="text-xs opacity-70">+{stock.pe}%</div>
+                <div className="text-[10px] opacity-70">+{stock.pe}%</div>
               </button>
             ))}
           </div>
         </div>
       )}
       
-      {/* Stock Card */}
-      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-        {/* Screenshot */}
-        {currentStock.screenshot && (
-          <div className="relative h-[400px] md:h-[550px] lg:h-[700px] bg-gray-50 border-b border-gray-100">
-            <Image 
-              src={currentStock.screenshot} 
-              alt={`${currentStock.ticker} chart`}
-              fill
-              className="object-contain"
-              priority
-            />
-            <div className="absolute top-4 left-4 bg-black text-white rounded-xl px-3 py-1.5">
-              <span className="text-xs font-medium">Live Chart</span>
-            </div>
-          </div>
-        )}
-        
-        {/* Card Content */}
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold mb-1">{currentStock.ticker}</h1>
-              <p className="text-gray-600">{currentStock.guru}</p>
-            </div>
-            <div className="text-right">
-              <div className="bg-black text-white font-bold rounded-xl px-4 py-2">
-                +{currentStock.pe}%
+      {/* Two-Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Chart Column */}
+        <div className="lg:col-span-2">
+          <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+            {currentStock.screenshot && (
+              <div className="relative h-[300px] md:h-[400px] bg-gray-50">
+                <Image 
+                  src={currentStock.screenshot} 
+                  alt={`${currentStock.ticker} chart`}
+                  fill
+                  className="object-contain"
+                  priority
+                />
+                <div className="absolute top-2 left-2 bg-black text-white rounded-lg px-2 py-1">
+                  <span className="text-xs font-medium">Live Chart</span>
+                </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Upside</p>
+            )}
+          </div>
+        </div>
+        
+        {/* Stats Column */}
+        <div className="space-y-4">
+          {/* Header Card */}
+          <div className="bg-white border border-gray-100 rounded-xl p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-xl font-bold">{currentStock.ticker}</h1>
+                <p className="text-sm text-gray-600">{currentStock.guru}</p>
+              </div>
+              <div className="text-right">
+                <div className="bg-black text-white font-bold rounded-lg px-3 py-1.5 text-lg">
+                  +{currentStock.pe}%
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Upside</p>
+              </div>
             </div>
           </div>
           
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-5 gap-4 mb-6">
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-xs text-gray-600 mb-1">Sentiment</p>
-              <p className="text-lg font-bold">{currentStock.sentiment_score}</p>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-xs text-gray-600 mb-1">Signal</p>
-              <p className="text-lg font-bold">{currentStock.signal_score}</p>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-xs text-gray-600 mb-1">Rule1</p>
-              <p className="text-lg font-bold">{currentStock.rule1_score !== null ? currentStock.rule1_score : '—'}</p>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-xs text-gray-600 mb-1">Moat</p>
-              <p className="text-lg font-bold">{currentStock.moat_score !== null ? currentStock.moat_score : '—'}</p>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-xs text-gray-600 mb-1">Buy Price</p>
-              <p className="text-lg font-bold">{formatCurrency(currentStock.buy_price).replace('$', '')}</p>
+          {/* Metrics Card */}
+          <div className="bg-white border border-gray-100 rounded-xl p-4">
+            <h3 className="font-semibold mb-3 text-sm">Key Metrics</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs text-gray-600">Sentiment</p>
+                <p className="font-bold">{currentStock.sentiment_score}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs text-gray-600">Signal</p>
+                <p className="font-bold">{currentStock.signal_score}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs text-gray-600">Rule1</p>
+                <p className="font-bold">{currentStock.rule1_score !== null ? currentStock.rule1_score : '—'}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs text-gray-600">Moat</p>
+                <p className="font-bold">{currentStock.moat_score !== null ? currentStock.moat_score : '—'}</p>
+              </div>
             </div>
           </div>
           
-          {/* Financial Metrics */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-xs text-gray-600 mb-1">Management</p>
-              <p className="font-bold">{currentStock.management_score !== null ? currentStock.management_score : '—'}</p>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-xs text-gray-600 mb-1">Sticker</p>
-              <p className="font-bold">{formatCurrency(currentStock.buy_price * 2).replace('$', '')}</p>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-xs text-gray-600 mb-1">Current</p>
-              <p className="font-bold">{currentStock.current_ratio || '—'}</p>
+          {/* Financial Card */}
+          <div className="bg-white border border-gray-100 rounded-xl p-4">
+            <h3 className="font-semibold mb-3 text-sm">Financial</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Buy Price</span>
+                <span className="font-bold">{formatCurrency(currentStock.buy_price).replace('$', '')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Sticker</span>
+                <span className="font-bold">{formatCurrency(currentStock.buy_price * 2).replace('$', '')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Management</span>
+                <span className="font-bold">{currentStock.management_score !== null ? currentStock.management_score : '—'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Current</span>
+                <span className="font-bold">{currentStock.current_ratio || '—'}</span>
+              </div>
             </div>
           </div>
           
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-3">
-              <span className="bg-gray-100 px-3 py-1 rounded-xl text-sm font-medium">
+          {/* Action Card */}
+          <div className="bg-white border border-gray-100 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="bg-gray-100 px-2 py-1 rounded-lg text-xs font-medium">
                 {currentStock.source}
               </span>
-              <span className="text-sm text-gray-600">
+              <span className="text-xs text-gray-600">
                 {(currentStock.date || currentStock.created_at) ? 
                   new Date(currentStock.date || currentStock.created_at).toLocaleDateString('en-US') : 
                   'No date'
                 }
               </span>
             </div>
-            
             <button
               onClick={() => router.push(`/dashboard/highlighted/${currentStock.id}`)}
-              className="bg-black text-white px-4 py-2 rounded-xl font-medium hover:bg-gray-800"
+              className="w-full bg-black text-white py-2 rounded-lg font-medium hover:bg-gray-800"
             >
-              Analyze
+              Analyze Stock
             </button>
           </div>
         </div>
       </div>
       
-      {/* Keyboard Shortcuts Help */}
-      <div className="bg-white border border-gray-100 rounded-2xl p-4">
-        <div className="text-center text-sm text-gray-600">
-          <span className="font-medium">Keyboard Shortcuts:</span> ← → Navigate stocks | ↑ ↓ Change dates
+      {/* Navigation & Shortcuts */}
+      <div className="flex items-center justify-between bg-white border border-gray-100 rounded-xl p-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handlePrevious}
+            disabled={currentIndex === 0}
+            className={clsx(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium",
+              currentIndex === 0
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-black text-white hover:bg-gray-800"
+            )}
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+            </svg>
+            Prev
+          </button>
+          
+          <button
+            onClick={handleNext}
+            disabled={currentIndex === stocks.length - 1}
+            className={clsx(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium",
+              currentIndex === stocks.length - 1
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-black text-white hover:bg-gray-800"
+            )}
+          >
+            Next
+            <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+            </svg>
+          </button>
         </div>
-      </div>
-      
-      {/* Navigation */}
-      <div className="flex justify-center items-center gap-4">
-        <button
-          onClick={handlePrevious}
-          disabled={currentIndex === 0}
-          className={clsx(
-            "flex items-center gap-2 px-4 py-2 rounded-xl font-medium",
-            currentIndex === 0
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-              : "bg-black text-white hover:bg-gray-800"
-          )}
-        >
-          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-          </svg>
-          Previous
-        </button>
         
-        <div className="bg-gray-100 px-4 py-2 rounded-xl">
-          <span className="text-sm font-medium">
-            {currentIndex + 1} / {stocks.length}
-          </span>
+        <div className="text-xs text-gray-600">
+          <span className="font-medium">Shortcuts:</span> ← → Navigate | ↑ ↓ Dates
         </div>
-        
-        <button
-          onClick={handleNext}
-          disabled={currentIndex === stocks.length - 1}
-          className={clsx(
-            "flex items-center gap-2 px-4 py-2 rounded-xl font-medium",
-            currentIndex === stocks.length - 1
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-              : "bg-black text-white hover:bg-gray-800"
-          )}
-        >
-          Next
-          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-          </svg>
-        </button>
       </div>
     </div>
   );

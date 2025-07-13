@@ -19,7 +19,7 @@ const links = [
   { name: 'Add Stock', href: '/dashboard/stocks/create', icon: PlusCircleIcon },
 ];
 
-export default function NavLinks() {
+export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolean }) {
   const pathname = usePathname();
   
   return (
@@ -37,12 +37,18 @@ export default function NavLinks() {
               "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200",
               isActive
                 ? "bg-black text-white"
-                : "text-gray-600 hover:bg-gray-100 hover:text-black"
+                : "text-gray-600 hover:bg-gray-100 hover:text-black",
+              isCollapsed && "justify-center px-2"
             )}
+            title={isCollapsed ? link.name : undefined}
           >
             <LinkIcon className="h-5 w-5 flex-shrink-0" />
-            <span className="truncate">{link.name}</span>
-            {isActive && <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full" />}
+            {!isCollapsed && (
+              <>
+                <span className="truncate">{link.name}</span>
+                {isActive && <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full" />}
+              </>
+            )}
           </Link>
         );
       })}

@@ -44,7 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       
       {/* Sidebar */}
       <div className={`
-        fixed md:relative inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 md:translate-x-0
+        fixed md:relative inset-y-0 left-0 z-50 transform transition-transform duration-200 md:translate-x-0
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         md:flex-none border-r border-gray-100
       `}>
