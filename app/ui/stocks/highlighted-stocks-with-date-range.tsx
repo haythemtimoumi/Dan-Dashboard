@@ -42,6 +42,7 @@ export default function HighlightedStocksWithDateRange({
   const [commentHistory, setCommentHistory] = useState<{text: string, date: string}[]>([]);
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [currentComment, setCurrentComment] = useState<string>('');
+  const [showColorModal, setShowColorModal] = useState<string | null>(null);
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -68,6 +69,17 @@ export default function HighlightedStocksWithDateRange({
     const newColors = { ...stockColors, [key]: color };
     setStockColors(newColors);
     localStorage.setItem('stockColors', JSON.stringify(newColors));
+    setShowColorModal(null);
+  };
+
+  const cycleColor = (stockId: string) => {
+    const stock = stocks.find(s => s.id === stockId);
+    const key = stock?.ticker || stockId;
+    const currentColor = stockColors[key] || '';
+    const colors = ['', 'red', 'green', 'yellow'];
+    const currentIndex = colors.indexOf(currentColor);
+    const nextColor = colors[(currentIndex + 1) % colors.length];
+    handleColorChange(stockId, nextColor);
   };
 
   // Save comment change to localStorage
@@ -540,17 +552,24 @@ export default function HighlightedStocksWithDateRange({
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <select
-                              value={stockColors[stock.ticker] || ''}
-                              onChange={(e) => handleColorChange(stock.id, e.target.value)}
-                              className="text-xs border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              onClick={(e) => e.stopPropagation()}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cycleColor(stock.id);
+                              }}
+                              className={clsx(
+                                "p-1 rounded hover:bg-gray-100 transition-colors",
+                                stockColors[stock.ticker] === 'red' && 'text-red-500',
+                                stockColors[stock.ticker] === 'green' && 'text-green-500',
+                                stockColors[stock.ticker] === 'yellow' && 'text-yellow-500',
+                                !stockColors[stock.ticker] && 'text-gray-400'
+                              )}
+                              title="Click to change color"
                             >
-                              <option value="">Color</option>
-                              <option value="red">🔴</option>
-                              <option value="green">🟢</option>
-                              <option value="yellow">🟡</option>
-                            </select>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                              </svg>
+                            </button>
                           </div>
                         </div>
                         {(stockComments[stock.ticker] || stockColors[stock.ticker]) && (
@@ -746,17 +765,24 @@ export default function HighlightedStocksWithDateRange({
                           {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString() : '-'}
                         </td>
                         <td className="px-2 py-2 text-center">
-                          <select
-                            value={stockColors[stock.ticker] || ''}
-                            onChange={(e) => handleColorChange(stock.id, e.target.value)}
-                            className="text-xs border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            onClick={(e) => e.stopPropagation()}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cycleColor(stock.id);
+                            }}
+                            className={clsx(
+                              "p-1 rounded hover:bg-gray-100 transition-colors",
+                              stockColors[stock.ticker] === 'red' && 'text-red-500',
+                              stockColors[stock.ticker] === 'green' && 'text-green-500',
+                              stockColors[stock.ticker] === 'yellow' && 'text-yellow-500',
+                              !stockColors[stock.ticker] && 'text-gray-400'
+                            )}
+                            title="Click to change color"
                           >
-                            <option value="">-</option>
-                            <option value="red" style={{backgroundColor: '#fee2e2'}}>🔴 Red</option>
-                            <option value="green" style={{backgroundColor: '#dcfce7'}}>🟢 Green</option>
-                            <option value="yellow" style={{backgroundColor: '#fef3c7'}}>🟡 Yellow</option>
-                          </select>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                          </button>
                         </td>
                         <td className="px-2 py-2 text-center">
                           <button
