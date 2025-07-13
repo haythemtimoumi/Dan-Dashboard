@@ -17,6 +17,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 const translations = {
   en: {
+    // Navigation
     dashboard: 'Dashboard',
     highlighted: 'Highlighted',
     portfolio: 'Portfolio',
@@ -28,28 +29,112 @@ const translations = {
     english: 'English',
     french: 'French',
     logout: 'Logout',
+    
+    // Page Titles
     featuredStocks: 'Featured Stocks',
     portfolioList: 'Portfolio List',
     stockUpdate: 'Stock Update',
+    stockScreener: 'StockScreener',
+    
+    // Descriptions
     highlightedInvestmentOpportunities: 'Highlighted investment opportunities',
     manualPortfolioStocks: 'Manual portfolio stocks',
+    trackStockMetricChanges: 'Track stock metric changes',
+    signInToAccessDashboard: 'Sign in to access your dashboard',
+    
+    // Forms & Filters
     filterByDateRange: 'Filter by Date Range',
     startDate: 'Start Date',
     endDate: 'End Date',
     today: 'Today',
     apply: 'Apply',
-    noStocksFound: 'No Stocks Found',
-    errorLoadingStocks: 'Error Loading Stocks',
-    tryAgain: 'Try Again',
-    loading: 'Loading...',
+    username: 'Username',
+    password: 'Password',
+    enterYourUsername: 'Enter your username',
+    enterYourPassword: 'Enter your password',
+    rememberMe: 'Remember me for 30 days',
+    signIn: 'Sign In',
+    signingIn: 'Signing in...',
+    
+    // Table Headers
+    ticker: 'Ticker',
+    sentiment: 'Sentiment',
+    signal: 'Signal',
+    rule1: 'Rule1',
+    moat: 'Moat',
+    management: 'Mgmt',
+    buyPrice: 'Buy',
+    stickerPrice: 'Sticker',
+    price: 'Price',
+    upside: 'Upside',
+    composite: 'Comp',
+    growth: 'Growth',
+    pbt: 'PBT',
+    source: 'Source',
+    date: 'Date',
+    color: 'Color',
+    comment: 'Comment',
+    
+    // Metrics
     keyMetrics: 'Key Metrics',
     financial: 'Financial',
+    totalChanges: 'Total Changes',
+    positive: 'Positive',
+    negative: 'Negative',
+    average: 'Average',
+    
+    // Actions
     analyzeStock: 'Analyze Stock',
+    addComment: 'Add Comment',
+    saveComment: 'Save Comment',
+    cancel: 'Cancel',
+    refresh: 'Refresh',
+    previous: 'Prev',
+    next: 'Next',
+    
+    // Messages
+    noStocksFound: 'No Stocks Found',
+    noFeaturedStocksFound: 'No Featured Stocks Found',
+    noPortfolioStocksFound: 'No Portfolio Stocks Found',
+    errorLoadingStocks: 'Error Loading Stocks',
+    errorLoadingFeaturedStocks: 'Error Loading Featured Stocks',
+    errorLoadingPortfolio: 'Error Loading Portfolio',
+    tryAgain: 'Try Again',
+    loading: 'Loading...',
+    noData: 'No data',
+    
+    // Shortcuts
     shortcuts: 'Shortcuts',
     navigate: 'Navigate',
     dates: 'Dates',
+    
+    // Stock Details
+    signalScore: 'Signal Score',
+    rule1Score: 'Rule1 Score',
+    targetBuyPrice: 'Target Buy Price',
+    lastPrice: 'Last Price',
+    lastSavedCompositeGR: 'Last Saved Composite GR',
+    analystEstimatedLongTermGR: 'Analyst Estimated Long-Term GR',
+    
+    // Dashboard specific
+    metric: 'Metric',
+    threshold: 'Threshold',
+    topGainers: 'Top Gainers',
+    topLosers: 'Top Losers',
+    gainers: 'Gainers',
+    losers: 'Losers',
+    
+    // Time
+    stocks: 'stocks',
+    yesterday: 'Yesterday',
+    
+    // Validation
+    pleaseSelectBothDates: 'Please select both start and end dates',
+    startDateCannotBeAfterEndDate: 'Start date cannot be after end date',
+    invalidDateSelection: 'Invalid date selection. Please try again.',
   },
   fr: {
+    // Navigation
     dashboard: 'Tableau de bord',
     highlighted: 'En vedette',
     portfolio: 'Portefeuille',
@@ -61,26 +146,109 @@ const translations = {
     english: 'Anglais',
     french: 'Français',
     logout: 'Déconnexion',
+    
+    // Page Titles
     featuredStocks: 'Actions en vedette',
     portfolioList: 'Liste du portefeuille',
     stockUpdate: 'Mise à jour des actions',
+    stockScreener: 'StockScreener',
+    
+    // Descriptions
     highlightedInvestmentOpportunities: 'Opportunités d\'investissement en vedette',
     manualPortfolioStocks: 'Actions du portefeuille manuel',
+    trackStockMetricChanges: 'Suivre les changements de métriques des actions',
+    signInToAccessDashboard: 'Connectez-vous pour accéder à votre tableau de bord',
+    
+    // Forms & Filters
     filterByDateRange: 'Filtrer par plage de dates',
     startDate: 'Date de début',
     endDate: 'Date de fin',
     today: 'Aujourd\'hui',
     apply: 'Appliquer',
-    noStocksFound: 'Aucune action trouvée',
-    errorLoadingStocks: 'Erreur lors du chargement des actions',
-    tryAgain: 'Réessayer',
-    loading: 'Chargement...',
+    username: 'Nom d\'utilisateur',
+    password: 'Mot de passe',
+    enterYourUsername: 'Entrez votre nom d\'utilisateur',
+    enterYourPassword: 'Entrez votre mot de passe',
+    rememberMe: 'Se souvenir de moi pendant 30 jours',
+    signIn: 'Se connecter',
+    signingIn: 'Connexion en cours...',
+    
+    // Table Headers
+    ticker: 'Symbole',
+    sentiment: 'Sentiment',
+    signal: 'Signal',
+    rule1: 'Rule1',
+    moat: 'Fossé',
+    management: 'Gestion',
+    buyPrice: 'Achat',
+    stickerPrice: 'Autocollant',
+    price: 'Prix',
+    upside: 'Potentiel',
+    composite: 'Composite',
+    growth: 'Croissance',
+    pbt: 'PBT',
+    source: 'Source',
+    date: 'Date',
+    color: 'Couleur',
+    comment: 'Commentaire',
+    
+    // Metrics
     keyMetrics: 'Métriques clés',
     financial: 'Financier',
+    totalChanges: 'Total des changements',
+    positive: 'Positif',
+    negative: 'Négatif',
+    average: 'Moyenne',
+    
+    // Actions
     analyzeStock: 'Analyser l\'action',
+    addComment: 'Ajouter un commentaire',
+    saveComment: 'Enregistrer le commentaire',
+    cancel: 'Annuler',
+    refresh: 'Actualiser',
+    previous: 'Précédent',
+    next: 'Suivant',
+    
+    // Messages
+    noStocksFound: 'Aucune action trouvée',
+    noFeaturedStocksFound: 'Aucune action en vedette trouvée',
+    noPortfolioStocksFound: 'Aucune action de portefeuille trouvée',
+    errorLoadingStocks: 'Erreur lors du chargement des actions',
+    errorLoadingFeaturedStocks: 'Erreur lors du chargement des actions en vedette',
+    errorLoadingPortfolio: 'Erreur lors du chargement du portefeuille',
+    tryAgain: 'Réessayer',
+    loading: 'Chargement...',
+    noData: 'Aucune donnée',
+    
+    // Shortcuts
     shortcuts: 'Raccourcis',
     navigate: 'Naviguer',
     dates: 'Dates',
+    
+    // Stock Details
+    signalScore: 'Score de signal',
+    rule1Score: 'Score Rule1',
+    targetBuyPrice: 'Prix d\'achat cible',
+    lastPrice: 'Dernier prix',
+    lastSavedCompositeGR: 'Dernier GR composite sauvegardé',
+    analystEstimatedLongTermGR: 'GR à long terme estimé par l\'analyste',
+    
+    // Dashboard specific
+    metric: 'Métrique',
+    threshold: 'Seuil',
+    topGainers: 'Meilleurs gains',
+    topLosers: 'Pires pertes',
+    gainers: 'Gains',
+    losers: 'Pertes',
+    
+    // Time
+    stocks: 'actions',
+    yesterday: 'Hier',
+    
+    // Validation
+    pleaseSelectBothDates: 'Veuillez sélectionner les dates de début et de fin',
+    startDateCannotBeAfterEndDate: 'La date de début ne peut pas être postérieure à la date de fin',
+    invalidDateSelection: 'Sélection de date invalide. Veuillez réessayer.',
   },
 };
 

@@ -68,14 +68,14 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              StockScreener
+              {t('stockScreener')}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">Sign in to access your dashboard</p>
+            <p className="text-gray-600 dark:text-gray-400">{t('signInToAccessDashboard')}</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('username')}</label>
               <div className="relative">
                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
@@ -83,14 +83,14 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your username"
+                  placeholder={t('enterYourUsername')}
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('password')}</label>
               <div className="relative">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -100,7 +100,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your password"
+                  placeholder={t('enterYourPassword')}
                   required
                 />
                 <button
@@ -122,7 +122,7 @@ export default function LoginPage() {
                 className="h-4 w-4 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
               />
               <label htmlFor="remember-me" className="ml-3 block text-sm text-gray-700 dark:text-gray-300">
-                Remember me for 30 days
+                {t('rememberMe')}
               </label>
             </div>
 
@@ -134,10 +134,10 @@ export default function LoginPage() {
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 border-2 border-gray-300 border-t-current rounded-full animate-spin"></div>
-                  Signing in...
+                  {t('signingIn')}
                 </div>
               ) : (
-                'Sign In'
+                t('signIn')
               )}
             </button>
           </form>

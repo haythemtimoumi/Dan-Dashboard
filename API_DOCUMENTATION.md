@@ -4,7 +4,7 @@ This document outlines the API endpoints implemented for the Stock Dashboard app
 
 ## Base URL
 
-All API endpoints are relative to: `http://localhost:3000/api`
+All API endpoints are relative to: `https://stockdashboard.ddnsfree.com/api`
 
 ## Available Endpoints
 

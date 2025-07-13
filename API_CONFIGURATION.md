@@ -46,9 +46,9 @@ If you see the error `Failed to load stocks. Please try again later.`, check for
 
 You can test the API endpoints directly in your browser:
 
-- All stocks: http://localhost:3000/api/stocks
-- Highlighted stocks: http://localhost:3000/api/stocks/highlighted
-- Sorted stocks: http://localhost:3000/api/stocks/sorted
-- Daily changes: http://localhost:3000/api/stocks/daily-changes
-- Date range: http://localhost:3000/api/stocks/date-range?startDate=2023-01-01&endDate=2023-12-31
-- Stock history: http://localhost:3000/api/stocks/123/history?from=2023-01-01&to=2023-01-31
+- All stocks: https://stockdashboard.ddnsfree.com/api/stocks
+- Highlighted stocks: https://stockdashboard.ddnsfree.com/api/stocks/highlighted
+- Sorted stocks: https://stockdashboard.ddnsfree.com/api/stocks/sorted
+- Daily changes: https://stockdashboard.ddnsfree.com/api/stocks/daily-changes
+- Date range: https://stockdashboard.ddnsfree.com/api/stocks/date-range?startDate=2023-01-01&endDate=2023-12-31
+- Stock history: https://stockdashboard.ddnsfree.com/api/stocks/123/history?from=2023-01-01&to=2023-01-31

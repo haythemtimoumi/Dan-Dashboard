@@ -355,8 +355,8 @@ export default function HighlightedStocksWithDateRange({
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Featured Stocks</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Highlighted investment opportunities</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('featuredStocks')}</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('highlightedInvestmentOpportunities')}</p>
               </div>
               <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-semibold">
                 {stocks.length} stocks
@@ -375,11 +375,11 @@ export default function HighlightedStocksWithDateRange({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Filter by Date Range</span>
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t('filterByDateRange')}</span>
             </div>
             <form onSubmit={handleDateFilterChange} className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-32">
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Start Date</label>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">{t('startDate')}</label>
                 <div className="relative">
                   <DatePicker
                     selected={startDateObj}
@@ -395,7 +395,7 @@ export default function HighlightedStocksWithDateRange({
               </div>
               
               <div className="flex-1 min-w-32">
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">End Date</label>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">{t('endDate')}</label>
                 <div className="relative">
                   <DatePicker
                     selected={endDateObj}
@@ -427,13 +427,13 @@ export default function HighlightedStocksWithDateRange({
                 }}
                 className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
               >
-                Today
+                {t('today')}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
               >
-                Apply
+                {t('apply')}
               </button>
             </form>
             
@@ -451,7 +451,7 @@ export default function HighlightedStocksWithDateRange({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">No Featured Stocks Found</h3>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('noFeaturedStocksFound')}</h3>
               <p className="text-gray-500 max-w-md mx-auto">No highlighted stocks were found for the selected date range. Try selecting a wider date range or different dates to see featured stocks.</p>
               <button
                 onClick={() => {

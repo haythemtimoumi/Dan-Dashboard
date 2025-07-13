@@ -24,7 +24,7 @@ const API_URL = isProduction ? '/api/proxy' : directApiUrl;
 // Function to create API URLs based on environment
 function createApiUrl(path: string, params?: Record<string, string>) {
   const base = isProduction 
-    ? 'https://stockdashboard.ddnsfree.com' 
+    ? 'http://localhost:3000' 
     : directApiUrl;
 
   // Ensure path starts with /api

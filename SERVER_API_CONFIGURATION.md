@@ -57,11 +57,11 @@ const response = await fetch('/api/proxy/stocks');
 
 1. **Client-side rendering**: 
    - Relative URLs work fine because the browser provides the base URL context
-   - Example: `/api/stocks` → `http://localhost:3000/api/stocks`
+   - Example: `/api/stocks` → `https://stockdashboard.ddnsfree.com/api/stocks`
 
 2. **Server-side rendering**:
    - We use `NEXT_PUBLIC_BASE_URL` to create absolute URLs
-   - Example: `/api/stocks` → `http://localhost:3000/api/stocks`
+   - Example: `/api/stocks` → `https://stockdashboard.ddnsfree.com/api/stocks`
 
 3. **Production environment**:
    - The proxy API route is used to avoid CORS issues
