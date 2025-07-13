@@ -542,6 +542,8 @@ export default function PortfolioListWithDateRange({
                 <table className="min-w-full text-gray-900 text-sm">
                   <thead>
                     <tr className="bg-gradient-to-r from-gray-50 to-green-50 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider border-b border-gray-200">
+                      <th className="px-2 py-2 text-center text-gray-700">Color</th>
+                      <th className="px-2 py-2 text-left text-gray-700">Comment</th>
                       <th className="px-2 py-2 text-left text-gray-700 cursor-pointer" onClick={() => handleSort('ticker')}>
                         <div className="flex items-center gap-1">
                           <span>Ticker</span>
@@ -617,8 +619,6 @@ export default function PortfolioListWithDateRange({
                       </th>
                       <th className="px-2 py-2 text-left text-gray-700">Source</th>
                       <th className="px-2 py-2 text-left text-gray-700">Date</th>
-                      <th className="px-2 py-2 text-center text-gray-700">Color</th>
-                      <th className="px-2 py-2 text-left text-gray-700">Comment</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
@@ -637,6 +637,51 @@ export default function PortfolioListWithDateRange({
                           router.push(`/dashboard/highlighted/${stock.id}`);
                         }}
                       >
+                        <td className="px-2 py-2 text-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cycleColor(stock.id);
+                            }}
+                            className={clsx(
+                              "p-1 rounded hover:bg-gray-100 transition-colors",
+                              stockColors[stock.ticker] === 'red' && 'text-red-500',
+                              stockColors[stock.ticker] === 'green' && 'text-green-500',
+                              stockColors[stock.ticker] === 'yellow' && 'text-yellow-500',
+                              !stockColors[stock.ticker] && 'text-gray-400'
+                            )}
+                            title="Click to change color"
+                          >
+                            {stock.source === 'manual' ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v9a2 2 0 002 2z" />
+                                <circle cx="12" cy="9" r="2" />
+                                <path d="M8 9h1m6 0h1" />
+                              </svg>
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-2 py-2 text-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openCommentModal(stock.id);
+                            }}
+                            className={clsx(
+                              "p-1 rounded hover:bg-gray-100 transition-colors",
+                              stockComments[stock.ticker] ? "text-green-600" : "text-gray-400"
+                            )}
+                            title={stockComments[stock.ticker] || "Add comment"}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </button>
+                        </td>
                         <td className="px-2 py-2">
                           <div className="font-medium text-gray-900 text-sm">{stock.ticker}</div>
                         </td>
@@ -695,51 +740,6 @@ export default function PortfolioListWithDateRange({
                         </td>
                         <td className="px-2 py-2 text-xs text-gray-500">
                           {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-2 py-2 text-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              cycleColor(stock.id);
-                            }}
-                            className={clsx(
-                              "p-1 rounded hover:bg-gray-100 transition-colors",
-                              stockColors[stock.ticker] === 'red' && 'text-red-500',
-                              stockColors[stock.ticker] === 'green' && 'text-green-500',
-                              stockColors[stock.ticker] === 'yellow' && 'text-yellow-500',
-                              !stockColors[stock.ticker] && 'text-gray-400'
-                            )}
-                            title="Click to change color"
-                          >
-                            {stock.source === 'manual' ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
-                            ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v9a2 2 0 002 2z" />
-                                <circle cx="12" cy="9" r="2" />
-                                <path d="M8 9h1m6 0h1" />
-                              </svg>
-                            )}
-                          </button>
-                        </td>
-                        <td className="px-2 py-2 text-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openCommentModal(stock.id);
-                            }}
-                            className={clsx(
-                              "p-1 rounded hover:bg-gray-100 transition-colors",
-                              stockComments[stock.ticker] ? "text-green-600" : "text-gray-400"
-                            )}
-                            title={stockComments[stock.ticker] || "Add comment"}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </button>
                         </td>
                       </tr>
                     ))}
