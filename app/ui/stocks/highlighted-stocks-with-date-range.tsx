@@ -345,37 +345,15 @@ export default function HighlightedStocksWithDateRange({
   return (
     <div className="flow-root">
       <div className="inline-block min-w-full align-middle">
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-          <div className="flex justify-between items-center p-6 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Featured Stocks</h1>
-                <p className="text-sm text-gray-500">Highlighted investment opportunities</p>
-              </div>
-              <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-semibold">
-                {stocks.length} stocks
-              </span>
-            </div>
-            <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
-              {formatDateToString(startDateObj)} - {formatDateToString(endDateObj)}
-            </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h1 className="text-2xl font-bold text-gray-900">Featured Stocks</h1>
+            <p className="text-gray-600 mt-1">{stocks.length} stocks • {formatDateToString(startDateObj)} - {formatDateToString(endDateObj)}</p>
           </div>
           
           {/* Date filter */}
-          <div className="p-6 bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <span className="text-sm font-semibold text-gray-800">Filter by Date Range</span>
-            </div>
+          <div className="p-6 bg-gray-50 border-b border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Date Range</h3>
             <form onSubmit={handleDateFilterChange} className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-32">
                 <label className="block text-xs text-gray-600 mb-1">Start Date</label>
@@ -424,13 +402,13 @@ export default function HighlightedStocksWithDateRange({
                     router.push(`${pathname}?${params.toString()}`);
                   }, 100);
                 }}
-                className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                className="px-4 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700"
               >
                 Today
               </button>
               <button
                 type="submit"
-                className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
               >
                 Apply
               </button>

@@ -288,37 +288,15 @@ export default function PortfolioListWithDateRange({
   return (
     <div className="flow-root">
       <div className="inline-block min-w-full align-middle">
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-          <div className="flex justify-between items-center p-6 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Portfolio List</h1>
-                <p className="text-sm text-gray-500">Manual portfolio stocks</p>
-              </div>
-              <span className="bg-gradient-to-r from-green-100 to-blue-100 text-green-800 px-3 py-1.5 rounded-full text-sm font-semibold">
-                {stocks.length} stocks
-              </span>
-            </div>
-            <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
-              {formatDateToString(startDateObj)} - {formatDateToString(endDateObj)}
-            </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h1 className="text-2xl font-bold text-gray-900">Portfolio List</h1>
+            <p className="text-gray-600 mt-1">{stocks.length} stocks • {formatDateToString(startDateObj)} - {formatDateToString(endDateObj)}</p>
           </div>
           
           {/* Date filter */}
-          <div className="p-6 bg-gradient-to-r from-gray-50 to-green-50 border-b border-gray-200">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-6 w-6 bg-green-100 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <span className="text-sm font-semibold text-gray-800">Filter by Date Range</span>
-            </div>
+          <div className="p-6 bg-gray-50 border-b border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Date Range</h3>
             <form onSubmit={handleDateFilterChange} className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-32">
                 <label className="block text-xs text-gray-600 mb-1">Start Date</label>
@@ -539,206 +517,99 @@ export default function PortfolioListWithDateRange({
               
               {/* Desktop view */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="min-w-full text-gray-900 text-sm">
+                <table className="min-w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r from-gray-50 to-green-50 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider border-b border-gray-200">
-                      <th className="px-2 py-2 text-center text-gray-700">Color</th>
-                      <th className="px-2 py-2 text-left text-gray-700">Comment</th>
-                      <th className="px-2 py-2 text-left text-gray-700 cursor-pointer" onClick={() => handleSort('ticker')}>
-                        <div className="flex items-center gap-1">
-                          <span>Ticker</span>
-                          {sortBy === 'ticker' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
+                    <tr className="border-b border-gray-200">
+                      <th className="px-3 py-4 text-left text-sm font-medium text-gray-600">Color</th>
+                      <th className="px-3 py-4 text-left text-sm font-medium text-gray-600">Comment</th>
+                      <th className="px-3 py-4 text-left text-sm font-medium text-gray-600 cursor-pointer hover:text-green-600" onClick={() => handleSort('ticker')}>
+                        Ticker {sortBy === 'ticker' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('sentiment_score')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>Sentiment</span>
-                          {sortBy === 'sentiment_score' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
+                      <th className="px-3 py-4 text-center text-sm font-medium text-gray-600 cursor-pointer hover:text-green-600" onClick={() => handleSort('sentiment_score')}>
+                        Sentiment {sortBy === 'sentiment_score' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('signal_score')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>Signal</span>
-                          {sortBy === 'signal_score' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
+                      <th className="px-3 py-4 text-center text-sm font-medium text-gray-600 cursor-pointer hover:text-green-600" onClick={() => handleSort('buy_price')}>
+                        Buy Price {sortBy === 'buy_price' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('rule1_score')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>Rule1</span>
-                          {sortBy === 'rule1_score' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
+                      <th className="px-3 py-4 text-center text-sm font-medium text-gray-600 cursor-pointer hover:text-green-600" onClick={() => handleSort('current_ratio')}>
+                        Current Price {sortBy === 'current_ratio' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('moat_score')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>Moat</span>
-                          {sortBy === 'moat_score' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
+                      <th className="px-3 py-4 text-center text-sm font-medium text-gray-600 cursor-pointer hover:text-green-600" onClick={() => handleSort('pe')}>
+                        Upside {sortBy === 'pe' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('management_score')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>Mgmt</span>
-                          {sortBy === 'management_score' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
-                      </th>
-                      <th className="px-2 py-2 text-right text-gray-700 cursor-pointer" onClick={() => handleSort('buy_price')}>
-                        <div className="flex items-center justify-end gap-1">
-                          <span>Buy</span>
-                          {sortBy === 'buy_price' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
-                      </th>
-                      <th className="px-2 py-2 text-right text-gray-700">Sticker</th>
-                      <th className="px-2 py-2 text-right text-gray-700 cursor-pointer" onClick={() => handleSort('current_ratio')}>
-                        <div className="flex items-center justify-end gap-1">
-                          <span>Price</span>
-                          {sortBy === 'current_ratio' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
-                      </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('pe')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>Upside</span>
-                          {sortBy === 'pe' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
-                      </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('dividend')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>Comp</span>
-                          {sortBy === 'dividend' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
-                      </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('cash_per_share')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>Growth</span>
-                          {sortBy === 'cash_per_share' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
-                      </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('guru')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>PBT</span>
-                          {sortBy === 'guru' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
-                      </th>
-                      <th className="px-2 py-2 text-left text-gray-700">Source</th>
-                      <th className="px-2 py-2 text-left text-gray-700">Date</th>
+                      <th className="px-3 py-4 text-left text-sm font-medium text-gray-600">Date</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-100">
                     {paginatedStocks.map((stock) => (
                       <tr
                         key={stock.id}
                         className={clsx(
-                          "cursor-pointer transition-all duration-200 border-b border-gray-100 last:border-b-0",
-                          stockColors[stock.ticker] === 'red' && 'bg-red-50 hover:bg-red-100',
-                          stockColors[stock.ticker] === 'green' && 'bg-green-50 hover:bg-green-100',
-                          stockColors[stock.ticker] === 'yellow' && 'bg-yellow-50 hover:bg-yellow-100',
-                          !stockColors[stock.ticker] && 'hover:bg-green-50/50'
+                          "cursor-pointer hover:bg-gray-50 transition-colors",
+                          stockColors[stock.ticker] === 'red' && 'bg-red-50',
+                          stockColors[stock.ticker] === 'green' && 'bg-green-50',
+                          stockColors[stock.ticker] === 'yellow' && 'bg-yellow-50'
                         )}
                         onClick={(e) => {
                           e.preventDefault();
                           router.push(`/dashboard/highlighted/${stock.id}`);
                         }}
                       >
-                        <td className="px-2 py-2 text-center">
+                        <td className="px-3 py-4">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               cycleColor(stock.id);
                             }}
                             className={clsx(
-                              "p-1 rounded hover:bg-gray-100 transition-colors",
-                              stockColors[stock.ticker] === 'red' && 'text-red-500',
-                              stockColors[stock.ticker] === 'green' && 'text-green-500',
-                              stockColors[stock.ticker] === 'yellow' && 'text-yellow-500',
-                              !stockColors[stock.ticker] && 'text-gray-400'
+                              "w-6 h-6 rounded-full border-2 transition-colors",
+                              stockColors[stock.ticker] === 'red' && 'bg-red-500 border-red-500',
+                              stockColors[stock.ticker] === 'green' && 'bg-green-500 border-green-500',
+                              stockColors[stock.ticker] === 'yellow' && 'bg-yellow-500 border-yellow-500',
+                              !stockColors[stock.ticker] && 'border-gray-300 hover:border-gray-400'
                             )}
-                            title="Click to change color"
-                          >
-                            {stock.source === 'manual' ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
-                            ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v9a2 2 0 002 2z" />
-                                <circle cx="12" cy="9" r="2" />
-                                <path d="M8 9h1m6 0h1" />
-                              </svg>
-                            )}
-                          </button>
+                          />
                         </td>
-                        <td className="px-2 py-2 text-center">
+                        <td className="px-3 py-4">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               openCommentModal(stock.id);
                             }}
                             className={clsx(
-                              "p-1 rounded hover:bg-gray-100 transition-colors",
-                              stockComments[stock.ticker] ? "text-green-600" : "text-gray-400"
+                              "text-xs px-2 py-1 rounded border transition-colors",
+                              stockComments[stock.ticker] ? "bg-green-50 border-green-200 text-green-700" : "border-gray-200 text-gray-400 hover:border-gray-300"
                             )}
-                            title={stockComments[stock.ticker] || "Add comment"}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            {stockComments[stock.ticker] ? '💬' : '+'}
                           </button>
                         </td>
-                        <td className="px-2 py-2">
-                          <div className="font-medium text-gray-900 text-sm">{stock.ticker}</div>
+                        <td className="px-3 py-4">
+                          <div className="font-semibold text-gray-900">{stock.ticker}</div>
                         </td>
-                        <td className="px-2 py-2 text-center">
+                        <td className="px-3 py-4 text-center">
                           <span className={clsx(
-                            getSentimentColor(stock.sentiment_score),
-                            "px-1.5 py-0.5 rounded text-xs font-medium"
+                            "px-2 py-1 rounded-full text-xs font-medium",
+                            getSentimentColor(stock.sentiment_score)
                           )}>
                             {stock.sentiment_score}
                           </span>
                         </td>
-                        <td className="px-2 py-2 text-center">
-                          <span className={clsx(
-                            getSentimentColor(stock.signal_score),
-                            "px-1.5 py-0.5 rounded text-xs font-medium"
-                          )}>
-                            {stock.signal_score}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2 text-center text-sm">
-                          {stock.rule1_score !== null ? stock.rule1_score : '-'}
-                        </td>
-                        <td className="px-2 py-2 text-center text-sm">
-                          {stock.moat_score !== null ? stock.moat_score : '-'}
-                        </td>
-                        <td className="px-2 py-2 text-center text-sm">
-                          {stock.management_score !== null ? stock.management_score : '-'}
-                        </td>
-                        <td className="px-2 py-2 text-right text-sm">
+                        <td className="px-3 py-4 text-center font-medium">
                           {formatCurrency(stock.buy_price)}
                         </td>
-                        <td className="px-2 py-2 text-right text-sm">
-                          {formatCurrency(stock.buy_price * 2)}
-                        </td>
-                        <td className="px-2 py-2 text-right text-sm">
+                        <td className="px-3 py-4 text-center font-medium">
                           {stock.current_ratio}
                         </td>
-                        <td className="px-2 py-2 text-center text-sm">
-                          {stock.pe}%
-                        </td>
-                        <td className="px-2 py-2 text-center text-sm">
-                          {stock.dividend || '-'}
-                        </td>
-                        <td className="px-2 py-2 text-center text-sm">
-                          {stock.cash_per_share || '-'}
-                        </td>
-                        <td className="px-2 py-2 text-center text-sm">
-                          {stock.guru || '-'}
-                        </td>
-                        <td className="px-2 py-2">
-                          <span className={clsx("px-1.5 py-0.5 rounded text-xs", 
-                            getSourceBadgeColor(stock.source)
+                        <td className="px-3 py-4 text-center">
+                          <span className={clsx(
+                            "px-2 py-1 rounded text-xs font-medium",
+                            stock.pe > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                           )}>
-                            {stock.source}
+                            {stock.pe}%
                           </span>
                         </td>
-                        <td className="px-2 py-2 text-xs text-gray-500">
+                        <td className="px-3 py-4 text-sm text-gray-500">
                           {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString() : '-'}
                         </td>
                       </tr>
