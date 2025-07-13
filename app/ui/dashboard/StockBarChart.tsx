@@ -30,17 +30,11 @@ export default function StockBarChart({
         label: 'Change %',
         data: data.map((d) => d.change_percent),
         backgroundColor: data.map((d) =>
-          d.change_percent >= 0 ? 'rgba(16,185,129,0.85)' : 'rgba(239,68,68,0.85)'
+          d.change_percent >= 0 ? '#000000' : '#ef4444'
         ),
-        borderWidth: 1,
-        borderColor: data.map((d) =>
-          d.change_percent >= 0 ? 'rgba(5,150,105,1)' : 'rgba(220,38,38,1)'
-        ),
-        borderRadius: 8,
+        borderWidth: 0,
+        borderRadius: 6,
         borderSkipped: false,
-        hoverBackgroundColor: data.map((d) =>
-          d.change_percent >= 0 ? 'rgba(16,185,129,1)' : 'rgba(239,68,68,1)'
-        ),
       },
     ],
   };
@@ -118,19 +112,17 @@ export default function StockBarChart({
   };
 
   return (
-    <div className="rounded-xl shadow-lg bg-white p-5 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-        <span className="mr-2">{title}</span>
-        <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-          {data.length} stocks
-        </span>
-      </h3>
+    <div className="bg-white border border-gray-100 rounded-2xl p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-black">{title}</h3>
+        <span className="text-sm text-gray-500">{data.length}</span>
+      </div>
       <div className="h-64">
         {data.length > 0 ? (
           <Bar data={chartData} options={options as any} />
         ) : (
-          <div className="h-full flex items-center justify-center bg-gray-50 rounded-lg">
-            <p className="text-gray-500">No data available</p>
+          <div className="h-full flex items-center justify-center">
+            <p className="text-gray-400">No data</p>
           </div>
         )}
       </div>
