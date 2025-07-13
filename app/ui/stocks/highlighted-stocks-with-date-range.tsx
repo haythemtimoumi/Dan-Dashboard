@@ -746,21 +746,28 @@ export default function HighlightedStocksWithDateRange({
                           </button>
                         </td>
                         <td className="px-2 py-2 text-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openCommentModal(stock.id);
-                            }}
-                            className={clsx(
-                              "p-1 rounded hover:bg-gray-100 transition-colors",
-                              stockComments[stock.ticker] ? "text-blue-600" : "text-gray-400"
+                          <div className="relative group">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCommentModal(stock.id);
+                              }}
+                              className={clsx(
+                                "p-1 rounded hover:bg-gray-100 transition-colors",
+                                stockComments[stock.ticker] ? "text-blue-600" : "text-gray-400"
+                              )}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </button>
+                            {stockComments[stock.ticker] && (
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 max-w-xs whitespace-normal">
+                                <div className="break-words">{stockComments[stock.ticker]}</div>
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                              </div>
                             )}
-                            title={stockComments[stock.ticker] || "Add comment"}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </button>
+                          </div>
                         </td>
                         <td className="px-2 py-2">
                           <div className="font-medium text-gray-900 text-sm">{stock.ticker}</div>
