@@ -1,36 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Stock } from '@/app/lib/definitions';
-import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatDate } from '@/app/lib/utils';
+import { formatCurrency, getSentimentColor, getSourceBadgeColor } from '@/app/lib/utils';
 import clsx from 'clsx';
-import { CalendarIcon } from '@heroicons/react/24/outline';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import '@/app/ui/datepicker-custom.css';
 import { useSettings } from '@/app/contexts/settings-context';
-import { registerLocale } from 'react-datepicker';
-import { fr } from 'date-fns/locale';
-
-registerLocale('fr', fr);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
 
-export default function PortfolioListWithDateRange({
-  startDate
-}: {
-  startDate: string;
-}) {
+export default function PortfolioListWithDateRange() {
   const router = useRouter();
-  const pathname = usePathname();
   const { t, language } = useSettings();
   
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(parseDate(startDate));
-  const [dateError, setDateError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('sentiment_score');
   const [sortOrder, setSortOrder] = useState<string>('desc');
   const [stockColors, setStockColors] = useState<{[key: string]: string}>({});
@@ -110,21 +95,7 @@ export default function PortfolioListWithDateRange({
     localStorage.setItem('tickerCommentHistory', JSON.stringify(newHistory));
   };
 
-  function parseDate(dateString: string): Date | null {
-    try {
-      if (dateString.includes('/')) {
-        const [month, day, year] = dateString.split('/');
-        return new Date(`${year}-${month}-${day}`);
-      }
-      return new Date(dateString);
-    } catch (error) {
-      console.error('Error parsing date:', error);
-      return null;
-    }
-  }
-
-  function formatDateToString(date: Date | null): string {
-    if (!date) return '';
+  function formatDateToString(date: Date): string {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const year = date.getFullYear();
@@ -134,11 +105,10 @@ export default function PortfolioListWithDateRange({
   useEffect(() => {
     const fetchPortfolioStocks = async () => {
       try {
-        if (!selectedDate) return;
-        
         setLoading(true);
         
-        const formattedDate = formatDateToString(selectedDate);
+        const today = new Date();
+        const formattedDate = formatDateToString(today);
         const response = await fetch(`${API_URL}/stocks/filter-by-date-source?date=${formattedDate}&source=manual`);
         
         if (!response.ok) {
@@ -157,27 +127,9 @@ export default function PortfolioListWithDateRange({
     };
 
     fetchPortfolioStocks();
-  }, [selectedDate]);
+  }, []);
 
-  const handleDateFilterChange = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      if (!selectedDate) {
-        setDateError('Please select a date');
-        return;
-      }
-      
-      const formattedDate = formatDateToString(selectedDate);
-      const params = new URLSearchParams();
-      params.set('startDate', formattedDate);
-      
-      router.push(`${pathname}?${params.toString()}`);
-      setDateError(null);
-    } catch (err) {
-      setDateError('Invalid date selection. Please try again.');
-    }
-  };
+
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -294,7 +246,7 @@ export default function PortfolioListWithDateRange({
               </span>
             </div>
             <div className="text-sm text-black dark:text-black bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
-              {formatDateToString(selectedDate)}
+              {t('today')} - {formatDateToString(new Date())}
             </div>
           </div>
           
@@ -332,64 +284,7 @@ export default function PortfolioListWithDateRange({
             </div>
           )}
           
-          {/* Date filter */}
-          <div className="p-6 bg-gradient-to-r from-gray-50 to-green-50 dark:from-gray-800 dark:to-gray-700 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-6 w-6 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600 dark:text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t('filterByDate')}</span>
-            </div>
-            <form onSubmit={handleDateFilterChange} className="flex flex-wrap items-end gap-3">
-              <div className="flex-1 min-w-48">
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">{t('selectDate')}</label>
-                <div className="relative">
-                  <DatePicker
-                    selected={selectedDate}
-                    onChange={(date) => setSelectedDate(date)}
-                    dateFormat="MM/dd/yyyy"
-                    locale={language === 'fr' ? 'fr' : undefined}
-                    className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-black dark:text-white focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                    showMonthDropdown
-                    showYearDropdown
-                    dropdownMode="select"
-                  />
-                  <CalendarIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                </div>
-              </div>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  const today = new Date();
-                  setSelectedDate(today);
-                  setTimeout(() => {
-                    const formattedToday = formatDateToString(today);
-                    const params = new URLSearchParams();
-                    params.set('startDate', formattedToday);
-                    router.push(`${pathname}?${params.toString()}`);
-                  }, 100);
-                }}
-                className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-              >
-                {t('today')}
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-              >
-                {t('apply')}
-              </button>
-            </form>
-            
-            {dateError && (
-              <div className="mt-2 text-red-600 text-xs">
-                {dateError}
-              </div>
-            )}
-          </div>
+
           
           {stocks.length === 0 ? (
             <div className="py-12 text-center">
