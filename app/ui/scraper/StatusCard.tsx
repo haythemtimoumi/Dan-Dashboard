@@ -47,8 +47,9 @@ export default function StatusCard() {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true
-    });
+      hour12: true,
+      timeZone: 'UTC'
+    }) + ' UTC';
   };
 
   const config = getStatusConfig();
