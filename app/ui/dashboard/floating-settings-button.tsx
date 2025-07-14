@@ -12,7 +12,7 @@ export default function FloatingSettingsButton() {
     <>
       <button
         onClick={() => setIsSettingsOpen(true)}
-        className="fixed bottom-6 left-6 z-40 w-14 h-14 bg-gradient-to-r from-gray-900 to-black dark:from-white dark:to-gray-100 text-white dark:text-black rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 group"
+        className="fixed bottom-6 left-6 z-[60] w-14 h-14 bg-gradient-to-r from-gray-900 to-black dark:from-white dark:to-gray-100 text-white dark:text-black rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 group"
         title={t('settings')}
       >
         <div className="flex items-center justify-center w-full h-full">

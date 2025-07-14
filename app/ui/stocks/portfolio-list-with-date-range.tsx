@@ -10,6 +10,10 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import '@/app/ui/datepicker-custom.css';
 import { useSettings } from '@/app/contexts/settings-context';
+import { registerLocale } from 'react-datepicker';
+import { fr } from 'date-fns/locale';
+
+registerLocale('fr', fr);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
 
@@ -22,7 +26,7 @@ export default function PortfolioListWithDateRange({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { t } = useSettings();
+  const { t, language } = useSettings();
   
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -328,6 +332,7 @@ export default function PortfolioListWithDateRange({
                     selected={startDateObj}
                     onChange={(date) => setStartDateObj(date)}
                     dateFormat="MM/dd/yyyy"
+                    locale={language === 'fr' ? 'fr' : undefined}
                     className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-black dark:text-white focus:ring-1 focus:ring-green-500 focus:border-green-500"
                     showMonthDropdown
                     showYearDropdown
@@ -344,6 +349,7 @@ export default function PortfolioListWithDateRange({
                     selected={endDateObj}
                     onChange={(date) => setEndDateObj(date)}
                     dateFormat="MM/dd/yyyy"
+                    locale={language === 'fr' ? 'fr' : undefined}
                     className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-black dark:text-white focus:ring-1 focus:ring-green-500 focus:border-green-500"
                     minDate={startDateObj || undefined}
                     showMonthDropdown
