@@ -44,8 +44,10 @@ const translations = {
     
     // Forms & Filters
     filterByDateRange: 'Filter by Date Range',
+    filterByDate: 'Filter by Date',
     startDate: 'Start Date',
     endDate: 'End Date',
+    selectDate: 'Select Date',
     today: 'Today',
     apply: 'Apply',
     username: 'Username',
@@ -187,8 +189,10 @@ const translations = {
     
     // Forms & Filters
     filterByDateRange: 'Filtrer par plage de dates',
+    filterByDate: 'Filtrer par date',
     startDate: 'Date de début',
     endDate: 'Date de fin',
+    selectDate: 'Sélectionner la date',
     today: 'Aujourd\'hui',
     apply: 'Appliquer',
     username: 'Nom d\'utilisateur',

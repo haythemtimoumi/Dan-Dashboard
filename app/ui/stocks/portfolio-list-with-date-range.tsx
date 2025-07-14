@@ -18,11 +18,9 @@ registerLocale('fr', fr);
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
 
 export default function PortfolioListWithDateRange({
-  startDate,
-  endDate
+  startDate
 }: {
   startDate: string;
-  endDate: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -31,8 +29,7 @@ export default function PortfolioListWithDateRange({
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [startDateObj, setStartDateObj] = useState<Date | null>(parseDate(startDate));
-  const [endDateObj, setEndDateObj] = useState<Date | null>(parseDate(endDate));
+  const [selectedDate, setSelectedDate] = useState<Date | null>(parseDate(startDate));
   const [dateError, setDateError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('sentiment_score');
   const [sortOrder, setSortOrder] = useState<string>('desc');
@@ -137,24 +134,19 @@ export default function PortfolioListWithDateRange({
   useEffect(() => {
     const fetchPortfolioStocks = async () => {
       try {
-        if (!startDateObj || !endDateObj) return;
+        if (!selectedDate) return;
         
         setLoading(true);
         
-        const formattedStart = formatDateToString(startDateObj);
-        const adjustedEndDate = new Date(endDateObj);
-        adjustedEndDate.setHours(23, 59, 59, 999);
-        const formattedEnd = formatDateToString(adjustedEndDate);
-        
-        const response = await fetch(`${API_URL}/stocks/highlighted/filter?startDate=${formattedStart}&endDate=${formattedEnd}`);
+        const formattedDate = formatDateToString(selectedDate);
+        const response = await fetch(`${API_URL}/stocks/filter-by-date-source?date=${formattedDate}&source=manual`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch portfolio stocks: ${response.statusText}`);
         }
         
         const data = await response.json();
-        const manualStocks = data.filter((stock: Stock) => stock.source === 'manual');
-        setStocks(manualStocks);
+        setStocks(data);
         setError(null);
       } catch (err) {
         console.error('Error fetching portfolio stocks:', err);
@@ -165,28 +157,20 @@ export default function PortfolioListWithDateRange({
     };
 
     fetchPortfolioStocks();
-  }, [startDateObj, endDateObj]);
+  }, [selectedDate]);
 
   const handleDateFilterChange = (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      if (!startDateObj || !endDateObj) {
-        setDateError('Please select both start and end dates');
+      if (!selectedDate) {
+        setDateError('Please select a date');
         return;
       }
       
-      if (startDateObj > endDateObj) {
-        setDateError('Start date cannot be after end date');
-        return;
-      }
-      
-      const formattedStartDate = formatDateToString(startDateObj);
-      const formattedEndDate = formatDateToString(endDateObj);
-      
+      const formattedDate = formatDateToString(selectedDate);
       const params = new URLSearchParams();
-      params.set('startDate', formattedStartDate);
-      params.set('endDate', formattedEndDate);
+      params.set('startDate', formattedDate);
       
       router.push(`${pathname}?${params.toString()}`);
       setDateError(null);
@@ -310,7 +294,7 @@ export default function PortfolioListWithDateRange({
               </span>
             </div>
             <div className="text-sm text-black dark:text-black bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
-              {formatDateToString(startDateObj)} - {formatDateToString(endDateObj)}
+              {formatDateToString(selectedDate)}
             </div>
           </div>
           
@@ -322,36 +306,18 @@ export default function PortfolioListWithDateRange({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t('filterByDateRange')}</span>
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t('filterByDate')}</span>
             </div>
             <form onSubmit={handleDateFilterChange} className="flex flex-wrap items-end gap-3">
-              <div className="flex-1 min-w-32">
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">{t('startDate')}</label>
+              <div className="flex-1 min-w-48">
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">{t('selectDate')}</label>
                 <div className="relative">
                   <DatePicker
-                    selected={startDateObj}
-                    onChange={(date) => setStartDateObj(date)}
+                    selected={selectedDate}
+                    onChange={(date) => setSelectedDate(date)}
                     dateFormat="MM/dd/yyyy"
                     locale={language === 'fr' ? 'fr' : undefined}
                     className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-black dark:text-white focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                    showMonthDropdown
-                    showYearDropdown
-                    dropdownMode="select"
-                  />
-                  <CalendarIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                </div>
-              </div>
-              
-              <div className="flex-1 min-w-32">
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">{t('endDate')}</label>
-                <div className="relative">
-                  <DatePicker
-                    selected={endDateObj}
-                    onChange={(date) => setEndDateObj(date)}
-                    dateFormat="MM/dd/yyyy"
-                    locale={language === 'fr' ? 'fr' : undefined}
-                    className="w-full rounded border border-gray-300 dark:border-gray-600 py-2 px-3 pl-8 text-sm bg-white dark:bg-gray-700 text-black dark:text-white focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                    minDate={startDateObj || undefined}
                     showMonthDropdown
                     showYearDropdown
                     dropdownMode="select"
@@ -364,13 +330,11 @@ export default function PortfolioListWithDateRange({
                 type="button"
                 onClick={() => {
                   const today = new Date();
-                  setStartDateObj(today);
-                  setEndDateObj(today);
+                  setSelectedDate(today);
                   setTimeout(() => {
-                    const formattedToday = today.toISOString().split('T')[0];
+                    const formattedToday = formatDateToString(today);
                     const params = new URLSearchParams();
                     params.set('startDate', formattedToday);
-                    params.set('endDate', formattedToday);
                     router.push(`${pathname}?${params.toString()}`);
                   }, 100);
                 }}

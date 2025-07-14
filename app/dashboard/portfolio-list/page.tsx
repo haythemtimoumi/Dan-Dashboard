@@ -13,21 +13,22 @@ export default function PortfolioListPage({
 }: {
   searchParams?: {
     startDate?: string;
-    endDate?: string;
   };
 }) {
   // Get current date for default values
   const currentDate = new Date();
-  const currentDateFormatted = currentDate.toISOString().split('T')[0];
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const day = String(currentDate.getDate()).padStart(2, '0');
+  const year = currentDate.getFullYear();
+  const currentDateFormatted = `${month}/${day}/${year}`;
   
-  // Default to current date if no dates provided
+  // Default to current date if no date provided
   const startDate = searchParams?.startDate || currentDateFormatted;
-  const endDate = searchParams?.endDate || currentDateFormatted;
 
   return (
     <main>
       <Suspense fallback={<HighlightedStocksExternalSkeleton />}>
-        <PortfolioListWithDateRange startDate={startDate} endDate={endDate} />
+        <PortfolioListWithDateRange startDate={startDate} />
       </Suspense>
     </main>
   );
