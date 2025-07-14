@@ -82,6 +82,8 @@ const translations = {
     positive: 'Positive',
     negative: 'Negative',
     average: 'Average',
+    averageSentiment: 'Average Sentiment',
+    averageUpside: 'Average Upside',
     
     // Actions
     analyzeStock: 'Analyze Stock',
@@ -227,6 +229,8 @@ const translations = {
     positive: 'Positif',
     negative: 'Négatif',
     average: 'Moyenne',
+    averageSentiment: 'Sentiment Moyen',
+    averageUpside: 'Potentiel Moyen',
     
     // Actions
     analyzeStock: 'Analyser l\'action',
