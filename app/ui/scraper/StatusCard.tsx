@@ -4,8 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { scraperApi, ScraperStatus } from '@/app/lib/scraper-api';
 import { ClockIcon, PlayIcon, StopIcon, CalendarIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { StatusSkeleton } from './LoadingSkeleton';
+import { useSettings } from '@/app/contexts/settings-context';
 
 export default function StatusCard() {
+  const { t } = useSettings();
   const { data: status, isLoading, error } = useQuery<ScraperStatus>({
     queryKey: ['scraper-status'],
     queryFn: scraperApi.getStatus,
@@ -61,8 +63,8 @@ export default function StatusCard() {
               <ClockIcon className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Scraper Status</h3>
-              <p className="text-sm text-gray-600">Next run countdown</p>
+              <h3 className="text-xl font-bold text-gray-900">{t('scraperStatus')}</h3>
+              <p className="text-sm text-gray-600">{t('nextRunCountdown')}</p>
             </div>
           </div>
           
@@ -75,11 +77,11 @@ export default function StatusCard() {
         {/* Countdown Display */}
         <div className="text-center mb-6">
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 border border-gray-200">
-            <p className="text-sm font-medium text-gray-600 mb-2">Next Run In</p>
+            <p className="text-sm font-medium text-gray-600 mb-2">{t('nextRunIn')}</p>
             <div className="text-6xl font-bold text-gray-900 mb-2 font-mono tracking-wider">
               {status.next_run_in_hours_minutes}
             </div>
-            <p className="text-sm text-gray-500">hours : minutes</p>
+            <p className="text-sm text-gray-500">{t('hoursMinutes')}</p>
           </div>
         </div>
 
@@ -91,10 +93,10 @@ export default function StatusCard() {
                 <CheckCircleIcon className="h-5 w-5 text-green-600" /> : 
                 <XCircleIcon className="h-5 w-5 text-red-500" />
               }
-              <span className="text-sm font-medium text-gray-700">Status</span>
+              <span className="text-sm font-medium text-gray-700">{t('status')}</span>
             </div>
             <p className={`text-lg font-bold ${status.is_running ? 'text-green-600' : 'text-red-500'}`}>
-              {status.is_running ? 'Running' : 'Stopped'}
+              {status.is_running ? t('running') : t('stopped')}
             </p>
           </div>
 
@@ -104,10 +106,10 @@ export default function StatusCard() {
                 <CheckCircleIcon className="h-5 w-5 text-green-600" /> : 
                 <XCircleIcon className="h-5 w-5 text-amber-500" />
               }
-              <span className="text-sm font-medium text-gray-700">Updates</span>
+              <span className="text-sm font-medium text-gray-700">{t('updates')}</span>
             </div>
             <p className={`text-lg font-bold ${status.can_update_tickers ? 'text-green-600' : 'text-amber-600'}`}>
-              {status.can_update_tickers ? 'Available' : 'Locked'}
+              {status.can_update_tickers ? t('available') : t('locked')}
             </p>
           </div>
         </div>
@@ -115,11 +117,11 @@ export default function StatusCard() {
         {/* Timeline */}
         <div className="space-y-3">
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm font-medium text-gray-600">Next Run:</span>
+            <span className="text-sm font-medium text-gray-600">{t('nextRun')}</span>
             <span className="text-sm font-bold text-gray-900">{formatDateTime(status.next_scheduled_run)}</span>
           </div>
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm font-medium text-gray-600">Last Run:</span>
+            <span className="text-sm font-medium text-gray-600">{t('lastRun')}</span>
             <span className="text-sm font-bold text-gray-900">{formatDateTime(status.last_run)}</span>
           </div>
         </div>

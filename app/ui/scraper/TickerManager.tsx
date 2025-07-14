@@ -5,8 +5,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { scraperApi, TickerResponse, ScraperStatus } from '@/app/lib/scraper-api';
 import { PlusIcon, ArrowPathIcon, PencilSquareIcon, DocumentTextIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import { useSettings } from '@/app/contexts/settings-context';
 
 export default function TickerManager() {
+  const { t } = useSettings();
   const [newTickers, setNewTickers] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const queryClient = useQueryClient();
@@ -76,8 +78,8 @@ export default function TickerManager() {
               <PencilSquareIcon className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Ticker Management</h3>
-              <p className="text-sm text-gray-600">Add or replace stock symbols</p>
+              <h3 className="text-xl font-bold text-gray-900">{t('tickerManagement')}</h3>
+              <p className="text-sm text-gray-600">{t('addOrReplaceStockSymbols')}</p>
             </div>
           </div>
           
@@ -91,7 +93,7 @@ export default function TickerManager() {
             }`}
           >
             {!canUpdate ? <LockClosedIcon className="h-4 w-4" /> : <PlusIcon className="h-4 w-4" />}
-            {isExpanded ? 'Cancel' : 'Manage Tickers'}
+            {isExpanded ? t('cancel') : t('manageTickers')}
           </button>
         </div>
 

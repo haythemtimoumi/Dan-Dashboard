@@ -5,8 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { scraperApi, TickerResponse } from '@/app/lib/scraper-api';
 import { TickerGridSkeleton } from './LoadingSkeleton';
 import { MagnifyingGlassIcon, ChartBarIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { useSettings } from '@/app/contexts/settings-context';
 
 export default function TickerGrid() {
+  const { t } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
   const { data: tickerData, isLoading, error } = useQuery<TickerResponse>({
     queryKey: ['tickers'],
@@ -39,8 +41,8 @@ export default function TickerGrid() {
               <ChartBarIcon className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Active Tickers</h3>
-              <p className="text-sm text-gray-600">Currently monitored symbols</p>
+              <h3 className="text-xl font-bold text-gray-900">{t('activeTickers')}</h3>
+              <p className="text-sm text-gray-600">{t('currentlyMonitoredSymbols')}</p>
             </div>
           </div>
           
