@@ -124,6 +124,12 @@ const translations = {
     gainers: 'Gainers',
     losers: 'Losers',
     
+    // Stock Update specific
+    buyPrice: 'Buy Price',
+    stickerPrice: 'Sticker',
+    current: 'Current',
+    manual: 'Manual',
+    
     // Time
     stocks: 'stocks',
     yesterday: 'Yesterday',
@@ -240,6 +246,12 @@ const translations = {
     topLosers: 'Pires pertes',
     gainers: 'Gains',
     losers: 'Pertes',
+    
+    // Stock Update specific
+    buyPrice: 'Prix d\'achat',
+    stickerPrice: 'Autocollant',
+    current: 'Actuel',
+    manual: 'Manuel',
     
     // Time
     stocks: 'actions',

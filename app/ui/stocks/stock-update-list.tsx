@@ -180,7 +180,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
     <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-4 mb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Stock Update</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('stockUpdate')}</h2>
           {stocks.length > 0 && (
             <span className="text-sm text-gray-500 dark:text-gray-400">({currentIndex + 1}/{stocks.length})</span>
           )}
@@ -200,7 +200,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
             </svg>
           </button>
           <button onClick={goToToday} className="px-2.5 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs hover:bg-gray-800 dark:hover:bg-gray-200">
-            Today
+            {t('today')}
           </button>
           <button 
             onClick={() => setAutoRefresh(!autoRefresh)}
@@ -308,22 +308,22 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
           
           {/* Metrics Card */}
           <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-4">
-            <h3 className="font-semibold mb-3 text-sm text-gray-900 dark:text-white">Key Metrics</h3>
+            <h3 className="font-semibold mb-3 text-sm text-gray-900 dark:text-white">{t('keyMetrics')}</h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                <p className="text-xs text-gray-600 dark:text-gray-400">Sentiment</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">{t('sentiment')}</p>
                 <p className="font-bold text-gray-900 dark:text-white">{currentStock.sentiment_score}</p>
               </div>
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                <p className="text-xs text-gray-600 dark:text-gray-400">Signal</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">{t('signal')}</p>
                 <p className="font-bold text-gray-900 dark:text-white">{currentStock.signal_score}</p>
               </div>
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                <p className="text-xs text-gray-600 dark:text-gray-400">Rule1</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">{t('rule1')}</p>
                 <p className="font-bold text-gray-900 dark:text-white">{currentStock.rule1_score !== null ? currentStock.rule1_score : '—'}</p>
               </div>
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                <p className="text-xs text-gray-600 dark:text-gray-400">Moat</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">{t('moat')}</p>
                 <p className="font-bold text-gray-900 dark:text-white">{currentStock.moat_score !== null ? currentStock.moat_score : '—'}</p>
               </div>
             </div>
@@ -331,22 +331,22 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
           
           {/* Financial Card */}
           <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-4">
-            <h3 className="font-semibold mb-3 text-sm text-gray-900 dark:text-white">Financial</h3>
+            <h3 className="font-semibold mb-3 text-sm text-gray-900 dark:text-white">{t('financial')}</h3>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Buy Price</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('buyPrice')}</span>
                 <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(currentStock.buy_price).replace('$', '')}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Sticker</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('stickerPrice')}</span>
                 <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(currentStock.buy_price * 2).replace('$', '')}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Management</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('management')}</span>
                 <span className="font-bold text-gray-900 dark:text-white">{currentStock.management_score !== null ? currentStock.management_score : '—'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Current</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('current')}</span>
                 <span className="font-bold text-gray-900 dark:text-white">{currentStock.current_ratio || '—'}</span>
               </div>
             </div>
@@ -369,7 +369,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
               onClick={() => router.push(`/dashboard/highlighted/${currentStock.id}`)}
               className="w-full bg-black dark:bg-white text-white dark:text-black py-2 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-200"
             >
-              Analyze Stock
+              {t('analyzeStock')}
             </button>
           </div>
         </div>
@@ -391,7 +391,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
             <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
             </svg>
-            Prev
+            {t('previous')}
           </button>
           
           <button
@@ -404,7 +404,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
                 : "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
             )}
           >
-            Next
+            {t('next')}
             <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
             </svg>
@@ -412,7 +412,7 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
         </div>
         
         <div className="text-xs text-gray-600 dark:text-gray-400">
-          <span className="font-medium">Shortcuts:</span> ← → Navigate | ↑ ↓ Dates
+          <span className="font-medium">{t('shortcuts')}:</span> ← → {t('navigate')} | ↑ ↓ {t('dates')}
         </div>
       </div>
     </div>
