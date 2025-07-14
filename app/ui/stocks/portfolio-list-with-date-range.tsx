@@ -239,7 +239,6 @@ export default function PortfolioListWithDateRange() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('portfolioList')}</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t('manualPortfolioStocks')}</p>
               </div>
               <span className="bg-gradient-to-r from-green-100 to-blue-100 text-green-800 px-3 py-1.5 rounded-full text-sm font-semibold">
                 {stocks.length} {t('stocks')}
