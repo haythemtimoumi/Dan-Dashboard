@@ -60,18 +60,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
           );
         })}
         
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className={clsx(
-            "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200 w-full",
-            "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white",
-            isCollapsed && "justify-center px-2"
-          )}
-          title={isCollapsed ? t('settings') : undefined}
-        >
-          <CogIcon className="h-5 w-5 flex-shrink-0" />
-          {!isCollapsed && <span className="truncate">{t('settings')}</span>}
-        </button>
+
       </nav>
       
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />

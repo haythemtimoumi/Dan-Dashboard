@@ -6,6 +6,7 @@ import SideNav from '@/app/ui/dashboard/sidenav';
 import { auth } from '@/app/lib/auth';
 import { ArrowRightOnRectangleIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/app/contexts/settings-context';
+import FloatingSettingsButton from '@/app/ui/dashboard/floating-settings-button';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
@@ -77,7 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
           >
             <ArrowRightOnRectangleIcon className="h-4 w-4" />
-            Logout
+            {t('logout')}
           </button>
         </div>
         <div className="flex-1 overflow-auto">
@@ -86,6 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </div>
+      <FloatingSettingsButton />
     </div>
   );
 }

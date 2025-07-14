@@ -222,14 +222,14 @@ export default function StockUpdateList({ currentPage }: { currentPage: number }
       <div className="space-y-4">
         {dateSelector}
         <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-6 text-center">
-          <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">No Stocks Found</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">No stocks available for selected date</p>
+          <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">{t('noStocksFound')}</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{t('noStocksAvailableForSelectedDate')}</p>
           <div className="flex justify-center gap-2">
             <button onClick={goToPreviousDay} className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300">
-              Yesterday
+              {t('yesterday')}
             </button>
             <button onClick={goToToday} className="px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 text-sm">
-              Today
+              {t('today')}
             </button>
           </div>
         </div>

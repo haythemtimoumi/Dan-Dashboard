@@ -92,6 +92,7 @@ const translations = {
     
     // Messages
     noStocksFound: 'No Stocks Found',
+    noStocksAvailableForSelectedDate: 'No stocks available for selected date',
     noFeaturedStocksFound: 'No Featured Stocks Found',
     noPortfolioStocksFound: 'No Portfolio Stocks Found',
     errorLoadingStocks: 'Error Loading Stocks',
@@ -234,6 +235,7 @@ const translations = {
     
     // Messages
     noStocksFound: 'Aucune action trouvée',
+    noStocksAvailableForSelectedDate: 'Aucune action disponible pour la date sélectionnée',
     noFeaturedStocksFound: 'Aucune action en vedette trouvée',
     noPortfolioStocksFound: 'Aucune action de portefeuille trouvée',
     errorLoadingStocks: 'Erreur lors du chargement des actions',
