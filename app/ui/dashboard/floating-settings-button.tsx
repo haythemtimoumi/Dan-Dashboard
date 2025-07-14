@@ -12,7 +12,7 @@ export default function FloatingSettingsButton() {
     <>
       <button
         onClick={() => setIsSettingsOpen(true)}
-        className="fixed bottom-6 left-6 z-[60] w-14 h-14 bg-gradient-to-r from-gray-900 to-black dark:from-white dark:to-gray-100 text-white dark:text-black rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 group"
+        className="fixed bottom-20 left-6 z-[60] w-14 h-14 bg-gradient-to-r from-white to-gray-100 dark:from-gray-900 dark:to-black text-black dark:text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 group"
         title={t('settings')}
       >
         <div className="flex items-center justify-center w-full h-full">
@@ -38,7 +38,7 @@ export default function FloatingSettingsButton() {
         </div>
         
         {/* Ripple effect */}
-        <div className="absolute inset-0 rounded-full bg-white dark:bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 rounded-full bg-black dark:bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
       </button>
       
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />

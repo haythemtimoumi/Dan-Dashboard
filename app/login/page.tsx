@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { EyeIcon, EyeSlashIcon, UserIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { useSettings } from '@/app/contexts/settings-context';
+import FloatingSettingsButton from '@/app/ui/dashboard/floating-settings-button';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -143,6 +144,7 @@ export default function LoginPage() {
           </form>
         </div>
       </div>
+      <FloatingSettingsButton />
     </div>
   );
 }
