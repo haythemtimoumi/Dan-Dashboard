@@ -50,7 +50,7 @@ describe('Future Date Range API Tests', () => {
   });
 
   it('should return stocks for future date range (06/06/2025 to 07/06/2025)', async () => {
-    const request = new Request('https://stockdashboard.ddnsfree.com/api/stocks/date-range?startDate=06/06/2025&endDate=07/06/2025');
+    const request = new Request('http://locahost:3000/api/stocks/date-range?startDate=06/06/2025&endDate=07/06/2025');
     await getStocksByDateRange(request);
     
     expect(mockJson).toHaveBeenCalled();
@@ -61,7 +61,7 @@ describe('Future Date Range API Tests', () => {
   });
 
   it('should return empty array for future date range with no stocks', async () => {
-    const request = new Request('https://stockdashboard.ddnsfree.com/api/stocks/date-range?startDate=08/01/2025&endDate=09/01/2025');
+    const request = new Request('http://locahost:3000/api/stocks/date-range?startDate=08/01/2025&endDate=09/01/2025');
     await getStocksByDateRange(request);
     
     expect(mockJson).toHaveBeenCalled();

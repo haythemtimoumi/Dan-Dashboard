@@ -7,7 +7,7 @@ import { formatCurrency, getSentimentColor, getSourceBadgeColor } from '@/app/li
 import clsx from 'clsx';
 import { useSettings } from '@/app/contexts/settings-context';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://locahost:3000/api';
 
 export default function PortfolioListWithDateRange() {
   const router = useRouter();

@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://locahost:3000';
 
 export interface User {
   id: number;

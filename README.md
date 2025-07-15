@@ -25,7 +25,7 @@ POSTGRES_DATABASE=
 
 // Auth
 AUTH_SECRET=
-AUTH_URL=https://stockdashboard.ddnsfree.com
+AUTH_URL=http://locahost:3000
 
 ```
 

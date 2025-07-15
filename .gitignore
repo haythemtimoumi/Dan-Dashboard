@@ -18,7 +18,7 @@
 # misc
 .DS_Store
 *.pem
-
+/.amazonq
 # debug
 npm-debug.log*
 yarn-debug.log*

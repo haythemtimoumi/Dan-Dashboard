@@ -8,7 +8,7 @@ To ensure the API works correctly, you need to set up the proper environment var
 2. Add the following environment variable:
 
 ```
-NEXT_PUBLIC_API_URL=https://stockdashboard.ddnsfree.com
+NEXT_PUBLIC_API_URL=http://locahost:3000
 ```
 
 **Note:** When your frontend is running on a different port (e.g., 3001) than your backend API (e.g., 3000), you need to use an absolute URL with the correct port for the backend.
@@ -17,7 +17,7 @@ NEXT_PUBLIC_API_URL=https://stockdashboard.ddnsfree.com
 
 The application uses a properly formatted URL for API calls. The URL can be either:
 
-1. An absolute URL (recommended for separate backend): `https://stockdashboard.ddnsfree.com`
+1. An absolute URL (recommended for separate backend): `http://locahost:3000`
    - Must include:
      - Protocol (http:// or https://)
      - Host (localhost or your domain)
@@ -46,9 +46,9 @@ If you see the error `Failed to load stocks. Please try again later.`, check for
 
 You can test the API endpoints directly in your browser:
 
-- All stocks: https://stockdashboard.ddnsfree.com/api/stocks
-- Highlighted stocks: https://stockdashboard.ddnsfree.com/api/stocks/highlighted
-- Sorted stocks: https://stockdashboard.ddnsfree.com/api/stocks/sorted
-- Daily changes: https://stockdashboard.ddnsfree.com/api/stocks/daily-changes
-- Date range: https://stockdashboard.ddnsfree.com/api/stocks/date-range?startDate=2023-01-01&endDate=2023-12-31
-- Stock history: https://stockdashboard.ddnsfree.com/api/stocks/123/history?from=2023-01-01&to=2023-01-31
+- All stocks: http://locahost:3000/api/stocks
+- Highlighted stocks: http://locahost:3000/api/stocks/highlighted
+- Sorted stocks: http://locahost:3000/api/stocks/sorted
+- Daily changes: http://locahost:3000/api/stocks/daily-changes
+- Date range: http://locahost:3000/api/stocks/date-range?startDate=2023-01-01&endDate=2023-12-31
+- Stock history: http://locahost:3000/api/stocks/123/history?from=2023-01-01&to=2023-01-31

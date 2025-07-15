@@ -1,0 +1,78 @@
+name: Deploy Next.js Dashboard to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Set up SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy Next.js Dashboard with Zero Downtime
+      run: |
+        ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          set -e
+          
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          cd /root/Dan-Dashboard
+          
+          # Backup current version
+          if [ -d ".next" ]; then
+            cp -r .next .next.backup
+            echo "Backup created"
+          fi
+          
+          # Pull latest code
+          git pull origin main
+          
+          # Install dependencies
+          npm install
+          
+          # Build the application
+          if npm run build; then
+            echo "Build successful"
+            
+            # Remove old backup
+            rm -rf .next.backup
+            
+            # Restart PM2 process
+            if pm2 list | grep -q "dashboard"; then
+              pm2 reload dashboard --update-env
+            else
+              pm2 start npm --name dashboard -- start --update-env
+            fi
+            
+            pm2 save
+            echo "Deployment successful"
+          else
+            echo "Build failed - Rolling back"
+            
+            # Restore backup if build fails
+            if [ -d ".next.backup" ]; then
+              rm -rf .next
+              mv .next.backup .next
+              echo "Rollback completed - Previous version restored"
+            fi
+            
+            exit 1
+          fi
+        EOF

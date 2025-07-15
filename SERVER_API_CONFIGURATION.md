@@ -25,8 +25,8 @@ Add these environment variables to your project:
 
 1. Create a `.env.local` file in your project root:
 ```
-NEXT_PUBLIC_BASE_URL=https://stockdashboard.ddnsfree.com
-NEXT_PUBLIC_API_URL=https://stockdashboard.ddnsfree.com/api
+NEXT_PUBLIC_BASE_URL=http://locahost:3000
+NEXT_PUBLIC_API_URL=http://locahost:3000/api
 ```
 
 2. For Vercel deployment, add these same variables in the Vercel dashboard:
@@ -57,11 +57,11 @@ const response = await fetch('/api/proxy/stocks');
 
 1. **Client-side rendering**: 
    - Relative URLs work fine because the browser provides the base URL context
-   - Example: `/api/stocks` → `https://stockdashboard.ddnsfree.com/api/stocks`
+   - Example: `/api/stocks` → `http://locahost:3000/api/stocks`
 
 2. **Server-side rendering**:
    - We use `NEXT_PUBLIC_BASE_URL` to create absolute URLs
-   - Example: `/api/stocks` → `https://stockdashboard.ddnsfree.com/api/stocks`
+   - Example: `/api/stocks` → `http://locahost:3000/api/stocks`
 
 3. **Production environment**:
    - The proxy API route is used to avoid CORS issues

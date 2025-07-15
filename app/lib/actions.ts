@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { StockForm } from './definitions';
 
-const API_URL = 'https://stockdashboard.ddnsfree.com';
+const API_URL = 'http://locahost:3000';
 
 const StockFormSchema = z.object({
   id: z.string().optional(),

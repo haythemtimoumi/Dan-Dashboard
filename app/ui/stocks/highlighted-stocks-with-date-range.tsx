@@ -16,7 +16,7 @@ import { fr } from 'date-fns/locale';
 registerLocale('fr', fr);
 
 // Get API URL from environment variable
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://locahost:3000/api';
 
 // No pagination - show all items
 

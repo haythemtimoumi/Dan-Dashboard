@@ -35,7 +35,7 @@ describe('Data fetching functions', () => {
     const result = await fetchStocksForChart();
 
     // Check that fetch was called with the correct URL
-    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
+    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'http://locahost:3000/api';
     expect(global.fetch).toHaveBeenCalledWith(`${expectedUrl}/stocks`);
     
     // Check that the function returns the expected result
@@ -69,7 +69,7 @@ describe('Data fetching functions', () => {
     const result = await fetchHighlightedStocks();
 
     // Check that fetch was called with the correct URL
-    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
+    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'http://locahost:3000/api';
     expect(global.fetch).toHaveBeenCalledWith(`${expectedUrl}/stocks/highlighted`);
     
     // Check that the function returns the expected result
@@ -115,7 +115,7 @@ describe('Data fetching functions', () => {
     );
 
     // Check that fetch was called with the correct URL
-    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
+    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'http://locahost:3000/api';
     expect(global.fetch).toHaveBeenCalledWith(`${expectedUrl}/stocks`);
     
     // Only AAPL should match all filters including date range
@@ -153,7 +153,7 @@ describe('Data fetching functions', () => {
     );
 
     // Check that fetch was called with the correct URL
-    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
+    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'http://locahost:3000/api';
     expect(global.fetch).toHaveBeenCalledWith(`${expectedUrl}/stocks`);
     
     // Should filter to only Rule 1 stocks with high sentiment in Q1
@@ -190,7 +190,7 @@ describe('Data fetching functions', () => {
     );
 
     // Check that fetch was called with the correct URL
-    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
+    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'http://locahost:3000/api';
     expect(global.fetch).toHaveBeenCalledWith(`${expectedUrl}/stocks`);
     
     // Should only include Q2 stocks (AMZN, META, TSLA)
@@ -224,7 +224,7 @@ describe('Data fetching functions', () => {
     const result = await fetchStockById('123');
 
     // Check that fetch was called with the correct URL
-    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
+    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'http://locahost:3000/api';
     expect(global.fetch).toHaveBeenCalledWith(`${expectedUrl}/stocks/123`);
     
     // Check that the function returns the expected result
@@ -242,7 +242,7 @@ describe('Data fetching functions', () => {
     await expect(fetchStockById('999')).rejects.toThrow('Failed to fetch stock.');
 
     // Check that fetch was called with the correct URL
-    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'https://stockdashboard.ddnsfree.com/api';
+    const expectedUrl = process.env.NEXT_PUBLIC_API_URL || 'http://locahost:3000/api';
     expect(global.fetch).toHaveBeenCalledWith(`${expectedUrl}/stocks/999`);
   });
 });
