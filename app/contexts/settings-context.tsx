@@ -162,6 +162,11 @@ const translations = {
     pleaseSelectBothDates: 'Please select both start and end dates',
     startDateCannotBeAfterEndDate: 'Start date cannot be after end date',
     invalidDateSelection: 'Invalid date selection. Please try again.',
+    
+    // Delete functionality
+    deleteStock: 'Delete stock',
+    confirmDeleteStock: 'Are you sure you want to delete this stock?',
+    errorDeletingStock: 'Failed to delete stock. Please try again.',
   },
   fr: {
     // Navigation
@@ -309,6 +314,11 @@ const translations = {
     pleaseSelectBothDates: 'Veuillez sélectionner les dates de début et de fin',
     startDateCannotBeAfterEndDate: 'La date de début ne peut pas être postérieure à la date de fin',
     invalidDateSelection: 'Sélection de date invalide. Veuillez réessayer.',
+    
+    // Delete functionality
+    deleteStock: 'Supprimer l\'action',
+    confirmDeleteStock: 'Êtes-vous sûr de vouloir supprimer cette action?',
+    errorDeletingStock: 'Échec de la suppression de l\'action. Veuillez réessayer.',
   },
 };
 

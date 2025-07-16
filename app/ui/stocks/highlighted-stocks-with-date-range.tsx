@@ -49,6 +49,7 @@ export default function HighlightedStocksWithDateRange({
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [currentComment, setCurrentComment] = useState<string>('');
   const [showColorModal, setShowColorModal] = useState<string | null>(null);
+  const [deletingStocks, setDeletingStocks] = useState<Set<string>>(new Set());
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -118,6 +119,39 @@ export default function HighlightedStocksWithDateRange({
     const newHistory = { ...commentHistory, [ticker]: updatedTickerHistory };
     setCommentHistory(newHistory);
     localStorage.setItem('tickerCommentHistory', JSON.stringify(newHistory));
+  };
+
+  const handleDeleteStock = async (stockId: string) => {
+    const stock = stocks.find(s => s.id === stockId);
+    if (!stock) return;
+
+    if (!confirm(t('confirmDeleteStock') || `Are you sure you want to delete ${stock.ticker}?`)) {
+      return;
+    }
+
+    setDeletingStocks(prev => new Set(prev).add(stockId));
+
+    try {
+      const response = await fetch(`https://mytickerlist.com/api/stocks/${stockId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete stock: ${response.statusText}`);
+      }
+
+      // Remove from local state
+      setStocks(prev => prev.filter(s => s.id !== stockId));
+    } catch (error) {
+      console.error('Error deleting stock:', error);
+      alert(t('errorDeletingStock') || 'Failed to delete stock. Please try again.');
+    } finally {
+      setDeletingStocks(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(stockId);
+        return newSet;
+      });
+    }
   };
 
   // Parse date string to Date object
@@ -589,6 +623,26 @@ export default function HighlightedStocksWithDateRange({
                                 </svg>
                               )}
                             </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteStock(stock.id);
+                              }}
+                              disabled={deletingStocks.has(stock.id)}
+                              className="p-1 rounded hover:bg-red-100 transition-colors text-red-500 hover:text-red-700 disabled:opacity-50"
+                              title={t('deleteStock') || 'Delete stock'}
+                            >
+                              {deletingStocks.has(stock.id) ? (
+                                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              )}
+                            </button>
                           </div>
                         </div>
                         {(stockComments[stock.ticker] || stockColors[stock.ticker]) && (
@@ -629,7 +683,7 @@ export default function HighlightedStocksWithDateRange({
                 <table className="min-w-full text-gray-900 text-sm">
                   <thead>
                     <tr className="bg-gradient-to-r from-gray-50 to-blue-50 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider border-b border-gray-200">
-                      <th className="px-2 py-2 text-center text-gray-700">Color</th>
+                      <th className="px-2 py-2 text-center text-gray-700">Actions</th>
                       <th className="px-2 py-2 text-left text-gray-700">Comment</th>
                       <th className="px-2 py-2 text-left text-gray-700 cursor-pointer" onClick={() => handleSort('ticker')}>
                         <div className="flex items-center gap-1">
@@ -725,20 +779,21 @@ export default function HighlightedStocksWithDateRange({
                         }}
                       >
                         <td className="px-2 py-2 text-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              cycleColor(stock.id);
-                            }}
-                            className={clsx(
-                              "p-1 rounded hover:bg-gray-100 transition-colors",
-                              stockColors[stock.ticker] === 'red' && 'text-red-500',
-                              stockColors[stock.ticker] === 'green' && 'text-green-500',
-                              stockColors[stock.ticker] === 'yellow' && 'text-yellow-500',
-                              !stockColors[stock.ticker] && 'text-gray-400'
-                            )}
-                            title="Click to change color"
-                          >
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cycleColor(stock.id);
+                              }}
+                              className={clsx(
+                                "p-1 rounded hover:bg-gray-100 transition-colors",
+                                stockColors[stock.ticker] === 'red' && 'text-red-500',
+                                stockColors[stock.ticker] === 'green' && 'text-green-500',
+                                stockColors[stock.ticker] === 'yellow' && 'text-yellow-500',
+                                !stockColors[stock.ticker] && 'text-gray-400'
+                              )}
+                              title="Click to change color"
+                            >
                             {stock.source === 'manual' ? (
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -750,7 +805,28 @@ export default function HighlightedStocksWithDateRange({
                                 <path d="M8 9h1m6 0h1" />
                               </svg>
                             )}
-                          </button>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteStock(stock.id);
+                              }}
+                              disabled={deletingStocks.has(stock.id)}
+                              className="p-1 rounded hover:bg-red-100 transition-colors text-red-500 hover:text-red-700 disabled:opacity-50"
+                              title={t('deleteStock') || 'Delete stock'}
+                            >
+                              {deletingStocks.has(stock.id) ? (
+                                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
                         </td>
                         <td className="px-2 py-2 text-center">
                           <div className="relative group">
