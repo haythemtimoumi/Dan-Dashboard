@@ -25,7 +25,7 @@ POSTGRES_DATABASE=
 
 // Auth
 AUTH_SECRET=
-AUTH_URL=http://locahost:3000
+AUTH_URL=http://localhost:3000
 
 ```
 

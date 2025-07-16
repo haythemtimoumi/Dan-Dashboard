@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // The base URL of your HTTP-only backend API
-const API_BASE_URL = 'http://locahost:3000';
+const API_BASE_URL = 'http://localhost:3000';
 
 // Mark this route as dynamic to ensure it's not cached
 export const dynamic = 'force-dynamic';

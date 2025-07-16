@@ -47,7 +47,7 @@ describe('fetchStocksBySource', () => {
 
     // Verify the fetch was called with the correct URL
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://locahost:3000/api/stocks/source/rule1'
+      'http://localhost:3000/api/stocks/source/rule1'
     );
 
     // Verify the result contains the expected data
