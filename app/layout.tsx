@@ -5,6 +5,7 @@ import {inter} from "@/app/ui/fonts"
 import QueryProvider from "@/app/providers/query-provider";
 import { Toaster } from 'react-hot-toast';
 import { SettingsProvider } from "@/app/contexts/settings-context";
+import { AuthProvider } from "@/app/contexts/auth-context";
 
 
 export const metadata:Metadata={
@@ -24,12 +25,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
-        <SettingsProvider>
-          <QueryProvider>
-            {children}
-            <Toaster position="top-right" />
-          </QueryProvider>
-        </SettingsProvider>
+        <AuthProvider>
+          <SettingsProvider>
+            <QueryProvider>
+              {children}
+              <Toaster position="top-right" />
+            </QueryProvider>
+          </SettingsProvider>
+        </AuthProvider>
       </body>
     </html>
   );

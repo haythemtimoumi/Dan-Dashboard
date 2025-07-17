@@ -414,8 +414,12 @@ export async function fetchStocksByDateAndSource(
 export async function fetchStockById(id: string): Promise<Stock | null> {
   noStore();
   try {
-    // Use the createApiUrl function for proper URL handling
-    const response = await fetch(createApiUrl(`/stocks/${id}`));
+    // Use the Dan-API URL directly
+    const headers = {
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MjcxNDQxNywiZXhwIjoxNzUyODAwODE3fQ.FB0oi_TFyDaz56zWp8s0HC59pdBjVAlnfpf64zqSwqM'
+    };
+    
+    const response = await fetch(`http://localhost:3000/api/stocks/${id}`, { headers });
     
     if (response.status === 404) {
       console.warn(`Stock with ID ${id} not found`);
@@ -627,16 +631,19 @@ export async function fetchStockHistory(
   noStore();
   try {
     // Build the URL with optional query parameters
-    // Use the createApiUrl function for proper URL handling
-    const params: Record<string, string> = {};
+    const url = new URL(`http://localhost:3000/api/stocks/${id}/history`);
     if (fromDate) {
-      params['from'] = fromDate;
+      url.searchParams.append('from', fromDate);
     }
     if (toDate) {
-      params['to'] = toDate;
+      url.searchParams.append('to', toDate);
     }
     
-    const response = await fetch(createApiUrl(`/stocks/${id}/history`, params));
+    const headers = {
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MjcxNDQxNywiZXhwIjoxNzUyODAwODE3fQ.FB0oi_TFyDaz56zWp8s0HC59pdBjVAlnfpf64zqSwqM'
+    };
+    
+    const response = await fetch(url.toString(), { headers });
     
     if (response.status === 404) {
       console.warn(`Stock history for ID ${id} not found`);

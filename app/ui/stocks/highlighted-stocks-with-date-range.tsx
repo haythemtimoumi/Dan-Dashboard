@@ -1,6 +1,52 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Add custom CSS for animations
+const animationStyles = `
+  @keyframes slide-up {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = animationStyles;
+  document.head.appendChild(styleSheet);
+}
+
+// Utility function to format numbers
+const formatNumber = (value: any): string => {
+  // Handle null, undefined, and empty string
+  if (value === null || value === undefined || value === '') return '-';
+  
+  // Convert to number
+  let num: number;
+  if (typeof value === 'string') {
+    // Remove commas and parse
+    num = parseFloat(value.replace(/,/g, ''));
+  } else {
+    num = Number(value);
+  }
+  
+  // Check if conversion resulted in NaN
+  if (isNaN(num)) return '-';
+  
+  // Round and convert to string without commas
+  const rounded = Math.round(num);
+  return rounded.toString();
+};
 import { useRouter, usePathname } from 'next/navigation';
 import { Stock } from '@/app/lib/definitions';
 import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatDate } from '@/app/lib/utils';
@@ -10,13 +56,14 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import '@/app/ui/datepicker-custom.css';
 import { useSettings } from '@/app/contexts/settings-context';
+import { useAuth } from '@/app/contexts/auth-context';
 import { registerLocale } from 'react-datepicker';
 import { fr } from 'date-fns/locale';
 
 registerLocale('fr', fr);
 
-// Get API URL from environment variable
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+// Get API URL from environment variable - point directly to Dan-API server
+const API_URL = 'http://localhost:3000/api';
 
 // No pagination - show all items
 
@@ -33,6 +80,7 @@ export default function HighlightedStocksWithDateRange({
   const router = useRouter();
   const pathname = usePathname();
   const { t, language } = useSettings();
+  const { isAdmin } = useAuth();
   
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -50,6 +98,39 @@ export default function HighlightedStocksWithDateRange({
   const [currentComment, setCurrentComment] = useState<string>('');
   const [showColorModal, setShowColorModal] = useState<string | null>(null);
   const [deletingStocks, setDeletingStocks] = useState<Set<string>>(new Set());
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [addingStock, setAddingStock] = useState<boolean>(false);
+  const [notification, setNotification] = useState<{show: boolean, message: string, countdown: number, undoData?: any}>({show: false, message: '', countdown: 0});
+  const [flipAnimations, setFlipAnimations] = useState<Set<string>>(new Set());
+  const [newStock, setNewStock] = useState<{
+    ticker: string;
+    source: string;
+    sentiment_score: number;
+    signal_score: number;
+    rule1_score: number | null;
+    moat_score: number | null;
+    management_score: number | null;
+    buy_price: string;
+    pe: string;
+    dividend: string;
+    cash_per_share: string;
+    current_ratio: string;
+    guru: string;
+  }>({
+    ticker: '',
+    source: 'manual',
+    sentiment_score: 0,
+    signal_score: 0,
+    rule1_score: null,
+    moat_score: null,
+    management_score: null,
+    buy_price: '',
+    pe: '',
+    dividend: '',
+    cash_per_share: '',
+    current_ratio: '',
+    guru: ''
+  });
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -121,36 +202,161 @@ export default function HighlightedStocksWithDateRange({
     localStorage.setItem('tickerCommentHistory', JSON.stringify(newHistory));
   };
 
+  const handleAddStock = async () => {
+    if (!newStock.ticker.trim()) {
+      alert('Ticker is required');
+      return;
+    }
+
+    setAddingStock(true);
+
+    try {
+      const headers = {
+        
+        'Content-Type': 'application/json'
+      };
+
+      const stockData = {
+        ...newStock,
+        ticker: newStock.ticker.toUpperCase(),
+        date: new Date().toISOString().split('T')[0]
+      };
+
+      const response = await fetch(`${API_URL}/stocks`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(stockData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to add stock: ${response.statusText}`);
+      }
+
+      const addedStock = await response.json();
+      setStocks(prev => [addedStock, ...prev]);
+      setShowAddModal(false);
+      setNewStock({
+        ticker: '',
+        source: 'manual',
+        sentiment_score: 0,
+        signal_score: 0,
+        rule1_score: null,
+        moat_score: null,
+        management_score: null,
+        buy_price: '',
+        pe: '',
+        dividend: '',
+        cash_per_share: '',
+        current_ratio: '',
+        guru: ''
+      });
+    } catch (error) {
+      console.error('Error adding stock:', error);
+      alert('Failed to add stock. Please try again.');
+    } finally {
+      setAddingStock(false);
+    }
+  };
+
   const handleDeleteStock = async (stockId: string) => {
     const stock = stocks.find(s => s.id === stockId);
     if (!stock) return;
 
-    if (!confirm(t('confirmDeleteStock') || `Are you sure you want to delete ${stock.ticker}?`)) {
-      return;
-    }
-
-    setDeletingStocks(prev => new Set(prev).add(stockId));
-
-    try {
-      const response = await fetch(`https://mytickerlist.com/api/stocks/${stockId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete stock: ${response.statusText}`);
-      }
-
-      // Remove from local state
-      setStocks(prev => prev.filter(s => s.id !== stockId));
-    } catch (error) {
-      console.error('Error deleting stock:', error);
-      alert(t('errorDeletingStock') || 'Failed to delete stock. Please try again.');
-    } finally {
-      setDeletingStocks(prev => {
+    // Start flip animation
+    setFlipAnimations(prev => new Set(prev).add(stockId));
+    
+    // Wait for flip animation
+    setTimeout(async () => {
+      setFlipAnimations(prev => {
         const newSet = new Set(prev);
         newSet.delete(stockId);
         return newSet;
       });
+      
+      setDeletingStocks(prev => new Set(prev).add(stockId));
+
+      try {
+        const headers = {
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MjcxNDQxNywiZXhwIjoxNzUyODAwODE3fQ.FB0oi_TFyDaz56zWp8s0HC59pdBjVAlnfpf64zqSwqM'
+        };
+        
+        const response = await fetch(`${API_URL}/stocks/${stockId}`, {
+          method: 'DELETE',
+          headers
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to delete stock: ${response.statusText}`);
+        }
+
+        // Remove from local state
+        setStocks(prev => prev.filter(s => s.id !== stockId));
+        
+        // Show notification with undo option
+        showDeleteNotification(stock);
+        
+      } catch (error) {
+        console.error('Error deleting stock:', error);
+        alert(t('errorDeletingStock') || 'Failed to delete stock. Please try again.');
+      } finally {
+        setDeletingStocks(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(stockId);
+          return newSet;
+        });
+      }
+    }, 600); // Wait for flip animation to complete
+  };
+
+  const showDeleteNotification = (deletedStock: any) => {
+    setNotification({
+      show: true,
+      message: `${deletedStock.ticker} deleted`,
+      countdown: 5,
+      undoData: deletedStock
+    });
+    
+    // Start countdown
+    const interval = setInterval(() => {
+      setNotification(prev => {
+        if (prev.countdown <= 1) {
+          clearInterval(interval);
+          return {show: false, message: '', countdown: 0};
+        }
+        return {...prev, countdown: prev.countdown - 1};
+      });
+    }, 1000);
+  };
+
+  const handleUndo = async () => {
+    if (!notification.undoData) return;
+    
+    try {
+      const headers = {
+        
+        'Content-Type': 'application/json'
+      };
+
+      const stockData = {
+        ...notification.undoData,
+        date: new Date().toISOString().split('T')[0]
+      };
+      delete stockData.id; // Remove ID to create new entry
+
+      const response = await fetch(`${API_URL}/stocks`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(stockData)
+      });
+
+      if (response.ok) {
+        const restoredStock = await response.json();
+        setStocks(prev => [restoredStock, ...prev]);
+        setNotification({show: false, message: '', countdown: 0});
+      }
+    } catch (error) {
+      console.error('Error restoring stock:', error);
     }
   };
 
@@ -187,16 +393,29 @@ export default function HighlightedStocksWithDateRange({
         
         setLoading(true);
         
-        // Format dates for API
-        const formattedStart = formatDateToString(startDateObj);
+        // Format dates for API in YYYY-MM-DD format (required by the API)
+        const formatDateForApi = (date: Date): string => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+        
+        const formattedStart = formatDateForApi(startDateObj);
         
         // Set to end of the selected day (23:59:59.999)
         const adjustedEndDate = new Date(endDateObj);
         adjustedEndDate.setHours(23, 59, 59, 999);
-        const formattedEnd = formatDateToString(adjustedEndDate);
+        const formattedEnd = formatDateForApi(adjustedEndDate);
+        
+        // Add authentication token
+        const headers = {
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MjcxNDQxNywiZXhwIjoxNzUyODAwODE3fQ.FB0oi_TFyDaz56zWp8s0HC59pdBjVAlnfpf64zqSwqM'
+        };
         
         // Use the API URL from environment variable
-        const response = await fetch(`${API_URL}/stocks/highlighted/filter?startDate=${formattedStart}&endDate=${formattedEnd}`);
+        const response = await fetch(`${API_URL}/stocks/highlighted/filter?startDate=${formattedStart}&endDate=${formattedEnd}`, { headers });
+        console.log(`Fetching highlighted stocks: ${API_URL}/stocks/highlighted/filter?startDate=${formattedStart}&endDate=${formattedEnd}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch highlighted stocks: ${response.statusText}`);
@@ -204,8 +423,18 @@ export default function HighlightedStocksWithDateRange({
         
         const data = await response.json();
         
-        // Use the data directly without additional processing
-        setStocks(data);
+        // Handle different response formats
+        if (data && data.stocks) {
+          // If API returns {stocks: [...]} format
+          setStocks(data.stocks);
+        } else if (Array.isArray(data)) {
+          // If API returns array directly
+          setStocks(data);
+        } else {
+          // If no valid data format, set empty array
+          console.error('Unexpected API response format:', data);
+          setStocks([]);
+        }
         setError(null);
       } catch (err) {
         console.error('Error fetching highlighted stocks:', err);
@@ -270,13 +499,14 @@ export default function HighlightedStocksWithDateRange({
   };
 
   // Sort stocks with improved handling for null/undefined values
-  const sortedStocks = [...stocks].sort((a, b) => {
+  const sortedStocks = [...(stocks || [])].sort((a, b) => {
     let valueA = a[sortBy as keyof Stock];
     let valueB = b[sortBy as keyof Stock];
     
     // Handle null/undefined/empty string values - always sort them to the end
-    const isAEmpty = valueA === null || valueA === undefined || valueA === '' || valueA === 0;
-    const isBEmpty = valueB === null || valueB === undefined || valueB === '' || valueB === 0;
+    // Note: 0 and negative numbers are NOT considered empty
+    const isAEmpty = valueA === null || valueA === undefined || valueA === '';
+    const isBEmpty = valueB === null || valueB === undefined || valueB === '';
     
     if (isAEmpty && isBEmpty) return 0;
     if (isAEmpty) return 1; // A goes to end
@@ -397,11 +627,24 @@ export default function HighlightedStocksWithDateRange({
                 <p className="text-sm text-gray-500 dark:text-gray-400">{t('highlightedInvestmentOpportunities')}</p>
               </div>
               <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-semibold">
-                {stocks.length} stocks
+                {(stocks || []).length} stocks
               </span>
             </div>
-            <div className="text-sm text-black dark:text-black bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
-              {formatDateToString(startDateObj)} - {formatDateToString(endDateObj)}
+            <div className="flex items-center gap-3">
+              {isAdmin && (
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Stock
+                </button>
+              )}
+              <div className="text-sm text-black dark:text-black bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                {formatDateToString(startDateObj)} - {formatDateToString(endDateObj)}
+              </div>
             </div>
           </div>
           
@@ -484,7 +727,7 @@ export default function HighlightedStocksWithDateRange({
             )}
           </div>
           
-          {stocks.length === 0 ? (
+          {(stocks || []).length === 0 ? (
             <div className="py-12 text-center">
               <div className="inline-flex items-center justify-center h-20 w-20 bg-blue-100 rounded-full mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -548,31 +791,35 @@ export default function HighlightedStocksWithDateRange({
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Signal Score</p>
-                          <p className="text-lg font-semibold">{stock.signal_score}</p>
+                          <p className={`text-lg font-semibold ${stock.signal_score && stock.signal_score < 0 ? 'text-red-600' : ''}`}>
+                            {formatNumber(stock.signal_score)}
+                          </p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Rule1 Score</p>
-                          <p className="text-lg font-semibold">{stock.rule1_score !== null ? stock.rule1_score : '-'}</p>
+                          <p className={`text-lg font-semibold ${stock.rule1_score && stock.rule1_score < 0 ? 'text-red-600' : ''}`}>
+                            {formatNumber(stock.rule1_score)}
+                          </p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Target Buy Price</p>
-                          <p className="text-lg font-semibold">{formatCurrency(stock.buy_price)}</p>
+                          <p className="text-lg font-semibold">{formatNumber(stock.buy_price)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Sticker Price</p>
-                          <p className="text-lg font-semibold">{formatCurrency(stock.buy_price * 2)}</p>
+                          <p className="text-lg font-semibold">{formatNumber(stock.buy_price * 2)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Last Price</p>
-                          <p className="text-lg font-semibold">{stock.current_ratio}</p>
+                          <p className="text-lg font-semibold">{formatNumber(stock.current_ratio)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Last Saved Composite GR</p>
-                          <p className="text-lg font-semibold">{stock.dividend || '-'}</p>
+                          <p className="text-lg font-semibold">{formatNumber(stock.dividend)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Analyst Estimated Long-Term GR</p>
-                          <p className="text-lg font-semibold">{stock.cash_per_share || '-'}</p>
+                          <p className="text-lg font-semibold">{formatNumber(stock.cash_per_share)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">PBT</p>
@@ -629,7 +876,9 @@ export default function HighlightedStocksWithDateRange({
                                 handleDeleteStock(stock.id);
                               }}
                               disabled={deletingStocks.has(stock.id)}
-                              className="p-1 rounded hover:bg-red-100 transition-colors text-red-500 hover:text-red-700 disabled:opacity-50"
+                              className={`p-1 rounded hover:bg-red-100 transition-all duration-300 text-red-500 hover:text-red-700 disabled:opacity-50 ${
+                                flipAnimations.has(stock.id) ? 'animate-pulse transform rotate-180 scale-110' : ''
+                              }`}
                               title={t('deleteStock') || 'Delete stock'}
                             >
                               {deletingStocks.has(stock.id) ? (
@@ -806,26 +1055,30 @@ export default function HighlightedStocksWithDateRange({
                               </svg>
                             )}
                             </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteStock(stock.id);
-                              }}
-                              disabled={deletingStocks.has(stock.id)}
-                              className="p-1 rounded hover:bg-red-100 transition-colors text-red-500 hover:text-red-700 disabled:opacity-50"
-                              title={t('deleteStock') || 'Delete stock'}
-                            >
-                              {deletingStocks.has(stock.id) ? (
-                                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                              ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              )}
-                            </button>
+                            {isAdmin && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteStock(stock.id);
+                                }}
+                                disabled={deletingStocks.has(stock.id)}
+                                className={`p-1 rounded hover:bg-red-100 transition-all duration-300 text-red-500 hover:text-red-700 disabled:opacity-50 ${
+                                  flipAnimations.has(stock.id) ? 'animate-pulse transform rotate-180 scale-110' : ''
+                                }`}
+                                title={t('deleteStock') || 'Delete stock'}
+                              >
+                                {deletingStocks.has(stock.id) ? (
+                                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                )}
+                              </button>
+                            )}
                           </div>
                         </td>
                         <td className="px-2 py-2 text-center">
@@ -872,34 +1125,52 @@ export default function HighlightedStocksWithDateRange({
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.rule1_score !== null ? stock.rule1_score : '-'}
+                          <span className={stock.rule1_score && stock.rule1_score < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.rule1_score)}
+                          </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.moat_score !== null ? stock.moat_score : '-'}
+                          <span className={stock.moat_score && stock.moat_score < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.moat_score)}
+                          </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.management_score !== null ? stock.management_score : '-'}
+                          <span className={stock.management_score && stock.management_score < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.management_score)}
+                          </span>
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
-                          {formatCurrency(stock.buy_price)}
+                          <span className={stock.buy_price && stock.buy_price < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.buy_price)}
+                          </span>
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
-                          {formatCurrency(stock.buy_price * 2)}
+                          <span className={stock.buy_price && (stock.buy_price * 2) < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.buy_price * 2)}
+                          </span>
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
-                          {stock.current_ratio}
+                          <span className={stock.current_ratio && Number(stock.current_ratio) < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.current_ratio)}
+                          </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.pe}%
+                          <span className={stock.pe && Number(stock.pe) < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.pe)}%
+                          </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.dividend || '-'}
+                          <span className={stock.dividend && Number(stock.dividend) < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.dividend)}
+                          </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.cash_per_share || '-'}
+                          <span className={stock.cash_per_share && Number(stock.cash_per_share) < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.cash_per_share)}
+                          </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.guru || '-'}
+                          {stock.guru ? stock.guru.replace(/,/g, '') : '-'}
                         </td>
                         <td className="px-2 py-2">
                           <span className={clsx("px-1.5 py-0.5 rounded text-xs", 
@@ -1025,6 +1296,193 @@ export default function HighlightedStocksWithDateRange({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Add Stock Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-100 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-10 w-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Add New Stock</h3>
+                  <p className="text-sm text-gray-500">Add a new stock to your portfolio</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Ticker *</label>
+                  <input
+                    type="text"
+                    value={newStock.ticker}
+                    onChange={(e) => setNewStock({...newStock, ticker: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="AAPL"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Source</label>
+                  <select
+                    value={newStock.source}
+                    onChange={(e) => setNewStock({...newStock, source: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="manual">Manual</option>
+                    <option value="rule1">Rule 1</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Sentiment Score</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={newStock.sentiment_score}
+                    onChange={(e) => setNewStock({...newStock, sentiment_score: Number(e.target.value)})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Signal Score</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={newStock.signal_score}
+                    onChange={(e) => setNewStock({...newStock, signal_score: Number(e.target.value)})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Rule1 Score</label>
+                  <input
+                    type="number"
+                    value={newStock.rule1_score || ''}
+                    onChange={(e) => setNewStock({...newStock, rule1_score: e.target.value ? Number(e.target.value) : null})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Buy Price</label>
+                  <input
+                    type="text"
+                    value={newStock.buy_price}
+                    onChange={(e) => setNewStock({...newStock, buy_price: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="100.50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">PE Ratio</label>
+                  <input
+                    type="text"
+                    value={newStock.pe}
+                    onChange={(e) => setNewStock({...newStock, pe: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Ratio</label>
+                  <input
+                    type="text"
+                    value={newStock.current_ratio}
+                    onChange={(e) => setNewStock({...newStock, current_ratio: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Moat Score</label>
+                  <input
+                    type="number"
+                    value={newStock.moat_score || ''}
+                    onChange={(e) => setNewStock({...newStock, moat_score: e.target.value ? Number(e.target.value) : null})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Management Score</label>
+                  <input
+                    type="number"
+                    value={newStock.management_score || ''}
+                    onChange={(e) => setNewStock({...newStock, management_score: e.target.value ? Number(e.target.value) : null})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Dividend</label>
+                  <input
+                    type="text"
+                    value={newStock.dividend}
+                    onChange={(e) => setNewStock({...newStock, dividend: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Cash Per Share</label>
+                  <input
+                    type="text"
+                    value={newStock.cash_per_share}
+                    onChange={(e) => setNewStock({...newStock, cash_per_share: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Guru (PBT)</label>
+                  <input
+                    type="text"
+                    value={newStock.guru}
+                    onChange={(e) => setNewStock({...newStock, guru: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="10.5 years"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button
+                  onClick={handleAddStock}
+                  disabled={addingStock}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl px-4 py-3 text-sm font-medium hover:from-green-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
+                >
+                  {addingStock ? 'Adding...' : 'Add Stock'}
+                </button>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Notification */}
+      {notification.show && (
+        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-4 animate-slide-up">
+          <div className="flex items-center gap-2">
+            <svg className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{notification.message}</span>
+          </div>
+          <button
+            onClick={handleUndo}
+            className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium transition-colors"
+          >
+            Undo
+          </button>
+          <div className="text-sm text-gray-300">
+            {notification.countdown}s
           </div>
         </div>
       )}

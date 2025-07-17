@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { EyeIcon, EyeSlashIcon, UserIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { useSettings } from '@/app/contexts/settings-context';
+import { useAuth } from '@/app/contexts/auth-context';
 import FloatingSettingsButton from '@/app/ui/dashboard/floating-settings-button';
 
 export default function LoginPage() {
@@ -15,13 +16,14 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { t } = useSettings();
+  const { setUser } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,6 +42,9 @@ export default function LoginPage() {
           sessionStorage.setItem('user', JSON.stringify(user));
           localStorage.removeItem('rememberMe');
         }
+        
+        // Set user in auth context
+        setUser(user);
         
         toast.success('Login successful!');
         router.push('/dashboard');

@@ -81,8 +81,9 @@ export default function StocksTable({
     let valueB = b[sortBy as keyof StocksTable];
     
     // Handle null/undefined/empty string values - always sort them to the end
-    const isAEmpty = valueA === null || valueA === undefined || valueA === '' || valueA === 0;
-    const isBEmpty = valueB === null || valueB === undefined || valueB === '' || valueB === 0;
+    // Note: 0 and negative numbers are NOT considered empty
+    const isAEmpty = valueA === null || valueA === undefined || valueA === '';
+    const isBEmpty = valueB === null || valueB === undefined || valueB === '';
     
     if (isAEmpty && isBEmpty) return 0;
     if (isAEmpty) return 1; // A goes to end
