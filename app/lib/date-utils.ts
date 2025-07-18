@@ -2,41 +2,63 @@
 
 /**
  * Format a date for the highlighted stocks API (YYYY-MM-DD format)
- * Uses local timezone to avoid date shifting
+ * Uses UTC noon time to avoid timezone date shifting
  */
 export function formatDateForHighlightedAPI(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  // Create a UTC date at noon to avoid any timezone day shifting
+  const utcDate = new Date(Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    12, 0, 0
+  ));
+  return utcDate.toISOString().split('T')[0];
 }
 
 /**
  * Format a date for the portfolio API (MM/DD/YYYY format)
- * Uses local timezone to avoid date shifting
+ * Uses UTC noon time to avoid timezone date shifting
  */
 export function formatDateForPortfolioAPI(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  // Create a UTC date at noon to avoid any timezone day shifting
+  const utcDate = new Date(Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    12, 0, 0
+  ));
+  const year = utcDate.getUTCFullYear();
+  const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(utcDate.getUTCDate()).padStart(2, '0');
   return `${month}/${day}/${year}`;
 }
 
 /**
  * Parse a date string in MM/DD/YYYY format to a Date object
- * Creates the date in local timezone to avoid shifting
+ * Creates the date in UTC at noon to avoid timezone shifting
  */
 export function parseDateString(dateString: string): Date | null {
   try {
     // Handle MM/DD/YYYY format
     if (dateString.includes('/')) {
       const [month, day, year] = dateString.split('/');
-      // Create date in local timezone
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      // Create date in UTC at noon to avoid timezone shifting
+      return new Date(Date.UTC(
+        parseInt(year), 
+        parseInt(month) - 1, 
+        parseInt(day),
+        12, 0, 0
+      ));
     }
     // Handle YYYY-MM-DD format
     const [year, month, day] = dateString.split('-');
-    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    // Create date in UTC at noon to avoid timezone shifting
+    return new Date(Date.UTC(
+      parseInt(year), 
+      parseInt(month) - 1, 
+      parseInt(day),
+      12, 0, 0
+    ));
   } catch (error) {
     console.error('Error parsing date:', error);
     return null;
@@ -63,11 +85,16 @@ export function createLocalDate(year: number, month: number, day: number): Date 
 }
 
 /**
- * Get today's date in local timezone
+ * Get today's date in UTC at noon to avoid timezone day shifting
  */
 export function getTodayLocal(): Date {
   const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return new Date(Date.UTC(
+    now.getFullYear(), 
+    now.getMonth(), 
+    now.getDate(),
+    12, 0, 0
+  ));
 }
 
 /**

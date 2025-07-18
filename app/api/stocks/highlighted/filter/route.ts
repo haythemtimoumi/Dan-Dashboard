@@ -39,36 +39,42 @@ export async function GET(request: Request) {
         // Add one day to end date to include the full end date
         end.setDate(end.getDate() + 1);
         
-        console.log(`Filtering highlighted stocks from ${startDate} to ${endDate}`);
-        console.log(`Date range: ${start.toISOString()} to ${end.toISOString()}`);
+        // Create UTC dates at noon to avoid timezone day shifting
+        const startUTC = new Date(Date.UTC(
+          start.getFullYear(), 
+          start.getMonth(), 
+          start.getDate(), 
+          12, 0, 0
+        ));
+        
+        const endUTC = new Date(Date.UTC(
+          end.getFullYear(), 
+          end.getMonth(), 
+          end.getDate() - 1, // Adjust because we added a day to end
+          12, 0, 0
+        ));
+        
+        // Get dates in YYYY-MM-DD format
+        const startDateStr = startUTC.toISOString().split('T')[0];
+        const endDateStr = endUTC.toISOString().split('T')[0];
         
         // Filter by date range
         highlightedStocks = highlightedStocks.filter(stock => {
+          // Get stock date in UTC at noon
           const stockDate = new Date(stock.created_at);
+          const stockUTC = new Date(Date.UTC(
+            stockDate.getFullYear(),
+            stockDate.getMonth(),
+            stockDate.getDate(),
+            12, 0, 0
+          ));
           
-          // Compare dates using local date parts to avoid timezone issues
-          const stockYear = stockDate.getFullYear();
-          const stockMonth = stockDate.getMonth();
-          const stockDay = stockDate.getDate();
+          // Get stock date in YYYY-MM-DD format
+          const stockDateStr = stockUTC.toISOString().split('T')[0];
           
-          const startYear = start.getFullYear();
-          const startMonth = start.getMonth();
-          const startDay = start.getDate();
-          
-          const endYear = end.getFullYear();
-          const endMonth = end.getMonth();
-          const endDay = end.getDate() - 1; // Adjust because we added a day to end
-          
-          // Create date objects using only year, month, day (no time)
-          const stockDateOnly = new Date(stockYear, stockMonth, stockDay);
-          const startDateOnly = new Date(startYear, startMonth, startDay);
-          const endDateOnly = new Date(endYear, endMonth, endDay);
-          
-          // Compare dates
-          return stockDateOnly >= startDateOnly && stockDateOnly <= endDateOnly;
+          // Compare dates as strings in YYYY-MM-DD format
+          return stockDateStr >= startDateStr && stockDateStr <= endDateStr;
         });
-        
-        console.log(`Found ${highlightedStocks.length} highlighted stocks in date range`);
       } catch (error) {
         console.error('Error parsing dates:', error);
         return NextResponse.json(
