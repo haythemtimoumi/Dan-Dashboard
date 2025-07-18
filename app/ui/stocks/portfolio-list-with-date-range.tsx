@@ -683,7 +683,7 @@ export default function PortfolioListWithDateRange() {
                               {stock.source}
                             </span>
                             <span className="text-xs text-gray-500">
-                              {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : 'No date'}
+                              {(stock.date || stock.created_at) ? (stock.date || stock.created_at).split('T')[0] : 'No date'}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -1002,7 +1002,7 @@ export default function PortfolioListWithDateRange() {
                           </span>
                         </td>
                         <td className="px-2 py-2 text-xs text-gray-500">
-                          {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString() : '-'}
+                          {(stock.date || stock.created_at) ? (stock.date || stock.created_at).split('T')[0] : '-'}
                         </td>
                       </tr>
                     ))}

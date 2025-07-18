@@ -13,11 +13,13 @@ import {
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { useSettings } from '@/app/contexts/settings-context';
+import { useAuth } from '@/app/contexts/auth-context';
 import SettingsModal from './settings-modal';
 
 export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolean }) {
   const pathname = usePathname();
   const { t } = useSettings();
+  const { isAdmin } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   const links = [
@@ -25,7 +27,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
     { name: t('highlighted'), href: '/dashboard/highlighted', icon: StarIcon },
     { name: t('portfolio'), href: '/dashboard/portfolio-list', icon: DocumentTextIcon },
     { name: t('update'), href: '/dashboard/stock-update', icon: ArrowPathIcon },
-    { name: t('addStock'), href: '/dashboard/stocks/create', icon: PlusCircleIcon },
+    ...(isAdmin ? [{ name: t('addStock'), href: '/dashboard/stocks/create', icon: PlusCircleIcon }] : []),
   ];
   
   return (

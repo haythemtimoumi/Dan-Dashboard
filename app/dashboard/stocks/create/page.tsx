@@ -7,9 +7,22 @@ import TickerManager from '@/app/ui/scraper/TickerManager';
 import ThemeToggle from '@/app/ui/scraper/ThemeToggle';
 import ConnectionStatus from '@/app/ui/scraper/ConnectionStatus';
 import { useSettings } from '@/app/contexts/settings-context';
+import { useAuth } from '@/app/contexts/auth-context';
 
 export default function ScraperManagementPage() {
   const { t } = useSettings();
+  const { isAdmin } = useAuth();
+  
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Access Denied</h2>
+          <p className="text-gray-600 dark:text-gray-400">Admin access required to view this page.</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="w-full space-y-6">

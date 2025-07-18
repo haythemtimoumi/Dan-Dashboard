@@ -91,23 +91,18 @@ export default function HighlightedStocksWithDateRange({
   const [endDateObj, setEndDateObj] = useState<Date | null>(parseDate(endDate));
   const [isClientMounted, setIsClientMounted] = useState(false);
 
-  // Set today's date in client's timezone on mount with UTC noon approach
+  const [dateError, setDateError] = useState<string | null>(null);
+
+  // Set today's date on mount
   useEffect(() => {
     setIsClientMounted(true);
-    // If using default dates (2024-01-01), set to today in client's timezone
+    // If using default dates (2024-01-01), set to today
     if (startDate === '2024-01-01' && endDate === '2024-01-01') {
-      const today = getTodayLocal(); // This uses UTC noon approach
+      const today = getTodayLocal();
       setStartDateObj(today);
       setEndDateObj(today);
-      
-      // Log timezone information for debugging
-      console.log('Client timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
-      console.log('Timezone offset:', new Date().getTimezoneOffset() / -60, 'hours from UTC');
-      console.log('Today (local):', new Date().toString());
-      console.log('Today (UTC noon):', today.toString());
     }
   }, [startDate, endDate]);
-  const [dateError, setDateError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('sentiment_score');
   const [sortOrder, setSortOrder] = useState<string>('desc');
   const [stockColors, setStockColors] = useState<{[key: string]: string}>({});
@@ -898,7 +893,7 @@ export default function HighlightedStocksWithDateRange({
                               {stock.source}
                             </span>
                             <span className="text-xs text-gray-500">
-                              {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toISOString().split('T')[0] : 'No date'}
+                              {(stock.date || stock.created_at) ? (stock.date || stock.created_at).split('T')[0] : 'No date'}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -1244,7 +1239,7 @@ export default function HighlightedStocksWithDateRange({
                           </span>
                         </td>
                         <td className="px-2 py-2 text-xs text-gray-500">
-                          {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString() : '-'}
+                          {(stock.date || stock.created_at) ? (stock.date || stock.created_at).split('T')[0] : '-'}
                         </td>
                       </tr>
                     ))}
