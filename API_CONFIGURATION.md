@@ -8,7 +8,7 @@ To ensure the API works correctly, you need to set up the proper environment var
 2. Add the following environment variable:
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=https://www.mytickerlist.com/
 ```
 
 **Note:** When your frontend is running on a different port (e.g., 3001) than your backend API (e.g., 3000), you need to use an absolute URL with the correct port for the backend.
@@ -17,7 +17,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3000
 
 The application uses a properly formatted URL for API calls. The URL can be either:
 
-1. An absolute URL (recommended for separate backend): `http://localhost:3000`
+1. An absolute URL (recommended for separate backend): `https://www.mytickerlist.com/`
    - Must include:
      - Protocol (http:// or https://)
      - Host (localhost or your domain)
@@ -46,9 +46,9 @@ If you see the error `Failed to load stocks. Please try again later.`, check for
 
 You can test the API endpoints directly in your browser:
 
-- All stocks: http://localhost:3000/api/stocks
-- Highlighted stocks: http://localhost:3000/api/stocks/highlighted
-- Sorted stocks: http://localhost:3000/api/stocks/sorted
-- Daily changes: http://localhost:3000/api/stocks/daily-changes
-- Date range: http://localhost:3000/api/stocks/date-range?startDate=2023-01-01&endDate=2023-12-31
-- Stock history: http://localhost:3000/api/stocks/123/history?from=2023-01-01&to=2023-01-31
+- All stocks: https://www.mytickerlist.com/api/stocks
+- Highlighted stocks: https://www.mytickerlist.com/api/stocks/highlighted
+- Sorted stocks: https://www.mytickerlist.com/api/stocks/sorted
+- Daily changes: https://www.mytickerlist.com/api/stocks/daily-changes
+- Date range: https://www.mytickerlist.com/api/stocks/date-range?startDate=2023-01-01&endDate=2023-12-31
+- Stock history: https://www.mytickerlist.com/api/stocks/123/history?from=2023-01-01&to=2023-01-31

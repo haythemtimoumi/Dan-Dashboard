@@ -91,6 +91,7 @@ const translations = {
     saveComment: 'Save Comment',
     cancel: 'Cancel',
     refresh: 'Refresh',
+    reloadState: 'Reload State',
     previous: 'Prev',
     next: 'Next',
     
@@ -140,6 +141,7 @@ const translations = {
     idle: 'idle',
     nextRunIn: 'Next Run In',
     hoursMinutes: 'hours : minutes',
+    hoursMinutesSeconds: 'hours : minutes : seconds',
     status: 'Status',
     stopped: 'Stopped',
     updates: 'Updates',
@@ -243,6 +245,7 @@ const translations = {
     saveComment: 'Enregistrer le commentaire',
     cancel: 'Annuler',
     refresh: 'Actualiser',
+    reloadState: 'Recharger l\'état',
     previous: 'Précédent',
     next: 'Suivant',
     
@@ -292,6 +295,7 @@ const translations = {
     idle: 'inactif',
     nextRunIn: 'Prochaine Exécution Dans',
     hoursMinutes: 'heures : minutes',
+    hoursMinutesSeconds: 'heures : minutes : secondes',
     status: 'Statut',
     stopped: 'Arrêté',
     updates: 'Mises à jour',

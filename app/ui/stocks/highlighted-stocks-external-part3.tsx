@@ -8,7 +8,7 @@ import { CalendarIcon, XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline
 import { HighlightedStocksExternalSkeleton, Pagination } from './highlighted-stocks-external-part1';
 
 // Get API URL from environment variable
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.mytickerlist.com/api';
 
 // Items per page for pagination
 const ITEMS_PER_PAGE = 5;

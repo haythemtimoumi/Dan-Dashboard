@@ -285,5 +285,45 @@ export const stocks: Stock[] = [
     rule1_score: 92,
     moat_score: 89,
     management_score: 94
+  },
+  {
+    id: '14',
+    ticker: 'FUTURE4',
+    sentiment_score: 0.97,
+    signal_score: 0.94,
+    pe: 28.7,
+    buy_price: 225.0,
+    guru: 'Future Master',
+    source: 'rule1',
+    highlight: true,
+    created_at: '2025-07-17T10:00:00Z', // July 17, 2025
+    updated_at: '2025-07-17T10:30:00Z',
+    date: '07/17/2025',
+    dividend: '1.8%',
+    cash_per_share: '$30.25',
+    current_ratio: 2.6,
+    rule1_score: 98,
+    moat_score: 96,
+    management_score: 99
+  },
+  {
+    id: '15',
+    ticker: 'FUTURE5',
+    sentiment_score: 0.96,
+    signal_score: 0.93,
+    pe: 27.5,
+    buy_price: 240.0,
+    guru: 'Future Wizard',
+    source: 'manual', // Manual source for portfolio list
+    highlight: true,
+    created_at: '2025-07-17T11:00:00Z', // July 17, 2025
+    updated_at: '2025-07-17T11:30:00Z',
+    date: '07/17/2025',
+    dividend: '2.0%',
+    cash_per_share: '$35.50',
+    current_ratio: 2.8,
+    rule1_score: 97,
+    moat_score: 95,
+    management_score: 98
   }
 ];

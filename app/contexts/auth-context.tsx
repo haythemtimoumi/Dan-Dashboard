@@ -20,14 +20,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Try to get user from localStorage on mount
-    const savedUser = localStorage.getItem('user');
+    // Try to get user from localStorage or sessionStorage on mount
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
       } catch (error) {
         console.error('Error parsing saved user:', error);
         localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
       }
     }
   }, []);

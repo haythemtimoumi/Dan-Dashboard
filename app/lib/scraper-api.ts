@@ -1,12 +1,13 @@
 const SCRAPER_API_URL = 'https://scraperbackend.freeddns.org';
 
 export interface ScraperStatus {
-  status: 'running' | 'idle' | 'ready';
   is_running: boolean;
-  next_run_in_hours_minutes: string;
-  next_scheduled_run: string;
   last_run: string | null;
+  next_run: string;
+  next_run_in: string;
   can_update_tickers: boolean;
+  // Add computed property for backward compatibility
+  status?: 'running' | 'idle' | 'ready';
 }
 
 export interface TickerResponse {
@@ -16,12 +17,12 @@ export interface TickerResponse {
 
 // Mock data for when API is unavailable
 const mockStatus: ScraperStatus = {
-  status: 'idle',
   is_running: false,
-  next_run_in_hours_minutes: '0h:25m',
-  next_scheduled_run: '2025-07-12 00:00:00',
-  last_run: '2025-07-11 00:00:00',
+  next_run_in: '18:57:11',
+  next_run: '2025-07-18T20:05:00Z',
+  last_run: '2025-07-16T00:00:00Z',
   can_update_tickers: true,
+  status: 'idle',
 };
 
 const mockTickers: TickerResponse = {
@@ -54,6 +55,7 @@ export const scraperApi = {
       const response = await fetch(`${SCRAPER_API_URL}/scraper-status`, {
         signal: controller.signal,
         headers: { 'Accept': 'application/json' },
+        cache: 'no-cache', // Don't use old cached responses
       });
       
       clearTimeout(timeoutId);
@@ -63,6 +65,34 @@ export const scraperApi = {
     } catch (error) {
       console.warn('Scraper API unavailable, using mock data:', error);
       return mockStatus;
+    }
+  },
+  
+  async reloadScraperState(): Promise<ScraperStatus> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      // Use cache-busting headers but no query parameters
+      const response = await fetch(`${SCRAPER_API_URL}/scraper-status`, {
+        signal: controller.signal,
+        headers: { 
+          'Accept': 'application/json',
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache',
+          // Add a random header to bust any cache
+          'X-Cache-Bust': new Date().getTime().toString()
+        },
+        cache: 'no-store', // Force a fresh request
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    } catch (error) {
+      console.warn('Failed to reload scraper state:', error);
+      throw new Error('API unavailable - please try again later');
     }
   },
 

@@ -59,11 +59,12 @@ import { useSettings } from '@/app/contexts/settings-context';
 import { useAuth } from '@/app/contexts/auth-context';
 import { registerLocale } from 'react-datepicker';
 import { fr } from 'date-fns/locale';
+import { formatDateForHighlightedAPI, formatDateForDisplay, parseDateString, getTodayLocal, formatDateForPortfolioAPI } from '@/app/lib/date-utils';
 
 registerLocale('fr', fr);
 
 // Get API URL from environment variable - point directly to Dan-API server
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://www.mytickerlist.com/api';
 
 // No pagination - show all items
 
@@ -88,6 +89,18 @@ export default function HighlightedStocksWithDateRange({
   // No pagination state needed
   const [startDateObj, setStartDateObj] = useState<Date | null>(parseDate(startDate));
   const [endDateObj, setEndDateObj] = useState<Date | null>(parseDate(endDate));
+  const [isClientMounted, setIsClientMounted] = useState(false);
+
+  // Set today's date in client's timezone on mount
+  useEffect(() => {
+    setIsClientMounted(true);
+    // If using default dates (2024-01-01), set to today in client's timezone
+    if (startDate === '2024-01-01' && endDate === '2024-01-01') {
+      const today = getTodayLocal();
+      setStartDateObj(today);
+      setEndDateObj(today);
+    }
+  }, [startDate, endDate]);
   const [dateError, setDateError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('sentiment_score');
   const [sortOrder, setSortOrder] = useState<string>('desc');
@@ -204,22 +217,28 @@ export default function HighlightedStocksWithDateRange({
 
   const handleAddStock = async () => {
     if (!newStock.ticker.trim()) {
-      alert('Ticker is required');
+      setNotification({
+        show: true,
+        message: 'Ticker is required',
+        countdown: 3
+      });
+      setTimeout(() => setNotification({show: false, message: '', countdown: 0}), 3000);
       return;
     }
 
     setAddingStock(true);
 
     try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
       const headers = {
-        
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
 
       const stockData = {
         ...newStock,
         ticker: newStock.ticker.toUpperCase(),
-        date: new Date().toISOString().split('T')[0]
+        date: formatDateForPortfolioAPI(getTodayLocal())
       };
 
       const response = await fetch(`${API_URL}/stocks`, {
@@ -230,6 +249,15 @@ export default function HighlightedStocksWithDateRange({
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (response.status === 403 || response.status === 401) {
+          throw new Error('Admin access required. Please log in as an admin user.');
+        }
+        if (response.status === 400 && errorData.errors) {
+          const tickerError = errorData.errors.find((e: any) => e.path === 'ticker');
+          if (tickerError) {
+            throw new Error(`Invalid ticker: ${tickerError.msg}. Please use a valid stock symbol.`);
+          }
+        }
         throw new Error(errorData.message || `Failed to add stock: ${response.statusText}`);
       }
 
@@ -253,7 +281,12 @@ export default function HighlightedStocksWithDateRange({
       });
     } catch (error) {
       console.error('Error adding stock:', error);
-      alert('Failed to add stock. Please try again.');
+      setNotification({
+        show: true,
+        message: 'Failed to add stock',
+        countdown: 3
+      });
+      setTimeout(() => setNotification({show: false, message: '', countdown: 0}), 3000);
     } finally {
       setAddingStock(false);
     }
@@ -277,13 +310,12 @@ export default function HighlightedStocksWithDateRange({
       setDeletingStocks(prev => new Set(prev).add(stockId));
 
       try {
-        const headers = {
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MjcxNDQxNywiZXhwIjoxNzUyODAwODE3fQ.FB0oi_TFyDaz56zWp8s0HC59pdBjVAlnfpf64zqSwqM'
-        };
-        
-        const response = await fetch(`${API_URL}/stocks/${stockId}`, {
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const response = await fetch(`/api/stocks/${stockId}`, {
           method: 'DELETE',
-          headers
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
 
         if (!response.ok) {
@@ -298,7 +330,12 @@ export default function HighlightedStocksWithDateRange({
         
       } catch (error) {
         console.error('Error deleting stock:', error);
-        alert(t('errorDeletingStock') || 'Failed to delete stock. Please try again.');
+        setNotification({
+          show: true,
+          message: 'Failed to delete stock',
+          countdown: 3
+        });
+        setTimeout(() => setNotification({show: false, message: '', countdown: 0}), 3000);
       } finally {
         setDeletingStocks(prev => {
           const newSet = new Set(prev);
@@ -333,14 +370,15 @@ export default function HighlightedStocksWithDateRange({
     if (!notification.undoData) return;
     
     try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
       const headers = {
-        
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
 
       const stockData = {
         ...notification.undoData,
-        date: new Date().toISOString().split('T')[0]
+        date: formatDateForPortfolioAPI(getTodayLocal())
       };
       delete stockData.id; // Remove ID to create new entry
 
@@ -360,29 +398,13 @@ export default function HighlightedStocksWithDateRange({
     }
   };
 
-  // Parse date string to Date object
+  // Use utility functions for date parsing and formatting
   function parseDate(dateString: string): Date | null {
-    try {
-      // Handle MM/DD/YYYY format
-      if (dateString.includes('/')) {
-        const [month, day, year] = dateString.split('/');
-        return new Date(`${year}-${month}-${day}`);
-      }
-      // Handle YYYY-MM-DD format
-      return new Date(dateString);
-    } catch (error) {
-      console.error('Error parsing date:', error);
-      return null;
-    }
+    return parseDateString(dateString);
   }
 
-  // Format Date object to MM/DD/YYYY string
   function formatDateToString(date: Date | null): string {
-    if (!date) return '';
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
+    return formatDateForDisplay(date);
   }
 
   // Fetch highlighted stocks by date range
@@ -393,29 +415,19 @@ export default function HighlightedStocksWithDateRange({
         
         setLoading(true);
         
-        // Format dates for API in YYYY-MM-DD format (required by the API)
-        const formatDateForApi = (date: Date): string => {
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          return `${year}-${month}-${day}`;
-        };
-        
-        const formattedStart = formatDateForApi(startDateObj);
-        
-        // Set to end of the selected day (23:59:59.999)
-        const adjustedEndDate = new Date(endDateObj);
-        adjustedEndDate.setHours(23, 59, 59, 999);
-        const formattedEnd = formatDateForApi(adjustedEndDate);
+        // Format dates for API using utility function
+        const formattedStart = formatDateForHighlightedAPI(startDateObj);
+        const formattedEnd = formatDateForHighlightedAPI(endDateObj);
         
         // Add authentication token
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         const headers = {
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MjcxNDQxNywiZXhwIjoxNzUyODAwODE3fQ.FB0oi_TFyDaz56zWp8s0HC59pdBjVAlnfpf64zqSwqM'
+          'Authorization': `Bearer ${token}`
         };
         
         // Use the API URL from environment variable
-        const response = await fetch(`${API_URL}/stocks/highlighted/filter?startDate=${formattedStart}&endDate=${formattedEnd}`, { headers });
         console.log(`Fetching highlighted stocks: ${API_URL}/stocks/highlighted/filter?startDate=${formattedStart}&endDate=${formattedEnd}`);
+        const response = await fetch(`${API_URL}/stocks/highlighted/filter?startDate=${formattedStart}&endDate=${formattedEnd}`, { headers });
         
         if (!response.ok) {
           throw new Error(`Failed to fetch highlighted stocks: ${response.statusText}`);
@@ -426,9 +438,11 @@ export default function HighlightedStocksWithDateRange({
         // Handle different response formats
         if (data && data.stocks) {
           // If API returns {stocks: [...]} format
+          console.log(`Found ${data.stocks.length} highlighted stocks for ${formattedStart} - ${formattedEnd}`);
           setStocks(data.stocks);
         } else if (Array.isArray(data)) {
           // If API returns array directly
+          console.log(`Found ${data.length} highlighted stocks for ${formattedStart} - ${formattedEnd}`);
           setStocks(data);
         } else {
           // If no valid data format, set empty array
@@ -511,6 +525,17 @@ export default function HighlightedStocksWithDateRange({
     if (isAEmpty && isBEmpty) return 0;
     if (isAEmpty) return 1; // A goes to end
     if (isBEmpty) return -1; // B goes to end
+    
+    // Special handling for buy_price field which may contain commas
+    if (sortBy === 'buy_price') {
+      // Remove commas and $ signs, then convert to number
+      const numA = typeof valueA === 'string' ? Number(valueA.replace(/[$,]/g, '')) : Number(valueA);
+      const numB = typeof valueB === 'string' ? Number(valueB.replace(/[$,]/g, '')) : Number(valueB);
+      
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return sortOrder === 'asc' ? numA - numB : numB - numA;
+      }
+    }
     
     // Convert to numbers if they are numeric strings or actual numbers
     if (typeof valueA === 'string' && !isNaN(Number(valueA))) {
@@ -697,11 +722,11 @@ export default function HighlightedStocksWithDateRange({
               <button
                 type="button"
                 onClick={() => {
-                  const today = new Date();
+                  const today = getTodayLocal();
                   setStartDateObj(today);
                   setEndDateObj(today);
                   setTimeout(() => {
-                    const formattedToday = today.toISOString().split('T')[0];
+                    const formattedToday = formatDateForDisplay(today);
                     const params = new URLSearchParams();
                     params.set('startDate', formattedToday);
                     params.set('endDate', formattedToday);
@@ -738,12 +763,12 @@ export default function HighlightedStocksWithDateRange({
               <p className="text-gray-500 max-w-md mx-auto">No highlighted stocks were found for the selected date range. Try selecting a wider date range or different dates to see featured stocks.</p>
               <button
                 onClick={() => {
-                  const today = new Date();
+                  const today = getTodayLocal();
                   setStartDateObj(today);
                   setEndDateObj(today);
                   
                   setTimeout(() => {
-                    const formattedToday = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+                    const formattedToday = formatDateForDisplay(today);
                     const params = new URLSearchParams();
                     params.set('startDate', formattedToday);
                     params.set('endDate', formattedToday);
@@ -823,7 +848,7 @@ export default function HighlightedStocksWithDateRange({
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">PBT</p>
-                          <p className="text-lg font-semibold">{stock.guru || '-'}</p>
+                          <p className="text-lg font-semibold">{stock.guru ? String(stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}</p>
                         </div>
                       </div>
                       
@@ -870,28 +895,30 @@ export default function HighlightedStocksWithDateRange({
                                 </svg>
                               )}
                             </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteStock(stock.id);
-                              }}
-                              disabled={deletingStocks.has(stock.id)}
-                              className={`p-1 rounded hover:bg-red-100 transition-all duration-300 text-red-500 hover:text-red-700 disabled:opacity-50 ${
-                                flipAnimations.has(stock.id) ? 'animate-pulse transform rotate-180 scale-110' : ''
-                              }`}
-                              title={t('deleteStock') || 'Delete stock'}
-                            >
-                              {deletingStocks.has(stock.id) ? (
-                                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                              ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              )}
-                            </button>
+                            {isAdmin && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteStock(stock.id);
+                                }}
+                                disabled={deletingStocks.has(stock.id)}
+                                className={`p-1 rounded hover:bg-red-100 transition-all duration-300 text-red-500 hover:text-red-700 disabled:opacity-50 ${
+                                  flipAnimations.has(stock.id) ? 'animate-pulse transform rotate-180 scale-110' : ''
+                                }`}
+                                title={t('deleteStock') || 'Delete stock'}
+                              >
+                                {deletingStocks.has(stock.id) ? (
+                                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                  )}
+                              </button>
+                            )}
                           </div>
                         </div>
                         {(stockComments[stock.ticker] || stockColors[stock.ticker]) && (
@@ -1075,8 +1102,8 @@ export default function HighlightedStocksWithDateRange({
                                 ) : (
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
-                                )}
+                                </svg>
+                                  )}
                               </button>
                             )}
                           </div>
@@ -1170,7 +1197,7 @@ export default function HighlightedStocksWithDateRange({
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.guru ? stock.guru.replace(/,/g, '') : '-'}
+                          {stock.guru ? String(stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}
                         </td>
                         <td className="px-2 py-2">
                           <span className={clsx("px-1.5 py-0.5 rounded text-xs", 

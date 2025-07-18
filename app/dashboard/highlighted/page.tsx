@@ -17,17 +17,13 @@ export default function HighlightedStocksPage({
     endDate?: string;
   };
 }) {
-  // Get current date for default values
-  const currentDate = new Date();
-  const currentDateFormatted = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-  const day = String(currentDate.getDate()).padStart(2, '0');
-  const year = currentDate.getFullYear();
-  const formattedDate = `${month}/${day}/${year}`;
+  // Use a default date that will be overridden on client-side
+  // This prevents timezone issues between server and client
+  const defaultDate = '2024-01-01'; // Fallback date
   
-  // Default to current date if no dates provided
-  const startDate = searchParams?.startDate || currentDateFormatted;
-  const endDate = searchParams?.endDate || currentDateFormatted;
+  // Default to fallback date if no dates provided - will be updated client-side
+  const startDate = searchParams?.startDate || defaultDate;
+  const endDate = searchParams?.endDate || defaultDate;
 
   return (
     <main>

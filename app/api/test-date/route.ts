@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const now = new Date();
+    
     // Get the first few stocks to examine their structure
     const sampleStocks = stocks.slice(0, 3);
     
@@ -18,6 +20,17 @@ export async function GET() {
     }));
     
     return NextResponse.json({
+      serverTime: {
+        iso: now.toISOString(),
+        utc: now.toUTCString(),
+        local: now.toString(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezoneOffset: now.getTimezoneOffset(),
+        formatted: {
+          'YYYY-MM-DD': now.toISOString().split('T')[0],
+          'MM/DD/YYYY': `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${now.getFullYear()}`
+        }
+      },
       dateInfo,
       rawStocks: sampleStocks
     });
