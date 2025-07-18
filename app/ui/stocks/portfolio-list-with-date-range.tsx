@@ -356,10 +356,10 @@ export default function PortfolioListWithDateRange() {
       try {
         setLoading(true);
         
-        // Format date for the API using utility function
+        // Format date for the API using utility function with UTC noon approach
         const formattedDate = formatDateForPortfolioAPI(selectedDate);
         
-        console.log(`Fetching portfolio stocks for date: ${formattedDate}`);
+        console.log(`Fetching portfolio stocks for date: ${formattedDate} (timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone})`);
         const response = await fetch(`${API_URL}/stocks/filter-by-date-source?date=${formattedDate}&source=manual`);
         
         if (!response.ok) {
@@ -367,8 +367,17 @@ export default function PortfolioListWithDateRange() {
         }
         
         const data = await response.json();
-        console.log(`Found ${data.length} portfolio stocks for ${formattedDate}`);
-        setStocks(data);
+        
+        // Handle different response formats
+        let stocksData = [];
+        if (data && data.stocks) {
+          stocksData = data.stocks;
+        } else if (Array.isArray(data)) {
+          stocksData = data;
+        }
+        
+        console.log(`Found ${stocksData.length} portfolio stocks for ${formattedDate}`);
+        setStocks(stocksData);
         setError(null);
       } catch (err) {
         console.error('Error fetching portfolio stocks:', err);

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canada Timezone Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .result { background-color: #f5f5f5; padding: 12px; border-radius: 4px; white-space: pre-wrap; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        input[type="date"] { padding: 8px; margin-right: 10px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Canada Timezone Frontend Test</h1>
+    <p>This page simulates a Canadian user accessing the dashboard to test if the timezone fix works correctly.</p>
+    
+    <div class="card">
+        <h2>Current Timezone Information</h2>
+        <div class="result" id="timezone-info"></div>
+    </div>
+    
+    <div class="card">
+        <h2>Test Highlighted Stocks API</h2>
+        <p>Select a date to test the highlighted stocks API:</p>
+        <input type="date" id="highlighted-date" value="2025-07-17">
+        <button onclick="testHighlightedAPI()">Test Highlighted API</button>
+        <div class="result" id="highlighted-result">Results will appear here...</div>
+    </div>
+    
+    <div class="card">
+        <h2>Test Portfolio List API</h2>
+        <p>Select a date to test the portfolio list API:</p>
+        <input type="date" id="portfolio-date" value="2025-07-17">
+        <button onclick="testPortfolioAPI()">Test Portfolio API</button>
+        <div class="result" id="portfolio-result">Results will appear here...</div>
+    </div>
+
+    <script>
+        // Display timezone information
+        function showTimezoneInfo() {
+            const now = new Date();
+            const tzInfo = document.getElementById('timezone-info');
+            tzInfo.innerHTML = `
+                Browser timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}
+                Timezone offset: UTC${now.getTimezoneOffset() > 0 ? '-' : '+'}${Math.abs(now.getTimezoneOffset() / 60)}
+                Current local time: ${now.toString()}
+                Current UTC time: ${now.toUTCString()}
+            `;
+        }
+        
+        // Format date for highlighted API (YYYY-MM-DD)
+        function formatDateForHighlightedAPI(date) {
+            // Create a UTC date at noon to avoid timezone day shifting
+            const utcDate = new Date(Date.UTC(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                12, 0, 0
+            ));
+            return utcDate.toISOString().split('T')[0];
+        }
+        
+        // Format date for portfolio API (MM/DD/YYYY)
+        function formatDateForPortfolioAPI(date) {
+            // Create a UTC date at noon to avoid timezone day shifting
+            const utcDate = new Date(Date.UTC(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                12, 0, 0
+            ));
+            const year = utcDate.getUTCFullYear();
+            const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(utcDate.getUTCDate()).padStart(2, '0');
+            return `${month}/${day}/${year}`;
+        }
+        
+        // Test the highlighted stocks API
+        async function testHighlightedAPI() {
+            const resultDiv = document.getElementById('highlighted-result');
+            resultDiv.innerHTML = 'Loading...';
+            
+            try {
+                const dateInput = document.getElementById('highlighted-date').value;
+                const selectedDate = new Date(dateInput);
+                
+                // Format date for API using the UTC noon approach
+                const formattedDate = formatDateForHighlightedAPI(selectedDate);
+                
+                const apiUrl = `https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=${formattedDate}&endDate=${formattedDate}`;
+                
+                resultDiv.innerHTML += `\nTesting URL: ${apiUrl}`;
+                
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                let output = `\n\nAPI Response for ${dateInput} (formatted as ${formattedDate}):\n`;
+                
+                if (Array.isArray(data) && data.length > 0) {
+                    output += `<span class="success">✓ Success! Found ${data.length} stocks</span>\n\nSample stocks:`;
+                    data.slice(0, 3).forEach(stock => {
+                        output += `\n- ${stock.ticker} (created: ${stock.created_at || stock.date})`;
+                    });
+                } else if (data.stocks && data.stocks.length > 0) {
+                    output += `<span class="success">✓ Success! Found ${data.stocks.length} stocks</span>\n\nSample stocks:`;
+                    data.stocks.slice(0, 3).forEach(stock => {
+                        output += `\n- ${stock.ticker} (created: ${stock.created_at || stock.date})`;
+                    });
+                } else {
+                    output += `<span class="error">✗ No stocks found for this date</span>`;
+                }
+                
+                resultDiv.innerHTML += output;
+                
+            } catch (error) {
+                resultDiv.innerHTML += `\n\n<span class="error">Error: ${error.message}</span>`;
+            }
+        }
+        
+        // Test the portfolio list API
+        async function testPortfolioAPI() {
+            const resultDiv = document.getElementById('portfolio-result');
+            resultDiv.innerHTML = 'Loading...';
+            
+            try {
+                const dateInput = document.getElementById('portfolio-date').value;
+                const selectedDate = new Date(dateInput);
+                
+                // Format date for API using the UTC noon approach
+                const formattedDate = formatDateForPortfolioAPI(selectedDate);
+                
+                const apiUrl = `https://www.mytickerlist.com/api/stocks/filter-by-date-source?date=${formattedDate}&source=manual`;
+                
+                resultDiv.innerHTML += `\nTesting URL: ${apiUrl}`;
+                
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                let output = `\n\nAPI Response for ${dateInput} (formatted as ${formattedDate}):\n`;
+                
+                if (data.stocks && data.stocks.length > 0) {
+                    output += `<span class="success">✓ Success! Found ${data.stocks.length} stocks</span>\n\nSample stocks:`;
+                    data.stocks.slice(0, 3).forEach(stock => {
+                        output += `\n- ${stock.ticker} (created: ${stock.created_at || stock.date})`;
+                    });
+                } else if (Array.isArray(data) && data.length > 0) {
+                    output += `<span class="success">✓ Success! Found ${data.length} stocks</span>\n\nSample stocks:`;
+                    data.slice(0, 3).forEach(stock => {
+                        output += `\n- ${stock.ticker} (created: ${stock.created_at || stock.date})`;
+                    });
+                } else {
+                    output += `<span class="error">✗ No stocks found for this date</span>`;
+                }
+                
+                resultDiv.innerHTML += output;
+                
+            } catch (error) {
+                resultDiv.innerHTML += `\n\n<span class="error">Error: ${error.message}</span>`;
+            }
+        }
+        
+        // Initialize
+        showTimezoneInfo();
+    </script>
+</body>
+</html>

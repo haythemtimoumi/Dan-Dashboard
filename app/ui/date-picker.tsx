@@ -4,6 +4,12 @@ import { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import './datepicker-custom.css';
+import { registerLocale } from 'react-datepicker';
+import { fr } from 'date-fns/locale';
+import { useSettings } from '@/app/contexts/settings-context';
+
+// Register French locale for multilingual support
+registerLocale('fr', fr);
 
 interface DatePickerInputProps {
   selectedDate: Date | null;
@@ -16,15 +22,39 @@ export default function DatePickerInput({
   onChange,
   placeholder = 'Select date...'
 }: DatePickerInputProps) {
+  const { language } = useSettings();
+  
+  // Handle date selection with timezone consistency
+  const handleDateChange = (date: Date | null) => {
+    if (!date) {
+      onChange(null);
+      return;
+    }
+    
+    // Create a UTC date at noon to avoid timezone day shifting
+    const utcDate = new Date(Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      12, 0, 0
+    ));
+    
+    onChange(utcDate);
+  };
+  
   return (
     <div className="relative">
       <DatePicker
         selected={selectedDate}
-        onChange={onChange}
+        onChange={handleDateChange}
         dateFormat="MM/dd/yyyy"
         placeholderText={placeholder}
         className="block w-full rounded-lg backdrop-blur-md bg-blue-900/30 border border-blue-400/30 py-2.5 pl-3 pr-10 text-sm text-white placeholder:text-blue-300 focus:border-blue-400/50 focus:bg-blue-900/40 focus:outline-none transition-all duration-300"
         wrapperClassName="w-full"
+        locale={language === 'fr' ? 'fr' : undefined}
+        showMonthDropdown
+        showYearDropdown
+        dropdownMode="select"
       />
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
         <svg

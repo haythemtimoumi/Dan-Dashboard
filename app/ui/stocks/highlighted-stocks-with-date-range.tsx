@@ -91,14 +91,20 @@ export default function HighlightedStocksWithDateRange({
   const [endDateObj, setEndDateObj] = useState<Date | null>(parseDate(endDate));
   const [isClientMounted, setIsClientMounted] = useState(false);
 
-  // Set today's date in client's timezone on mount
+  // Set today's date in client's timezone on mount with UTC noon approach
   useEffect(() => {
     setIsClientMounted(true);
     // If using default dates (2024-01-01), set to today in client's timezone
     if (startDate === '2024-01-01' && endDate === '2024-01-01') {
-      const today = getTodayLocal();
+      const today = getTodayLocal(); // This uses UTC noon approach
       setStartDateObj(today);
       setEndDateObj(today);
+      
+      // Log timezone information for debugging
+      console.log('Client timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+      console.log('Timezone offset:', new Date().getTimezoneOffset() / -60, 'hours from UTC');
+      console.log('Today (local):', new Date().toString());
+      console.log('Today (UTC noon):', today.toString());
     }
   }, [startDate, endDate]);
   const [dateError, setDateError] = useState<string | null>(null);
@@ -411,9 +417,17 @@ export default function HighlightedStocksWithDateRange({
     }
   };
 
-  // Use utility functions for date parsing and formatting
+  // Use utility functions for date parsing and formatting with UTC noon approach
   function parseDate(dateString: string): Date | null {
-    return parseDateString(dateString);
+    const parsedDate = parseDateString(dateString);
+    
+    // Log for debugging
+    if (parsedDate) {
+      console.log(`Parsed date "${dateString}" to:`, parsedDate.toString());
+      console.log(`- API format:`, formatDateForHighlightedAPI(parsedDate));
+    }
+    
+    return parsedDate;
   }
 
   function formatDateToString(date: Date | null): string {
@@ -474,7 +488,7 @@ export default function HighlightedStocksWithDateRange({
     fetchHighlightedStocks();
   }, [startDateObj, endDateObj]);
 
-  // Handle date filter changes
+  // Handle date filter changes with timezone consistency
   const handleDateFilterChange = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -490,9 +504,18 @@ export default function HighlightedStocksWithDateRange({
         return;
       }
       
-      // Format dates for URL parameters
+      // Format dates for URL parameters using the UTC noon approach
       const formattedStartDate = formatDateToString(startDateObj);
       const formattedEndDate = formatDateToString(endDateObj);
+      
+      // Log for debugging
+      console.log('Applying date filter:');
+      console.log('- Start date:', startDateObj.toString());
+      console.log('- End date:', endDateObj.toString());
+      console.log('- Formatted start:', formattedStartDate);
+      console.log('- Formatted end:', formattedEndDate);
+      console.log('- API format start:', formatDateForHighlightedAPI(startDateObj));
+      console.log('- API format end:', formatDateForHighlightedAPI(endDateObj));
       
       // Update URL with new date parameters
       const params = new URLSearchParams();
@@ -502,6 +525,7 @@ export default function HighlightedStocksWithDateRange({
       router.push(`${pathname}?${params.toString()}`);
       setDateError(null);
     } catch (err) {
+      console.error('Date filter error:', err);
       setDateError('Invalid date selection. Please try again.');
     }
   };
