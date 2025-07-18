@@ -1421,7 +1421,7 @@ export default function HighlightedStocksWithDateRange({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">PE Ratio</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Upside</label>
                   <input
                     type="text"
                     value={newStock.pe}
@@ -1430,7 +1430,7 @@ export default function HighlightedStocksWithDateRange({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Ratio</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
                   <input
                     type="text"
                     value={newStock.current_ratio}
@@ -1457,7 +1457,7 @@ export default function HighlightedStocksWithDateRange({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Dividend</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Comp</label>
                   <input
                     type="text"
                     value={newStock.dividend}
@@ -1466,7 +1466,7 @@ export default function HighlightedStocksWithDateRange({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Cash Per Share</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Growth</label>
                   <input
                     type="text"
                     value={newStock.cash_per_share}
