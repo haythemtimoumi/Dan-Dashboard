@@ -37,17 +37,30 @@ export async function GET(request: Request) {
     const dateObj = new Date(year, month - 1, day); // month is 0-indexed in JS Date
     
     // Format the date to match the format in the stock data (YYYY-MM-DD)
-    const formattedDate = dateObj.toISOString().split('T')[0];
+    // Use local date parts to avoid timezone shifts
+    const formattedYear = dateObj.getFullYear();
+    const formattedMonth = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const formattedDay = String(dateObj.getDate()).padStart(2, '0');
+    const formattedDate = `${formattedYear}-${formattedMonth}-${formattedDay}`;
+    
+    console.log(`Filtering stocks for date: ${date} (formatted as: ${formattedDate}) and source: ${normalizedSource}`);
     
     // Filter stocks by date and source
     const filteredStocks = stocks.filter(stock => {
       // Extract date from the stock's date or created_at field
       const stockDate = stock.date ? new Date(stock.date) : new Date(stock.created_at);
-      const stockDateStr = stockDate.toISOString().split('T')[0];
+      
+      // Format stock date using local date parts to avoid timezone shifts
+      const stockYear = stockDate.getFullYear();
+      const stockMonth = String(stockDate.getMonth() + 1).padStart(2, '0');
+      const stockDay = String(stockDate.getDate()).padStart(2, '0');
+      const stockDateStr = `${stockYear}-${stockMonth}-${stockDay}`;
       
       // Check if the stock's date matches the requested date and source
       return stockDateStr === formattedDate && stock.source === normalizedSource;
     });
+    
+    console.log(`Found ${filteredStocks.length} stocks for date: ${formattedDate} and source: ${normalizedSource}`)
 
     if (filteredStocks.length === 0) {
       // Return an object with empty stocks array but include date and source info

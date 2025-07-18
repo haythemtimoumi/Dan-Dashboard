@@ -39,11 +39,36 @@ export async function GET(request: Request) {
         // Add one day to end date to include the full end date
         end.setDate(end.getDate() + 1);
         
+        console.log(`Filtering highlighted stocks from ${startDate} to ${endDate}`);
+        console.log(`Date range: ${start.toISOString()} to ${end.toISOString()}`);
+        
         // Filter by date range
         highlightedStocks = highlightedStocks.filter(stock => {
           const stockDate = new Date(stock.created_at);
-          return stockDate >= start && stockDate < end;
+          
+          // Compare dates using local date parts to avoid timezone issues
+          const stockYear = stockDate.getFullYear();
+          const stockMonth = stockDate.getMonth();
+          const stockDay = stockDate.getDate();
+          
+          const startYear = start.getFullYear();
+          const startMonth = start.getMonth();
+          const startDay = start.getDate();
+          
+          const endYear = end.getFullYear();
+          const endMonth = end.getMonth();
+          const endDay = end.getDate() - 1; // Adjust because we added a day to end
+          
+          // Create date objects using only year, month, day (no time)
+          const stockDateOnly = new Date(stockYear, stockMonth, stockDay);
+          const startDateOnly = new Date(startYear, startMonth, startDay);
+          const endDateOnly = new Date(endYear, endMonth, endDay);
+          
+          // Compare dates
+          return stockDateOnly >= startDateOnly && stockDateOnly <= endDateOnly;
         });
+        
+        console.log(`Found ${highlightedStocks.length} highlighted stocks in date range`);
       } catch (error) {
         console.error('Error parsing dates:', error);
         return NextResponse.json(
@@ -57,11 +82,13 @@ export async function GET(request: Request) {
     highlightedStocks.sort((a, b) => b.sentiment_score - a.sentiment_score);
     
     // Helper function to format date string to MM/DD/YYYY
+    // Uses local date parts to avoid timezone shifts
     const formatDateString = (dateStr: string): string => {
       if (!dateStr) return '';
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return '';
       
+      // Use local date parts to avoid timezone shifts
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
       const year = date.getFullYear();
