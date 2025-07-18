@@ -235,11 +235,24 @@ export default function HighlightedStocksWithDateRange({
         'Content-Type': 'application/json'
       };
 
-      const stockData = {
-        ...newStock,
+      const stockData: any = {
         ticker: newStock.ticker.toUpperCase(),
+        source: newStock.source,
+        sentiment_score: newStock.sentiment_score,
+        signal_score: newStock.signal_score,
         date: formatDateForPortfolioAPI(getTodayLocal())
       };
+      
+      // Only include optional fields if they have values
+      if (newStock.rule1_score !== null && newStock.rule1_score !== undefined) stockData.rule1_score = newStock.rule1_score;
+      if (newStock.moat_score !== null && newStock.moat_score !== undefined) stockData.moat_score = newStock.moat_score;
+      if (newStock.management_score !== null && newStock.management_score !== undefined) stockData.management_score = newStock.management_score;
+      if (newStock.buy_price && newStock.buy_price.trim()) stockData.buy_price = newStock.buy_price;
+      if (newStock.pe && newStock.pe.trim()) stockData.pe = newStock.pe;
+      if (newStock.dividend && newStock.dividend.trim()) stockData.dividend = newStock.dividend;
+      if (newStock.cash_per_share && newStock.cash_per_share.trim()) stockData.cash_per_share = newStock.cash_per_share;
+      if (newStock.current_ratio && newStock.current_ratio.trim()) stockData.current_ratio = newStock.current_ratio;
+      if (newStock.guru && newStock.guru.trim()) stockData.guru = newStock.guru;
 
       const response = await fetch(`${API_URL}/stocks`, {
         method: 'POST',
