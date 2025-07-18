@@ -1475,13 +1475,13 @@ export default function HighlightedStocksWithDateRange({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Guru (PBT)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">PBT</label>
                   <input
                     type="text"
                     value={newStock.guru}
                     onChange={(e) => setNewStock({...newStock, guru: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="10.5 years"
+                    placeholder="10.5"
                   />
                 </div>
               </div>

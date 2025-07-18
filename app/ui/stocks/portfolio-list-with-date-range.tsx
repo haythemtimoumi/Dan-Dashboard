@@ -1244,7 +1244,7 @@ export default function PortfolioListWithDateRange() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Guru (PBT)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">PBT</label>
                   <input
                     type="text"
                     value={newStock.guru}
