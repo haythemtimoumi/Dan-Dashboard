@@ -11,6 +11,7 @@ export default function TickerManager() {
   const { t } = useSettings();
   const [newTickers, setNewTickers] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedSource, setSelectedSource] = useState('manual');
   const queryClient = useQueryClient();
 
   const { data: status } = useQuery<ScraperStatus>({
@@ -35,6 +36,20 @@ export default function TickerManager() {
       toast.error('❌ Failed to update tickers');
     },
   });
+  
+  const updateSourceMutation = useMutation({
+    mutationFn: ({ source, tickers }: { source: string, tickers: string[] }) => 
+      scraperApi.updateSourceTickers(source, tickers),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickers'] });
+      toast.success(`✅ ${selectedSource} tickers updated successfully!`);
+      setNewTickers('');
+      setIsExpanded(false);
+    },
+    onError: () => {
+      toast.error(`❌ Failed to update ${selectedSource} tickers`);
+    },
+  });
 
   const handleAddTickers = () => {
     if (!newTickers.trim()) return;
@@ -46,10 +61,23 @@ export default function TickerManager() {
     
     if (tickersToAdd.length === 0) return;
     
-    const currentTickers = tickerData?.tickers || [];
-    const uniqueTickers = Array.from(new Set([...currentTickers, ...tickersToAdd]));
+    // Get current tickers for the selected source
+    const tickersArray = Array.isArray(tickerData?.tickers) && tickerData
+      ? tickerData.tickers.map(item => {
+          if (typeof item === 'string') {
+            return { source: 'manual', ticker: item };
+          }
+          return item;
+        })
+      : [];
+      
+    const currentSourceTickers = tickersArray
+      .filter(item => item.source === selectedSource)
+      .map(item => item.ticker);
     
-    updateMutation.mutate(uniqueTickers);
+    const uniqueTickers = Array.from(new Set([...currentSourceTickers, ...tickersToAdd]));
+    
+    updateSourceMutation.mutate({ source: selectedSource, tickers: uniqueTickers });
   };
 
   const handleReplaceTickers = () => {
@@ -62,11 +90,19 @@ export default function TickerManager() {
     
     if (tickersToReplace.length === 0) return;
     
-    updateMutation.mutate(tickersToReplace);
+    updateSourceMutation.mutate({ source: selectedSource, tickers: tickersToReplace });
   };
 
   const canUpdate = status?.can_update_tickers ?? false;
   const tickerCount = newTickers.split(/[\s,\n]+/).filter(t => t.trim().length > 0).length;
+  
+  // Source options for the dropdown
+  const sourceOptions = [
+    { value: 'manual', label: 'Manual (tickers_rule1.txt)' },
+    { value: 'guru_list', label: 'Guru List (tickers_guru.txt)' },
+    { value: 'target', label: 'Target (tickers_target.txt)' },
+    { value: 'monitor', label: 'Monitor (tickers_monitor.txt)' },
+  ];
 
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl shadow-lg overflow-hidden">
@@ -113,17 +149,35 @@ export default function TickerManager() {
         <div className="bg-white/70 backdrop-blur-sm border-t border-gray-200 p-6">
           <div className="space-y-6">
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <DocumentTextIcon className="h-5 w-5 text-gray-600" />
-                <label className="text-sm font-semibold text-gray-700">
-                  Enter Ticker Symbols
-                </label>
-                {tickerCount > 0 && (
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                    {tickerCount} symbols
-                  </span>
-                )}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <DocumentTextIcon className="h-5 w-5 text-gray-600" />
+                  <label className="text-sm font-semibold text-gray-700">
+                    Enter Ticker Symbols
+                  </label>
+                  {tickerCount > 0 && (
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                      {tickerCount} symbols
+                    </span>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Source:</label>
+                  <select
+                    value={selectedSource}
+                    onChange={(e) => setSelectedSource(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {sourceOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
+              
               <textarea
                 value={newTickers}
                 onChange={(e) => setNewTickers(e.target.value)}
@@ -138,28 +192,28 @@ export default function TickerManager() {
             <div className="flex gap-3">
               <button
                 onClick={handleAddTickers}
-                disabled={updateMutation.isPending || !newTickers.trim()}
+                disabled={updateSourceMutation.isPending || !newTickers.trim()}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none"
               >
-                {updateMutation.isPending ? (
+                {updateSourceMutation.isPending ? (
                   <ArrowPathIcon className="h-5 w-5 animate-spin" />
                 ) : (
                   <PlusIcon className="h-5 w-5" />
                 )}
-                Add to Existing
+                Add to {sourceOptions.find(opt => opt.value === selectedSource)?.label.split(' ')[0]}
               </button>
               
               <button
                 onClick={handleReplaceTickers}
-                disabled={updateMutation.isPending || !newTickers.trim()}
+                disabled={updateSourceMutation.isPending || !newTickers.trim()}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-600 hover:to-red-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none"
               >
-                {updateMutation.isPending ? (
+                {updateSourceMutation.isPending ? (
                   <ArrowPathIcon className="h-5 w-5 animate-spin" />
                 ) : (
                   <ArrowPathIcon className="h-5 w-5" />
                 )}
-                Replace All
+                Replace {sourceOptions.find(opt => opt.value === selectedSource)?.label.split(' ')[0]}
               </button>
             </div>
           </div>

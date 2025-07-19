@@ -1,19 +1,39 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { scraperApi, TickerResponse } from '@/app/lib/scraper-api';
 import { TickerGridSkeleton } from './LoadingSkeleton';
-import { MagnifyingGlassIcon, ChartBarIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ChartBarIcon, XCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/app/contexts/settings-context';
+import toast from 'react-hot-toast';
 
 export default function TickerGrid() {
   const { t } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
+  const queryClient = useQueryClient();
   const { data: tickerData, isLoading, error } = useQuery<TickerResponse>({
     queryKey: ['tickers'],
     queryFn: scraperApi.getTickers,
   });
+  
+  const deleteMutation = useMutation({
+    mutationFn: ({ source, ticker }: { source: string, ticker: string }) => 
+      scraperApi.deleteTicker(source, ticker),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tickers'] });
+      toast.success('Ticker deleted successfully');
+    },
+    onError: () => {
+      toast.error('Failed to delete ticker');
+    },
+  });
+  
+  const handleDeleteTicker = (source: string, ticker: string) => {
+    if (confirm(`Are you sure you want to delete ${ticker} from ${source}?`)) {
+      deleteMutation.mutate({ source, ticker });
+    }
+  };
 
   if (isLoading) return <TickerGridSkeleton />;
   if (error) return (
@@ -26,10 +46,56 @@ export default function TickerGrid() {
     </div>
   );
   if (!tickerData) return null;
-
-  const filteredTickers = tickerData.tickers.filter(ticker => 
-    ticker.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  
+  // Ensure tickers is an array of objects with source and ticker properties
+  const tickersArray = Array.isArray(tickerData.tickers) 
+    ? tickerData.tickers.map(item => {
+        if (typeof item === 'string') {
+          return { source: 'manual', ticker: item };
+        }
+        return item;
+      })
+    : [];
+    
+  // Group tickers by source
+  const tickersBySource = tickersArray.reduce((acc, item) => {
+    if (!acc[item.source]) {
+      acc[item.source] = [];
+    }
+    acc[item.source].push(item.ticker);
+    return acc;
+  }, {} as Record<string, string[]>);
+  
+  // Filter tickers based on search term
+  const filteredTickersBySource: Record<string, string[]> = {};
+  let totalFilteredTickers = 0;
+  
+  Object.keys(tickersBySource).forEach(source => {
+    const filteredSourceTickers = tickersBySource[source].filter(ticker => 
+      ticker.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    if (filteredSourceTickers.length > 0) {
+      filteredTickersBySource[source] = filteredSourceTickers;
+      totalFilteredTickers += filteredSourceTickers.length;
+    }
+  });
+  
+  // Source display names mapping
+  const sourceDisplayNames: Record<string, string> = {
+    'manual': 'Manual',
+    'guru_list': 'Guru List',
+    'target': 'Target',
+    'monitor': 'Monitor'
+  };
+  
+  // Source color mapping
+  const sourceColors: Record<string, { bg: string, border: string, text: string }> = {
+    'manual': { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' },
+    'guru_list': { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700' },
+    'target': { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700' },
+    'monitor': { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' }
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-lg">
@@ -47,7 +113,7 @@ export default function TickerGrid() {
           </div>
           
           <span className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-bold">
-            {filteredTickers.length} of {tickerData.count}
+            {totalFilteredTickers} of {tickerData.count}
           </span>
         </div>
 
@@ -66,27 +132,44 @@ export default function TickerGrid() {
       
       {/* Ticker Grid */}
       <div className="p-6">
-        {filteredTickers.length === 0 ? (
+        {totalFilteredTickers === 0 ? (
           <div className="text-center py-12">
             <MagnifyingGlassIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 font-medium">No tickers found</p>
             <p className="text-gray-500 text-sm">Try adjusting your search term</p>
           </div>
         ) : (
-          <div className="max-h-80 overflow-y-auto">
-            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-14 gap-2">
-              {filteredTickers.map((ticker, index) => (
-                <div
-                  key={index}
-                  className="group bg-gray-100 hover:bg-gray-200 border border-gray-300 hover:border-gray-400 p-3 rounded-lg text-center font-mono font-semibold text-gray-800 transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-md"
-                  style={{
-                    animationDelay: `${index * 50}ms`
-                  }}
-                >
-                  <span className="text-sm group-hover:text-gray-900 transition-colors duration-200">{ticker}</span>
+          <div className="space-y-8 max-h-[600px] overflow-y-auto pr-2">
+            {Object.keys(filteredTickersBySource).map(source => (
+              <div key={source} className="space-y-3">
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${sourceColors[source]?.bg || 'bg-gray-100'} ${sourceColors[source]?.border || 'border-gray-200'} border`}>
+                  <h4 className={`font-semibold ${sourceColors[source]?.text || 'text-gray-800'}`}>
+                    {sourceDisplayNames[source] || source}
+                  </h4>
+                  <span className="text-xs bg-white bg-opacity-50 px-2 py-1 rounded-full">
+                    {filteredTickersBySource[source].length} tickers
+                  </span>
                 </div>
-              ))}
-            </div>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+                  {filteredTickersBySource[source].map((ticker, index) => (
+                    <div
+                      key={`${source}-${ticker}`}
+                      className={`group relative ${sourceColors[source]?.bg || 'bg-gray-100'} hover:bg-opacity-70 ${sourceColors[source]?.border || 'border-gray-200'} border p-3 rounded-lg flex items-center justify-between transition-all duration-200 hover:shadow-md`}
+                    >
+                      <span className="font-mono font-medium text-sm">{ticker}</span>
+                      <button 
+                        onClick={() => handleDeleteTicker(source, ticker)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded-full hover:bg-red-100 text-red-500"
+                        title="Delete ticker"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

@@ -11,8 +11,18 @@ export interface ScraperStatus {
 }
 
 export interface TickerResponse {
-  tickers: string[];
+  tickers: Array<{source: string, ticker: string}> | string[];
   count: number;
+}
+
+export interface SourceTickersRequest {
+  source: string;
+  tickers: string[];
+}
+
+export interface DeleteTickerRequest {
+  source: string;
+  ticker: string;
 }
 
 // Mock data for when API is unavailable
@@ -27,23 +37,18 @@ const mockStatus: ScraperStatus = {
 
 const mockTickers: TickerResponse = {
   tickers: [
-    'AAPL', 'GOOGL', 'MSFT', 'TSLA', 'NVDA', 'AMZN', 'META', 'NFLX', 'AMD', 'INTC',
-    'CRM', 'ADBE', 'PYPL', 'SHOP', 'SQ', 'ROKU', 'ZM', 'DOCU', 'TWLO', 'OKTA',
-    'SNOW', 'PLTR', 'CRWD', 'NET', 'DDOG', 'MDB', 'FSLY', 'ESTC', 'TEAM', 'ATLASSIAN',
-    'UBER', 'LYFT', 'ABNB', 'DASH', 'COIN', 'HOOD', 'SOFI', 'UPST', 'AFRM', 'OPEN',
-    'RBLX', 'U', 'PINS', 'SNAP', 'TWTR', 'SPOT', 'MTCH', 'BMBL', 'YELP', 'GRUB',
-    'ETSY', 'EBAY', 'AMZN', 'WMT', 'TGT', 'COST', 'HD', 'LOW', 'NKE', 'LULU',
-    'SBUX', 'MCD', 'CMG', 'DPZ', 'YUM', 'QSR', 'DNKN', 'PZZA', 'WING', 'TXRH',
-    'DIS', 'CMCSA', 'T', 'VZ', 'TMUS', 'S', 'CHTR', 'DISH', 'SIRI', 'LBRDK',
-    'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS', 'AXP', 'V', 'MA', 'PYPL',
-    'JNJ', 'PFE', 'ABBV', 'MRK', 'BMY', 'GILD', 'AMGN', 'BIIB', 'REGN', 'VRTX',
-    'XOM', 'CVX', 'COP', 'EOG', 'SLB', 'HAL', 'BKR', 'OXY', 'DVN', 'FANG',
-    'BA', 'CAT', 'DE', 'MMM', 'GE', 'HON', 'UTX', 'LMT', 'NOC', 'RTX',
-    'TSLA', 'F', 'GM', 'FCAU', 'TM', 'HMC', 'NSANY', 'BMWYY', 'VWAGY', 'RACE',
-    'KO', 'PEP', 'MDLZ', 'KHC', 'GIS', 'K', 'CPB', 'HSY', 'SJM', 'CAG',
-    'PG', 'UL', 'CL', 'KMB', 'CHD', 'CLX', 'EL', 'COTY', 'REV', 'IFF'
+    { source: 'manual', ticker: 'AAPL' },
+    { source: 'manual', ticker: 'GOOGL' },
+    { source: 'manual', ticker: 'MSFT' },
+    { source: 'guru_list', ticker: 'TSLA' },
+    { source: 'guru_list', ticker: 'NVDA' },
+    { source: 'guru_list', ticker: 'AMZN' },
+    { source: 'target', ticker: 'META' },
+    { source: 'target', ticker: 'NFLX' },
+    { source: 'monitor', ticker: 'AMD' },
+    { source: 'monitor', ticker: 'INTC' }
   ],
-  count: 150,
+  count: 10
 }
 
 export const scraperApi = {
@@ -133,6 +138,48 @@ export const scraperApi = {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
     } catch (error) {
       console.warn('Failed to update tickers via API:', error);
+      throw new Error('API unavailable - please try again later');
+    }
+  },
+  
+  async updateSourceTickers(source: string, tickers: string[]): Promise<void> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(`${SCRAPER_API_URL}/update-source-tickers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source, tickers }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      console.warn('Failed to update source tickers via API:', error);
+      throw new Error('API unavailable - please try again later');
+    }
+  },
+  
+  async deleteTicker(source: string, ticker: string): Promise<void> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(`${SCRAPER_API_URL}/delete-ticker`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source, ticker }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      console.warn('Failed to delete ticker via API:', error);
       throw new Error('API unavailable - please try again later');
     }
   },
