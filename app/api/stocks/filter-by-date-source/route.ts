@@ -18,16 +18,14 @@ export async function GET(request: Request) {
     }
 
     // Convert source parameter to match the type in the stock data
-    // The API accepts "rule1" or "manual"
-    let normalizedSource: 'rule1' | 'manual';
+    // The API accepts "rule1", "manual", "target", "monitor", or "guru_list"
+    let normalizedSource: 'rule1' | 'manual' | 'target' | 'monitor' | 'guru_list';
     
-    if (source === 'rule1') {
-      normalizedSource = 'rule1';
-    } else if (source === 'manual') {
-      normalizedSource = 'manual';
+    if (['rule1', 'manual', 'target', 'monitor', 'guru_list'].includes(source)) {
+      normalizedSource = source as 'rule1' | 'manual' | 'target' | 'monitor' | 'guru_list';
     } else {
       return NextResponse.json(
-        { error: `Invalid source: ${source}. Must be 'rule1' or 'manual'` },
+        { error: `Invalid source: ${source}. Must be 'rule1', 'manual', 'target', 'monitor', or 'guru_list'` },
         { status: 400 }
       );
     }

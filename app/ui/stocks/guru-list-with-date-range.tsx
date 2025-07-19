@@ -212,7 +212,7 @@ export default function PortfolioListWithDateRange() {
 
       const stockData = {
         ...notification.undoData,
-        source: 'manual',
+        source: 'guru_list',
         date: selectedDate ? formatDateForPortfolioAPI(selectedDate) : formatDateForPortfolioAPI(getTodayLocal())
       };
       delete stockData.id; // Remove ID to create new entry
@@ -276,7 +276,7 @@ export default function PortfolioListWithDateRange() {
 
       const stockData: any = {
         ticker: newStock.ticker.toUpperCase(),
-        source: 'manual',
+        source: 'guru_list',
         sentiment_score: newStock.sentiment_score,
         signal_score: newStock.signal_score,
         date: selectedDate ? formatDateForPortfolioAPI(selectedDate) : formatDateForPortfolioAPI(getTodayLocal())
@@ -360,7 +360,7 @@ export default function PortfolioListWithDateRange() {
         const formattedDate = formatDateForPortfolioAPI(selectedDate);
         
         console.log(`Fetching portfolio stocks for date: ${formattedDate} (timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone})`);
-        const response = await fetch(`${API_URL}/stocks/filter-by-date-source?date=${formattedDate}&source=manual`);
+        const response = await fetch(`${API_URL}/stocks/filter-by-date-source?date=${formattedDate}&source=guru_list`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch portfolio stocks: ${response.statusText}`);
@@ -604,7 +604,7 @@ export default function PortfolioListWithDateRange() {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('noPortfolioStocksFound')}</h3>
-              <p className="text-gray-500 max-w-md mx-auto">No portfolio stocks were found for the selected date range or source. Try selecting a wider date range or different dates.</p>
+              <p className="text-gray-500 max-w-md mx-auto">No portfolio stocks were found for the selected date range or source. Try selecting a wider date range or different date.</p>
             </div>
           ) : (
             <>
@@ -701,7 +701,7 @@ export default function PortfolioListWithDateRange() {
                               )}
                               title="Click to change color"
                             >
-                              {stock.source === 'manual' ? (
+                              {stock.source === 'guru_list' ? (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                                 </svg>
@@ -885,7 +885,7 @@ export default function PortfolioListWithDateRange() {
                               )}
                               title="Click to change color"
                             >
-                            {stock.source === 'manual' ? (
+                            {stock.source === 'guru_list' ? (
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                               </svg>
@@ -1133,7 +1133,7 @@ export default function PortfolioListWithDateRange() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">Add New Portfolio Stock</h3>
-                  <p className="text-sm text-gray-500">Add a new manual stock to your portfolio</p>
+                  <p className="text-sm text-gray-500">Add a new guru_list stock to your portfolio</p>
                 </div>
               </div>
               
@@ -1152,7 +1152,7 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Source</label>
                   <input
                     type="text"
-                    value="manual"
+                    value="guru_list"
                     disabled
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
                   />
