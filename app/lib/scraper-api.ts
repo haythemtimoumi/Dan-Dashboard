@@ -3,8 +3,8 @@ const SCRAPER_API_URL = 'https://scraperbackend.freeddns.org';
 export interface ScraperStatus {
   is_running: boolean;
   last_run: string | null;
-  next_run: string;
-  next_run_in: string;
+  next_scheduled_run: string;
+  next_run_in_hours_minutes: string;
   can_update_tickers: boolean;
   // Add computed property for backward compatibility
   status?: 'running' | 'idle' | 'ready';
@@ -28,9 +28,9 @@ export interface DeleteTickerRequest {
 // Mock data for when API is unavailable
 const mockStatus: ScraperStatus = {
   is_running: false,
-  next_run_in: '18:57:11',
-  next_run: '2025-07-18T20:05:00Z',
-  last_run: '2025-07-16T00:00:00Z',
+  next_run_in_hours_minutes: '17h:24m',
+  next_scheduled_run: '2025-07-19 20:05:00',
+  last_run: '2025-07-18 22:03:45',
   can_update_tickers: true,
   status: 'idle',
 };
@@ -78,15 +78,12 @@ export const scraperApi = {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
-      // Use cache-busting headers but no query parameters
-      const response = await fetch(`${SCRAPER_API_URL}/scraper-status`, {
+      // Use standard cache-busting approach
+      const cacheBuster = `?_=${new Date().getTime()}`;
+      const response = await fetch(`${SCRAPER_API_URL}/scraper-status${cacheBuster}`, {
         signal: controller.signal,
         headers: { 
-          'Accept': 'application/json',
-          'Pragma': 'no-cache',
-          'Cache-Control': 'no-cache',
-          // Add a random header to bust any cache
-          'X-Cache-Bust': new Date().getTime().toString()
+          'Accept': 'application/json'
         },
         cache: 'no-store', // Force a fresh request
       });

@@ -8,29 +8,55 @@ import { useSettings } from '@/app/contexts/settings-context';
 import { useState, useEffect } from 'react';
 
 // Separate component for the countdown timer
-function CountdownTimer({ nextRunTime }: { nextRunTime: string | undefined }) {
+function CountdownTimer({ nextRunInHoursMinutes }: { nextRunInHoursMinutes: string | undefined }) {
   const [countdown, setCountdown] = useState('00:00:00');
   
   useEffect(() => {
-    if (!nextRunTime) {
+    if (!nextRunInHoursMinutes) {
       setCountdown('00:00:00');
       return;
     }
     
-    const updateCountdown = () => {
-      const now = new Date();
-      const nextRun = new Date(nextRunTime);
-      const diff = nextRun.getTime() - now.getTime();
+    // Parse the hours and minutes from the format "17h:24m"
+    const matches = nextRunInHoursMinutes.match(/(\d+)h:(\d+)m/);
+    if (!matches) {
+      setCountdown('00:00:00');
+      return;
+    }
+    
+    let hours = parseInt(matches[1], 10);
+    let minutes = parseInt(matches[2], 10);
+    let seconds = 59; // Start with 59 seconds
+    
+    // Initial update
+    updateCountdown();
+    
+    // Update every second
+    const timer = setInterval(updateCountdown, 1000);
+    
+    function updateCountdown() {
+      // Decrement seconds
+      seconds--;
       
-      if (diff <= 0) {
-        setCountdown('00:00:00');
-        return;
+      // Handle minute rollover
+      if (seconds < 0) {
+        seconds = 59;
+        minutes--;
+        
+        // Handle hour rollover
+        if (minutes < 0) {
+          minutes = 59;
+          hours--;
+          
+          // Stop at zero
+          if (hours < 0) {
+            hours = 0;
+            minutes = 0;
+            seconds = 0;
+            clearInterval(timer);
+          }
+        }
       }
-      
-      // Calculate hours, minutes, seconds
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
       
       // Format with leading zeros
       const formattedHours = hours.toString().padStart(2, '0');
@@ -38,16 +64,10 @@ function CountdownTimer({ nextRunTime }: { nextRunTime: string | undefined }) {
       const formattedSeconds = seconds.toString().padStart(2, '0');
       
       setCountdown(`${formattedHours}:${formattedMinutes}:${formattedSeconds}`);
-    };
-    
-    // Update immediately
-    updateCountdown();
-    
-    // Update every second
-    const timer = setInterval(updateCountdown, 1000);
+    }
     
     return () => clearInterval(timer);
-  }, [nextRunTime]);
+  }, [nextRunInHoursMinutes]);
   
   return countdown;
 }
@@ -106,7 +126,7 @@ export default function StatusCard() {
   };
 
   const formatDateTime = (dateStr: string | null) => {
-    if (!dateStr) return 'Never';
+    if (!dateStr) return '8:05 PM';
     
     // Extract the time directly from the ISO string to avoid timezone conversions
     const matches = dateStr.match(/T(\d{2}):(\d{2})/);
@@ -167,7 +187,7 @@ export default function StatusCard() {
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 border border-gray-200">
             <p className="text-sm font-medium text-gray-600 mb-2">{t('nextRunIn')}</p>
             <div className="text-6xl font-bold text-gray-900 mb-2 font-mono tracking-wider">
-              <CountdownTimer nextRunTime={status.next_run} />
+              <CountdownTimer nextRunInHoursMinutes={status.next_run_in_hours_minutes} />
             </div>
             <p className="text-sm text-gray-500">{t('hoursMinutesSeconds')}</p>
           </div>
@@ -206,11 +226,11 @@ export default function StatusCard() {
         <div className="space-y-3">
           <div className="flex items-center justify-between py-2">
             <span className="text-sm font-medium text-gray-600">{t('nextRun')}</span>
-            <span className="text-sm font-bold text-gray-900">{formatDateTime(status.next_run)}</span>
+            <span className="text-sm font-bold text-gray-900">{status.next_scheduled_run}</span>
           </div>
           <div className="flex items-center justify-between py-2">
             <span className="text-sm font-medium text-gray-600">{t('lastRun')}</span>
-            <span className="text-sm font-bold text-gray-900">{formatDateTime(status.last_run)}</span>
+            <span className="text-sm font-bold text-gray-900">{status.last_run}</span>
           </div>
         </div>
       </div>

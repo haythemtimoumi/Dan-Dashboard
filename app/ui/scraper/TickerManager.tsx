@@ -62,18 +62,22 @@ export default function TickerManager() {
     if (tickersToAdd.length === 0) return;
     
     // Get current tickers for the selected source
-    const tickersArray = Array.isArray(tickerData?.tickers) && tickerData
-      ? tickerData.tickers.map(item => {
-          if (typeof item === 'string') {
-            return { source: 'manual', ticker: item };
-          }
-          return item;
-        })
-      : [];
+    let currentSourceTickers: string[] = [];
+    
+    if (tickerData && Array.isArray(tickerData.tickers)) {
+      // Process the tickers based on their type
+      const processedTickers = tickerData.tickers.map(item => {
+        if (typeof item === 'string') {
+          return { source: 'manual', ticker: item };
+        }
+        return item;
+      });
       
-    const currentSourceTickers = tickersArray
-      .filter(item => item.source === selectedSource)
-      .map(item => item.ticker);
+      // Filter tickers for the selected source
+      currentSourceTickers = processedTickers
+        .filter(item => item.source === selectedSource)
+        .map(item => item.ticker);
+    }
     
     const uniqueTickers = Array.from(new Set([...currentSourceTickers, ...tickersToAdd]));
     
