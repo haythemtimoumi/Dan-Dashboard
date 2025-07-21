@@ -11,6 +11,7 @@ import DatePickerInput from '@/app/ui/date-picker';
 import { formatDateForPortfolioAPI, getTodayLocal, addDays, subtractDays } from '@/app/lib/date-utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.mytickerlist.com/api';
+//const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 export default function PortfolioListWithDateRange() {
   const router = useRouter();
@@ -47,6 +48,12 @@ export default function PortfolioListWithDateRange() {
     cash_per_share: string;
     current_ratio: string;
     guru: string;
+    // New API fields
+    last_price: string;
+    per_upside: string;
+    last_gr: string;
+    long_gr: string;
+    pbt: string;
   }>({
     ticker: '',
     sentiment_score: 0,
@@ -59,7 +66,13 @@ export default function PortfolioListWithDateRange() {
     dividend: '',
     cash_per_share: '',
     current_ratio: '',
-    guru: ''
+    guru: '',
+    // New API fields with empty defaults
+    last_price: '',
+    per_upside: '',
+    last_gr: '',
+    long_gr: '',
+    pbt: ''
   });
 
   // Load data from localStorage on component mount
@@ -287,10 +300,21 @@ export default function PortfolioListWithDateRange() {
       if (newStock.moat_score !== null && newStock.moat_score !== undefined) stockData.moat_score = newStock.moat_score;
       if (newStock.management_score !== null && newStock.management_score !== undefined) stockData.management_score = newStock.management_score;
       if (newStock.buy_price && newStock.buy_price.trim()) stockData.buy_price = newStock.buy_price;
+      
+      // Add both old and new field names for compatibility
+      if (newStock.per_upside && newStock.per_upside.trim()) stockData.per_upside = newStock.per_upside;
       if (newStock.pe && newStock.pe.trim()) stockData.pe = newStock.pe;
+      
+      if (newStock.last_gr && newStock.last_gr.trim()) stockData.last_gr = newStock.last_gr;
       if (newStock.dividend && newStock.dividend.trim()) stockData.dividend = newStock.dividend;
+      
+      if (newStock.long_gr && newStock.long_gr.trim()) stockData.long_gr = newStock.long_gr;
       if (newStock.cash_per_share && newStock.cash_per_share.trim()) stockData.cash_per_share = newStock.cash_per_share;
+      
+      if (newStock.last_price && newStock.last_price.trim()) stockData.last_price = newStock.last_price;
       if (newStock.current_ratio && newStock.current_ratio.trim()) stockData.current_ratio = newStock.current_ratio;
+      
+      if (newStock.pbt && newStock.pbt.trim()) stockData.pbt = newStock.pbt;
       if (newStock.guru && newStock.guru.trim()) stockData.guru = newStock.guru;
 
       const response = await fetch(`${API_URL}/stocks`, {
@@ -340,7 +364,13 @@ export default function PortfolioListWithDateRange() {
         dividend: '',
         cash_per_share: '',
         current_ratio: '',
-        guru: ''
+        guru: '',
+        // Reset new API fields
+        last_price: '',
+        per_upside: '',
+        last_gr: '',
+        long_gr: '',
+        pbt: ''
       });
     } catch (error) {
       console.error('Error adding stock:', error);
@@ -587,7 +617,13 @@ export default function PortfolioListWithDateRange() {
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('averageUpside')}</span>
                   </div>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {(stocks.reduce((sum, stock) => sum + (typeof stock.pe === 'string' ? parseFloat(stock.pe) : stock.pe || 0), 0) / stocks.length).toFixed(1)}%
+                    {(stocks.reduce((sum, stock) => {
+                      if (stock.per_upside !== undefined && stock.per_upside !== null) {
+                        return sum + (typeof stock.per_upside === 'string' ? parseFloat(stock.per_upside) : stock.per_upside);
+                      } else {
+                        return sum + (typeof stock.pe === 'string' ? parseFloat(stock.pe) : stock.pe || 0);
+                      }
+                    }, 0) / stocks.length).toFixed(1)}%
                   </p>
                 </div>
               </div>
@@ -658,19 +694,19 @@ export default function PortfolioListWithDateRange() {
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Last Price</p>
-                          <p className="text-lg font-semibold">{stock.current_ratio ? String(stock.current_ratio).replace(/,/g, '') : '-'}</p>
+                          <p className="text-lg font-semibold">{stock.last_price ? String(stock.last_price).replace(/,/g, '') : (stock.current_ratio ? String(stock.current_ratio).replace(/,/g, '') : '-')}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Last Saved Composite GR</p>
-                          <p className="text-lg font-semibold">{stock.dividend ? String(stock.dividend).replace(/,/g, '') : '-'}</p>
+                          <p className="text-lg font-semibold">{stock.last_gr ? String(stock.last_gr).replace(/,/g, '') : (stock.dividend ? String(stock.dividend).replace(/,/g, '') : '-')}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Analyst Estimated Long-Term GR</p>
-                          <p className="text-lg font-semibold">{stock.cash_per_share ? String(stock.cash_per_share).replace(/,/g, '') : '-'}</p>
+                          <p className="text-lg font-semibold">{stock.long_gr ? String(stock.long_gr).replace(/,/g, '') : (stock.cash_per_share ? String(stock.cash_per_share).replace(/,/g, '') : '-')}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">PBT</p>
-                          <p className="text-lg font-semibold">{stock.guru ? String(stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}</p>
+                          <p className="text-lg font-semibold">{stock.pbt ? String(stock.pbt).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : (stock.guru ? String(stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-')}</p>
                         </div>
                       </div>
                       
@@ -819,34 +855,34 @@ export default function PortfolioListWithDateRange() {
                         </div>
                       </th>
                       <th className="px-2 py-2 text-right text-gray-700">Sticker</th>
-                      <th className="px-2 py-2 text-right text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('current_ratio')}>
+                      <th className="px-2 py-2 text-right text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('last_price')}>
                         <div className="flex items-center justify-end gap-1">
                           <span>Price</span>
-                          {sortBy === 'current_ratio' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {sortBy === 'last_price' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('pe')}>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('per_upside')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Upside</span>
-                          {sortBy === 'pe' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {sortBy === 'per_upside' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('dividend')}>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('last_gr')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Comp</span>
-                          {sortBy === 'dividend' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {sortBy === 'last_gr' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('cash_per_share')}>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('long_gr')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Growth</span>
-                          {sortBy === 'cash_per_share' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {sortBy === 'long_gr' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('guru')}>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('pbt')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>PBT</span>
-                          {sortBy === 'guru' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {sortBy === 'pbt' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
                       <th className="px-2 py-2 text-left text-gray-700">Source</th>
@@ -980,19 +1016,19 @@ export default function PortfolioListWithDateRange() {
                           {formatCurrency(stock.buy_price * 2)}
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
-                          {stock.current_ratio ? String(stock.current_ratio).replace(/,/g, '') : '-'}
+                          {stock.last_price ? String(stock.last_price).replace(/,/g, '') : (stock.current_ratio ? String(stock.current_ratio).replace(/,/g, '') : '-')}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.pe ? String(stock.pe).replace(/,/g, '') + '%' : '-'}
+                          {stock.per_upside ? String(stock.per_upside).replace(/,/g, '') + '%' : (stock.pe ? String(stock.pe).replace(/,/g, '') + '%' : '-')}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.dividend ? String(stock.dividend).replace(/,/g, '') : '-'}
+                          {stock.last_gr ? String(stock.last_gr).replace(/,/g, '') : (stock.dividend ? String(stock.dividend).replace(/,/g, '') : '-')}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.cash_per_share ? String(stock.cash_per_share).replace(/,/g, '') : '-'}
+                          {stock.long_gr ? String(stock.long_gr).replace(/,/g, '') : (stock.cash_per_share ? String(stock.cash_per_share).replace(/,/g, '') : '-')}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.guru ? String(stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}
+                          {stock.pbt ? String(stock.pbt).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : (stock.guru ? String(stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-')}
                         </td>
                         <td className="px-2 py-2">
                           <span className={clsx("px-1.5 py-0.5 rounded text-xs", 
@@ -1202,8 +1238,8 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Upside</label>
                   <input
                     type="text"
-                    value={newStock.pe}
-                    onChange={(e) => setNewStock({...newStock, pe: e.target.value})}
+                    value={newStock.per_upside || newStock.pe}
+                    onChange={(e) => setNewStock({...newStock, per_upside: e.target.value, pe: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1211,8 +1247,8 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
                   <input
                     type="text"
-                    value={newStock.current_ratio}
-                    onChange={(e) => setNewStock({...newStock, current_ratio: e.target.value})}
+                    value={newStock.last_price || newStock.current_ratio}
+                    onChange={(e) => setNewStock({...newStock, last_price: e.target.value, current_ratio: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1238,8 +1274,8 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Comp</label>
                   <input
                     type="text"
-                    value={newStock.dividend}
-                    onChange={(e) => setNewStock({...newStock, dividend: e.target.value})}
+                    value={newStock.last_gr || newStock.dividend}
+                    onChange={(e) => setNewStock({...newStock, last_gr: e.target.value, dividend: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1247,8 +1283,8 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Growth</label>
                   <input
                     type="text"
-                    value={newStock.cash_per_share}
-                    onChange={(e) => setNewStock({...newStock, cash_per_share: e.target.value})}
+                    value={newStock.long_gr || newStock.cash_per_share}
+                    onChange={(e) => setNewStock({...newStock, long_gr: e.target.value, cash_per_share: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1256,8 +1292,8 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">PBT</label>
                   <input
                     type="text"
-                    value={newStock.guru}
-                    onChange={(e) => setNewStock({...newStock, guru: e.target.value})}
+                    value={newStock.pbt || newStock.guru}
+                    onChange={(e) => setNewStock({...newStock, pbt: e.target.value, guru: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="10.5 years"
                   />

@@ -22,6 +22,12 @@ export type Stock = {
   rule1_score?: number | null; // Optional Rule 1 score
   moat_score?: number | null; // Optional moat score
   management_score?: number | null; // Optional management score
+  // New API fields
+  last_price?: number; // Current price (replaces current_ratio)
+  per_upside?: number; // Upside percentage (replaces pe)
+  last_gr?: string; // Last saved composite growth rate (replaces dividend)
+  long_gr?: string; // Analyst estimated long-term growth rate (replaces cash_per_share)
+  pbt?: string; // Payback time (replaces guru)
 };
 
 export type StocksTable = {
@@ -44,6 +50,12 @@ export type StocksTable = {
   rule1_score?: number | null; // Optional Rule 1 score
   moat_score?: number | null; // Optional moat score
   management_score?: number | null; // Optional management score
+  // New API fields
+  last_price?: number; // Current price (replaces current_ratio)
+  per_upside?: number; // Upside percentage (replaces pe)
+  last_gr?: string; // Last saved composite growth rate (replaces dividend)
+  long_gr?: string; // Analyst estimated long-term growth rate (replaces cash_per_share)
+  pbt?: string; // Payback time (replaces guru)
 };
 
 export type LatestStock = {

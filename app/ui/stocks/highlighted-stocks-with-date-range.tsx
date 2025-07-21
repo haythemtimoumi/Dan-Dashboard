@@ -65,7 +65,7 @@ registerLocale('fr', fr);
 
 // Get API URL from environment variable - point directly to Dan-API server
 const API_URL = 'https://www.mytickerlist.com/api';
-
+//const API_URL = 'http://localhost:3000/api';
 // No pagination - show all items
 
 // No pagination component needed
@@ -130,6 +130,12 @@ export default function HighlightedStocksWithDateRange({
     cash_per_share: string;
     current_ratio: string;
     guru: string;
+    // New API fields
+    last_price: string;
+    per_upside: string;
+    last_gr: string;
+    long_gr: string;
+    pbt: string;
   }>({
     ticker: '',
     source: 'manual',
@@ -143,7 +149,13 @@ export default function HighlightedStocksWithDateRange({
     dividend: '',
     cash_per_share: '',
     current_ratio: '',
-    guru: ''
+    guru: '',
+    // New API fields with empty defaults
+    last_price: '',
+    per_upside: '',
+    last_gr: '',
+    long_gr: '',
+    pbt: ''
   });
 
   // Load data from localStorage on component mount
@@ -249,10 +261,21 @@ export default function HighlightedStocksWithDateRange({
       if (newStock.moat_score !== null && newStock.moat_score !== undefined) stockData.moat_score = newStock.moat_score;
       if (newStock.management_score !== null && newStock.management_score !== undefined) stockData.management_score = newStock.management_score;
       if (newStock.buy_price && newStock.buy_price.trim()) stockData.buy_price = newStock.buy_price;
+      
+      // Add both old and new field names for compatibility
+      if (newStock.per_upside && newStock.per_upside.trim()) stockData.per_upside = newStock.per_upside;
       if (newStock.pe && newStock.pe.trim()) stockData.pe = newStock.pe;
+      
+      if (newStock.last_gr && newStock.last_gr.trim()) stockData.last_gr = newStock.last_gr;
       if (newStock.dividend && newStock.dividend.trim()) stockData.dividend = newStock.dividend;
+      
+      if (newStock.long_gr && newStock.long_gr.trim()) stockData.long_gr = newStock.long_gr;
       if (newStock.cash_per_share && newStock.cash_per_share.trim()) stockData.cash_per_share = newStock.cash_per_share;
+      
+      if (newStock.last_price && newStock.last_price.trim()) stockData.last_price = newStock.last_price;
       if (newStock.current_ratio && newStock.current_ratio.trim()) stockData.current_ratio = newStock.current_ratio;
+      
+      if (newStock.pbt && newStock.pbt.trim()) stockData.pbt = newStock.pbt;
       if (newStock.guru && newStock.guru.trim()) stockData.guru = newStock.guru;
 
       const response = await fetch(`${API_URL}/stocks`, {
@@ -291,7 +314,13 @@ export default function HighlightedStocksWithDateRange({
         dividend: '',
         cash_per_share: '',
         current_ratio: '',
-        guru: ''
+        guru: '',
+        // Reset new API fields
+        last_price: '',
+        per_upside: '',
+        last_gr: '',
+        long_gr: '',
+        pbt: ''
       });
     } catch (error) {
       console.error('Error adding stock:', error);
@@ -868,19 +897,19 @@ export default function HighlightedStocksWithDateRange({
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Last Price</p>
-                          <p className="text-lg font-semibold">{formatNumber(stock.current_ratio)}</p>
+                          <p className="text-lg font-semibold">{formatNumber(stock.last_price || stock.current_ratio)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Last Saved Composite GR</p>
-                          <p className="text-lg font-semibold">{formatNumber(stock.dividend)}</p>
+                          <p className="text-lg font-semibold">{formatNumber(stock.last_gr || stock.dividend)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Analyst Estimated Long-Term GR</p>
-                          <p className="text-lg font-semibold">{formatNumber(stock.cash_per_share)}</p>
+                          <p className="text-lg font-semibold">{formatNumber(stock.long_gr || stock.cash_per_share)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">PBT</p>
-                          <p className="text-lg font-semibold">{stock.guru ? String(stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}</p>
+                          <p className="text-lg font-semibold">{(stock.pbt || stock.guru) ? String(stock.pbt || stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}</p>
                         </div>
                       </div>
                       
@@ -1036,34 +1065,34 @@ export default function HighlightedStocksWithDateRange({
                         </div>
                       </th>
                       <th className="px-2 py-2 text-right text-gray-700">Sticker</th>
-                      <th className="px-2 py-2 text-right text-gray-700 cursor-pointer" onClick={() => handleSort('current_ratio')}>
+                      <th className="px-2 py-2 text-right text-gray-700 cursor-pointer" onClick={() => handleSort('last_price')}>
                         <div className="flex items-center justify-end gap-1">
                           <span>Price</span>
-                          {sortBy === 'current_ratio' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {sortBy === 'last_price' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('pe')}>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('per_upside')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Upside</span>
-                          {sortBy === 'pe' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {sortBy === 'per_upside' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('dividend')}>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('last_gr')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Comp</span>
-                          {sortBy === 'dividend' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {sortBy === 'last_gr' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('cash_per_share')}>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('long_gr')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Growth</span>
-                          {sortBy === 'cash_per_share' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {sortBy === 'long_gr' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('guru')}>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer" onClick={() => handleSort('pbt')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>PBT</span>
-                          {sortBy === 'guru' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {sortBy === 'pbt' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
                       <th className="px-2 py-2 text-left text-gray-700">Source</th>
@@ -1209,27 +1238,27 @@ export default function HighlightedStocksWithDateRange({
                           </span>
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
-                          <span className={stock.current_ratio && Number(stock.current_ratio) < 0 ? 'text-red-600' : ''}>
-                            {formatNumber(stock.current_ratio)}
+                          <span className={(stock.last_price || stock.current_ratio) && Number(stock.last_price || stock.current_ratio) < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.last_price || stock.current_ratio)}
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          <span className={stock.pe && Number(stock.pe) < 0 ? 'text-red-600' : ''}>
-                            {formatNumber(stock.pe)}%
+                          <span className={(stock.per_upside || stock.pe) && Number(stock.per_upside || stock.pe) < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.per_upside || stock.pe)}%
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          <span className={stock.dividend && Number(stock.dividend) < 0 ? 'text-red-600' : ''}>
-                            {formatNumber(stock.dividend)}
+                          <span className={(stock.last_gr || stock.dividend) && Number(stock.last_gr || stock.dividend) < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.last_gr || stock.dividend)}
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          <span className={stock.cash_per_share && Number(stock.cash_per_share) < 0 ? 'text-red-600' : ''}>
-                            {formatNumber(stock.cash_per_share)}
+                          <span className={(stock.long_gr || stock.cash_per_share) && Number(stock.long_gr || stock.cash_per_share) < 0 ? 'text-red-600' : ''}>
+                            {formatNumber(stock.long_gr || stock.cash_per_share)}
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.guru ? String(stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}
+                          {(stock.pbt || stock.guru) ? String(stock.pbt || stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}
                         </td>
                         <td className="px-2 py-2">
                           <span className={clsx("px-1.5 py-0.5 rounded text-xs", 
@@ -1443,8 +1472,8 @@ export default function HighlightedStocksWithDateRange({
                   <label className="block text-sm font-medium text-gray-700 mb-2">Upside</label>
                   <input
                     type="text"
-                    value={newStock.pe}
-                    onChange={(e) => setNewStock({...newStock, pe: e.target.value})}
+                    value={newStock.per_upside || newStock.pe}
+                    onChange={(e) => setNewStock({...newStock, per_upside: e.target.value, pe: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1452,8 +1481,8 @@ export default function HighlightedStocksWithDateRange({
                   <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
                   <input
                     type="text"
-                    value={newStock.current_ratio}
-                    onChange={(e) => setNewStock({...newStock, current_ratio: e.target.value})}
+                    value={newStock.last_price || newStock.current_ratio}
+                    onChange={(e) => setNewStock({...newStock, last_price: e.target.value, current_ratio: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1479,8 +1508,8 @@ export default function HighlightedStocksWithDateRange({
                   <label className="block text-sm font-medium text-gray-700 mb-2">Comp</label>
                   <input
                     type="text"
-                    value={newStock.dividend}
-                    onChange={(e) => setNewStock({...newStock, dividend: e.target.value})}
+                    value={newStock.last_gr || newStock.dividend}
+                    onChange={(e) => setNewStock({...newStock, last_gr: e.target.value, dividend: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1488,8 +1517,8 @@ export default function HighlightedStocksWithDateRange({
                   <label className="block text-sm font-medium text-gray-700 mb-2">Growth</label>
                   <input
                     type="text"
-                    value={newStock.cash_per_share}
-                    onChange={(e) => setNewStock({...newStock, cash_per_share: e.target.value})}
+                    value={newStock.long_gr || newStock.cash_per_share}
+                    onChange={(e) => setNewStock({...newStock, long_gr: e.target.value, cash_per_share: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1497,8 +1526,8 @@ export default function HighlightedStocksWithDateRange({
                   <label className="block text-sm font-medium text-gray-700 mb-2">PBT</label>
                   <input
                     type="text"
-                    value={newStock.guru}
-                    onChange={(e) => setNewStock({...newStock, guru: e.target.value})}
+                    value={newStock.pbt || newStock.guru}
+                    onChange={(e) => setNewStock({...newStock, pbt: e.target.value, guru: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="10.5"
                   />

@@ -13,6 +13,7 @@ import '@/app/ui/datepicker-custom.css';
 
 // Use the backend API URL running on port 3000
 const API_URL = 'https://www.mytickerlist.com/api';
+//const API_URL = 'http://localhost:3000/api';
 
 // No pagination - show all items
 

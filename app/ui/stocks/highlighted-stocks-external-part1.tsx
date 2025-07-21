@@ -8,6 +8,7 @@ import { CalendarIcon, XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline
 
 // Get API URL from environment variable
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.mytickerlist.com/api';
+//const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 // Items per page for pagination
 const ITEMS_PER_PAGE = 5;
