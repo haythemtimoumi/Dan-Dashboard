@@ -458,40 +458,10 @@ export default function PortfolioListWithDateRange() {
         
         console.log(`Found ${stocksData.length} portfolio stocks for ${formattedDate}`);
         
-        // If no stocks found with guru_list source, try fetching all stocks
+        // If no stocks found with guru_list source, just show empty state
         if (stocksData.length === 0) {
-          console.log('No guru_list stocks found, trying to fetch all stocks');
-          const allStocksResponse = await fetch(`${API_URL}/stocks`);
-          if (allStocksResponse.ok) {
-            const allData = await allStocksResponse.json();
-            let allStocksData = [];
-            if (allData && allData.stocks) {
-              allStocksData = allData.stocks;
-            } else if (Array.isArray(allData)) {
-              allStocksData = allData;
-            } else if (allData && typeof allData === 'object') {
-              // If data is an object but not in the expected format, try to extract stocks
-              console.log('All stocks data is an object but not in expected format, trying to extract stocks');
-              if (allData.data && Array.isArray(allData.data)) {
-                allStocksData = allData.data;
-                console.log('Found stocks in allData.data:', allStocksData.length);
-              } else if (allData.results && Array.isArray(allData.results)) {
-                allStocksData = allData.results;
-                console.log('Found stocks in allData.results:', allStocksData.length);
-              } else {
-                console.log('Could not find stocks array in all stocks response');
-              }
-            }
-            console.log(`Found ${allStocksData.length} total stocks`);
-            
-            // Filter for guru_list stocks manually
-            const guruStocks = allStocksData.filter((stock: Stock) => stock.source === 'guru_list');
-            console.log(`Filtered ${guruStocks.length} guru_list stocks`);
-            
-            if (guruStocks.length > 0) {
-              stocksData = guruStocks;
-            }
-          }
+          console.log('No guru_list stocks found for the selected date');
+          // Don't try to fetch all stocks - just leave stocksData as empty array
         }
         
         setStocks(stocksData);
@@ -903,6 +873,12 @@ export default function PortfolioListWithDateRange() {
                           {sortBy === 'ticker' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
+                      <th className="px-2 py-2 text-left text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('guru')}>
+                        <div className="flex items-center gap-1">
+                          <span>Guru</span>
+                          {sortBy === 'guru' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
                       <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('sentiment_score')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Sentiment</span>
@@ -1068,6 +1044,9 @@ export default function PortfolioListWithDateRange() {
                         </td>
                         <td className="px-2 py-2">
                           <div className="font-medium text-gray-900 text-sm">{stock.ticker}</div>
+                        </td>
+                        <td className="px-2 py-2">
+                          <div className="text-gray-700 text-sm">{stock.guru || '-'}</div>
                         </td>
                         <td className="px-2 py-2 text-center">
                           <span className={clsx(
