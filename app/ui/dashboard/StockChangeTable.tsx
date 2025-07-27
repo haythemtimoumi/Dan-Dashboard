@@ -1,5 +1,7 @@
 'use client';
 
+import { formatLargeNumber } from '@/app/lib/utils';
+
 export default function StockChangeTable({ title, rows }: { title: string; rows: any[] }) {
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-6">
@@ -27,8 +29,8 @@ export default function StockChangeTable({ title, rows }: { title: string; rows:
                     <span className="font-medium text-gray-900 dark:text-white">{row.ticker.toUpperCase()}</span>
                   </td>
                   <td className="py-3 text-gray-600 dark:text-gray-400">{row.guru}</td>
-                  <td className="py-3 text-right font-mono text-gray-600 dark:text-gray-400">{row.start_value}</td>
-                  <td className="py-3 text-right font-mono text-gray-600 dark:text-gray-400">{row.end_value}</td>
+                  <td className="py-3 text-right font-mono text-gray-600 dark:text-gray-400">{formatLargeNumber(row.start_value)}</td>
+                  <td className="py-3 text-right font-mono text-gray-600 dark:text-gray-400">{formatLargeNumber(row.end_value)}</td>
                   <td className="py-3 text-right">
                     <span className={`font-medium ${row.change_percent >= 0 ? 'text-black dark:text-white' : 'text-red-500 dark:text-red-400'}`}>
                       {row.change_percent > 0 ? '+' : ''}{row.change_percent.toFixed(2)}%

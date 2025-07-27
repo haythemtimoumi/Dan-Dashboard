@@ -36,6 +36,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
     { name: t('targetList'), href: '/dashboard/target-list' },
     { name: t('monitor'), href: '/dashboard/monitor-list' },
     { name: t('guruList'), href: '/dashboard/guru-list' },
+    { name: t('Dan Portfolio'), href: '/dashboard/dan-portfolio-list' },
   ];
   
   return (
@@ -76,7 +77,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
             onClick={() => setIsPortfolioOpen(!isPortfolioOpen)}
             className={clsx(
               "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200 w-full",
-              (pathname.includes('/portfolio-list') || pathname.includes('/target') || pathname.includes('/monitor') || pathname.includes('/guru-list'))
+              (pathname.includes('/portfolio-list') || pathname.includes('/target') || pathname.includes('/monitor') || pathname.includes('/guru-list') || pathname.includes('/dan-portfolio-list'))
                 ? "bg-black dark:bg-white text-white dark:text-black"
                 : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white",
               isCollapsed && "justify-center px-2"

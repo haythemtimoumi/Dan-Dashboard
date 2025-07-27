@@ -1,1 +1,1 @@
-any component or section you gonna add or create or even modifying anything dont forget to adapt the language switcher model so we have two versions one in french and one in english
+any component or section you gonna add or create or even modifying anything dont forget to adapt the language switcher model so we have two versions one in french and one in english.

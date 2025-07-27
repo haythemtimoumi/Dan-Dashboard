@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Stock } from '@/app/lib/definitions';
-import { formatCurrency, getSentimentColor, getSourceBadgeColor } from '@/app/lib/utils';
+import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatLargeNumber } from '@/app/lib/utils';
 import clsx from 'clsx';
 import { useSettings } from '@/app/contexts/settings-context';
 import { useAuth } from '@/app/contexts/auth-context';
@@ -684,11 +684,11 @@ export default function PortfolioListWithDateRange() {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Signal Score</p>
-                          <p className="text-lg font-semibold">{stock.signal_score ? String(stock.signal_score).replace(/,/g, '') : '-'}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.signal_score)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Rule1 Score</p>
-                          <p className="text-lg font-semibold">{stock.rule1_score !== null ? String(stock.rule1_score).replace(/,/g, '') : '-'}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.rule1_score)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Target Buy Price</p>
@@ -700,19 +700,19 @@ export default function PortfolioListWithDateRange() {
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Last Price</p>
-                          <p className="text-lg font-semibold">{stock.last_price ? String(stock.last_price).replace(/,/g, '') : (stock.current_ratio ? String(stock.current_ratio).replace(/,/g, '') : '-')}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.last_price || stock.current_ratio)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Last Saved Composite GR</p>
-                          <p className="text-lg font-semibold">{stock.last_gr ? String(stock.last_gr).replace(/,/g, '') : (stock.dividend ? String(stock.dividend).replace(/,/g, '') : '-')}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.last_gr || stock.dividend)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Analyst Estimated Long-Term GR</p>
-                          <p className="text-lg font-semibold">{stock.long_gr ? String(stock.long_gr).replace(/,/g, '') : (stock.cash_per_share ? String(stock.cash_per_share).replace(/,/g, '') : '-')}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.long_gr || stock.cash_per_share)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">PBT</p>
-                          <p className="text-lg font-semibold">{(stock.pbt || stock.guru) ? String(stock.pbt || stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.pbt || stock.guru)}</p>
                         </div>
                       </div>
                       
@@ -995,7 +995,7 @@ export default function PortfolioListWithDateRange() {
                             getSentimentColor(stock.sentiment_score),
                             "px-1.5 py-0.5 rounded text-xs font-medium"
                           )}>
-                            {stock.sentiment_score ? String(stock.sentiment_score).replace(/,/g, '') : '-'}
+                            {formatLargeNumber(stock.sentiment_score)}
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center">
@@ -1003,17 +1003,17 @@ export default function PortfolioListWithDateRange() {
                             getSentimentColor(stock.signal_score),
                             "px-1.5 py-0.5 rounded text-xs font-medium"
                           )}>
-                            {stock.signal_score ? String(stock.signal_score).replace(/,/g, '') : '-'}
+                            {formatLargeNumber(stock.signal_score)}
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.rule1_score !== null ? String(stock.rule1_score).replace(/,/g, '') : '-'}
+                          {formatLargeNumber(stock.rule1_score)}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.moat_score !== null ? String(stock.moat_score).replace(/,/g, '') : '-'}
+                          {formatLargeNumber(stock.moat_score)}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.management_score !== null ? String(stock.management_score).replace(/,/g, '') : '-'}
+                          {formatLargeNumber(stock.management_score)}
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
                           {formatCurrency(stock.buy_price)}
@@ -1022,19 +1022,19 @@ export default function PortfolioListWithDateRange() {
                           {formatCurrency(stock.buy_price * 2)}
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
-                          {stock.last_price ? String(stock.last_price).replace(/,/g, '') : (stock.current_ratio ? String(stock.current_ratio).replace(/,/g, '') : '-')}
+                          {formatLargeNumber(stock.last_price || stock.current_ratio)}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.per_upside ? String(stock.per_upside).replace(/,/g, '') + '%' : (stock.pe ? String(stock.pe).replace(/,/g, '') + '%' : '-')}
+                          {formatLargeNumber(stock.per_upside || stock.pe)}{(stock.per_upside || stock.pe) ? '%' : ''}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.last_gr ? String(stock.last_gr).replace(/,/g, '') : (stock.dividend ? String(stock.dividend).replace(/,/g, '') : '-')}
+                          {formatLargeNumber(stock.last_gr || stock.dividend)}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.long_gr ? String(stock.long_gr).replace(/,/g, '') : (stock.cash_per_share ? String(stock.cash_per_share).replace(/,/g, '') : '-')}
+                          {formatLargeNumber(stock.long_gr || stock.cash_per_share)}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {(stock.pbt || stock.guru) ? String(stock.pbt || stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}
+                          {formatLargeNumber(stock.pbt || stock.guru)}
                         </td>
                         <td className="px-2 py-2">
                           <span className={clsx("px-1.5 py-0.5 rounded text-xs", 

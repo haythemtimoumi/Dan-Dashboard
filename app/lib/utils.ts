@@ -4,6 +4,10 @@ export const formatCurrency = (amount: number) => {
   if (isNaN(amount) || amount === null || amount === undefined) {
     return '$0';
   }
+  // Check if the amount is too large (greater than 1 billion)
+  if (amount > 1000000000) {
+    return '-';
+  }
   // Check if the amount is already in dollars (less than 10000)
   // This handles cases where the amount is stored directly as dollars
   const divisor = amount < 10000 ? 1 : 100;
@@ -123,4 +127,26 @@ export const isValidDateRange = (startDate: string, endDate: string): boolean =>
   const end = new Date(endDate);
   
   return start <= end;
+};
+
+export const formatLargeNumber = (value: string | number | null | undefined): string => {
+  if (value === null || value === undefined || value === '') {
+    return '-';
+  }
+  
+  // Convert to number if it's a string
+  const numValue = typeof value === 'string' ? Number(value.replace(/[^0-9.-]+/g, '')) : value;
+  
+  // Check if it's a valid number
+  if (isNaN(numValue)) {
+    return '-';
+  }
+  
+  // Return '-' for very large numbers
+  if (Math.abs(numValue) > 1000000000) {
+    return '-';
+  }
+  
+  // Return the original value as string
+  return typeof value === 'string' ? value : String(value);
 };

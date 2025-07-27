@@ -11,8 +11,7 @@ import DatePickerInput from '@/app/ui/date-picker';
 import { formatDateForPortfolioAPI, getTodayLocal, addDays, subtractDays } from '@/app/lib/date-utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.mytickerlist.com/api';
-//const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-
+//const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export default function PortfolioListWithDateRange() {
   const router = useRouter();
@@ -55,6 +54,8 @@ export default function PortfolioListWithDateRange() {
     last_gr: string;
     long_gr: string;
     pbt: string;
+    last_action?: string;
+    per_portfolio?: number;
   }>({
     ticker: '',
     sentiment_score: 0,
@@ -73,7 +74,9 @@ export default function PortfolioListWithDateRange() {
     per_upside: '',
     last_gr: '',
     long_gr: '',
-    pbt: ''
+    pbt: '',
+    last_action: '',
+    per_portfolio: undefined
   });
 
   // Load data from localStorage on component mount
@@ -226,7 +229,7 @@ export default function PortfolioListWithDateRange() {
 
       const stockData = {
         ...notification.undoData,
-        source: 'monitor',
+        source: 'dan_portfolio_list',
         date: selectedDate ? formatDateForPortfolioAPI(selectedDate) : formatDateForPortfolioAPI(getTodayLocal())
       };
       
@@ -297,7 +300,7 @@ export default function PortfolioListWithDateRange() {
 
       const stockData: any = {
         ticker: newStock.ticker.toUpperCase(),
-        source: 'monitor',
+        source: 'dan_portfolio_list',
         sentiment_score: newStock.sentiment_score,
         signal_score: newStock.signal_score,
         date: selectedDate ? formatDateForPortfolioAPI(selectedDate) : formatDateForPortfolioAPI(getTodayLocal())
@@ -309,21 +312,36 @@ export default function PortfolioListWithDateRange() {
       if (newStock.management_score !== null && newStock.management_score !== undefined) stockData.management_score = newStock.management_score;
       if (newStock.buy_price && newStock.buy_price.trim()) stockData.buy_price = newStock.buy_price;
       
-      // Add both old and new field names for compatibility
-      if (newStock.per_upside && newStock.per_upside.trim()) stockData.per_upside = newStock.per_upside;
-      if (newStock.pe && newStock.pe.trim()) stockData.pe = newStock.pe;
+      // Include both old and new API fields for compatibility
+      if (newStock.pe && newStock.pe.trim()) {
+        stockData.pe = newStock.pe;
+        stockData.per_upside = newStock.pe; // New field
+      }
+      if (newStock.dividend && newStock.dividend.trim()) {
+        stockData.dividend = newStock.dividend;
+        stockData.last_gr = newStock.dividend; // New field
+      }
+      if (newStock.cash_per_share && newStock.cash_per_share.trim()) {
+        stockData.cash_per_share = newStock.cash_per_share;
+        stockData.long_gr = newStock.cash_per_share; // New field
+      }
+      if (newStock.current_ratio && newStock.current_ratio.trim()) {
+        stockData.current_ratio = newStock.current_ratio;
+        stockData.last_price = newStock.current_ratio; // New field
+      }
+      if (newStock.guru && newStock.guru.trim()) {
+        stockData.guru = newStock.guru;
+        stockData.pbt = newStock.guru; // New field
+      }
       
-      if (newStock.last_gr && newStock.last_gr.trim()) stockData.last_gr = newStock.last_gr;
-      if (newStock.dividend && newStock.dividend.trim()) stockData.dividend = newStock.dividend;
-      
-      if (newStock.long_gr && newStock.long_gr.trim()) stockData.long_gr = newStock.long_gr;
-      if (newStock.cash_per_share && newStock.cash_per_share.trim()) stockData.cash_per_share = newStock.cash_per_share;
-      
+      // Also include new fields if they have values directly
       if (newStock.last_price && newStock.last_price.trim()) stockData.last_price = newStock.last_price;
-      if (newStock.current_ratio && newStock.current_ratio.trim()) stockData.current_ratio = newStock.current_ratio;
-      
+      if (newStock.per_upside && newStock.per_upside.trim()) stockData.per_upside = newStock.per_upside;
+      if (newStock.last_gr && newStock.last_gr.trim()) stockData.last_gr = newStock.last_gr;
+      if (newStock.long_gr && newStock.long_gr.trim()) stockData.long_gr = newStock.long_gr;
       if (newStock.pbt && newStock.pbt.trim()) stockData.pbt = newStock.pbt;
-      if (newStock.guru && newStock.guru.trim()) stockData.guru = newStock.guru;
+      if (newStock.last_action && newStock.last_action.trim()) stockData.last_action = newStock.last_action;
+      if (newStock.per_portfolio !== undefined) stockData.per_portfolio = newStock.per_portfolio;
 
       const response = await fetch(`${API_URL}/stocks`, {
         method: 'POST',
@@ -373,12 +391,14 @@ export default function PortfolioListWithDateRange() {
         cash_per_share: '',
         current_ratio: '',
         guru: '',
-        // Reset new API fields
+        // New API fields with empty defaults
         last_price: '',
         per_upside: '',
         last_gr: '',
         long_gr: '',
-        pbt: ''
+        pbt: '',
+        last_action: '',
+        per_portfolio: undefined
       });
     } catch (error) {
       console.error('Error adding stock:', error);
@@ -398,13 +418,31 @@ export default function PortfolioListWithDateRange() {
         const formattedDate = formatDateForPortfolioAPI(selectedDate);
         
         console.log(`Fetching portfolio stocks for date: ${formattedDate} (timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone})`);
-        const response = await fetch(`${API_URL}/stocks/filter-by-date-source?date=${formattedDate}&source=monitor`);
+        
+        // First, try fetching all stocks to see if the API is working
+        console.log('Testing API connection by fetching all stocks...');
+        const testResponse = await fetch(`${API_URL}/stocks`);
+        console.log('Test response status:', testResponse.status);
+        if (testResponse.ok) {
+          const testData = await testResponse.json();
+          console.log(`API is working. Found ${Array.isArray(testData) ? testData.length : 'unknown number of'} stocks in total`);
+        } else {
+          console.error('API test failed. Status:', testResponse.status);
+        }
+        
+        // Try fetching with the specific source first
+        const url = `${API_URL}/stocks/filter-by-date-source?date=${formattedDate}&source=dan_portfolio_list`;
+        console.log('Fetching from URL:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch portfolio stocks: ${response.statusText}`);
         }
         
         const data = await response.json();
+        console.log('API response data:', data);
         
         // Handle different response formats
         let stocksData = [];
@@ -412,9 +450,28 @@ export default function PortfolioListWithDateRange() {
           stocksData = data.stocks;
         } else if (Array.isArray(data)) {
           stocksData = data;
+        } else if (data && typeof data === 'object') {
+          // If data is an object but not in the expected format, try to extract stocks
+          console.log('Data is an object but not in expected format, trying to extract stocks');
+          if (data.data && Array.isArray(data.data)) {
+            stocksData = data.data;
+            console.log('Found stocks in data.data:', stocksData.length);
+          } else if (data.results && Array.isArray(data.results)) {
+            stocksData = data.results;
+            console.log('Found stocks in data.results:', stocksData.length);
+          } else {
+            console.log('Could not find stocks array in response');
+          }
         }
         
         console.log(`Found ${stocksData.length} portfolio stocks for ${formattedDate}`);
+        
+        // If no stocks found with dan_portfolio_list source, just show empty state
+        if (stocksData.length === 0) {
+          console.log('No dan_portfolio_list stocks found for the selected date');
+          // Don't try to fetch all stocks - just leave stocksData as empty array
+        }
+        
         setStocks(stocksData);
         setError(null);
       } catch (err) {
@@ -626,11 +683,9 @@ export default function PortfolioListWithDateRange() {
                   </div>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {(stocks.reduce((sum, stock) => {
-                      if (stock.per_upside !== undefined && stock.per_upside !== null) {
-                        return sum + (typeof stock.per_upside === 'string' ? parseFloat(stock.per_upside) : stock.per_upside);
-                      } else {
-                        return sum + (typeof stock.pe === 'string' ? parseFloat(stock.pe) : stock.pe || 0);
-                      }
+                      // Use per_upside if available, otherwise fall back to pe
+                      const value = stock.per_upside || stock.pe;
+                      return sum + (typeof value === 'string' ? parseFloat(value) : value || 0);
                     }, 0) / stocks.length).toFixed(1)}%
                   </p>
                 </div>
@@ -648,7 +703,7 @@ export default function PortfolioListWithDateRange() {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('noPortfolioStocksFound')}</h3>
-              <p className="text-gray-500 max-w-md mx-auto">No portfolio stocks were found for the selected date range or source. Try selecting a wider date range or different dates.</p>
+              <p className="text-gray-500 max-w-md mx-auto">No portfolio stocks were found for the selected date range or source. Try selecting a wider date range or different date.</p>
             </div>
           ) : (
             <>
@@ -716,6 +771,14 @@ export default function PortfolioListWithDateRange() {
                           <p className="text-xs text-gray-500 mb-1">PBT</p>
                           <p className="text-lg font-semibold">{formatLargeNumber(stock.pbt || stock.guru)}</p>
                         </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Last Action</p>
+                          <p className="text-lg font-semibold">{stock.last_action || '-'}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">% Portfolio</p>
+                          <p className="text-lg font-semibold">{stock.per_portfolio ? (String(stock.per_portfolio).endsWith('%') ? stock.per_portfolio : `${stock.per_portfolio}%`) : '-'}</p>
+                        </div>
                       </div>
                       
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
@@ -745,7 +808,7 @@ export default function PortfolioListWithDateRange() {
                               )}
                               title="Click to change color"
                             >
-                              {stock.source === 'monitor' ? (
+                              {stock.source === 'dan_portfolio_list' ? (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                                 </svg>
@@ -826,6 +889,12 @@ export default function PortfolioListWithDateRange() {
                           {sortBy === 'ticker' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
+                      <th className="px-2 py-2 text-left text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('guru')}>
+                        <div className="flex items-center gap-1">
+                          <span>Guru</span>
+                          {sortBy === 'guru' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
                       <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('sentiment_score')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Sentiment</span>
@@ -866,31 +935,43 @@ export default function PortfolioListWithDateRange() {
                       <th className="px-2 py-2 text-right text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('last_price')}>
                         <div className="flex items-center justify-end gap-1">
                           <span>Price</span>
-                          {sortBy === 'last_price' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {(sortBy === 'last_price' || sortBy === 'current_ratio') && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
                       <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('per_upside')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Upside</span>
-                          {sortBy === 'per_upside' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {(sortBy === 'per_upside' || sortBy === 'pe') && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
                       <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('last_gr')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Comp</span>
-                          {sortBy === 'last_gr' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {(sortBy === 'last_gr' || sortBy === 'dividend') && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
                       <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('long_gr')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Growth</span>
-                          {sortBy === 'long_gr' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {(sortBy === 'long_gr' || sortBy === 'cash_per_share') && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
                       <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('pbt')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>PBT</span>
-                          {sortBy === 'pbt' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                          {(sortBy === 'pbt' || sortBy === 'guru') && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('last_action')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Last Action</span>
+                          {sortBy === 'last_action' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('per_portfolio')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>% Portfolio</span>
+                          {sortBy === 'per_portfolio' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
                       <th className="px-2 py-2 text-left text-gray-700">Source</th>
@@ -929,7 +1010,7 @@ export default function PortfolioListWithDateRange() {
                               )}
                               title="Click to change color"
                             >
-                            {stock.source === 'monitor' ? (
+                            {stock.source === 'dan_portfolio_list' ? (
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                               </svg>
@@ -992,6 +1073,9 @@ export default function PortfolioListWithDateRange() {
                         <td className="px-2 py-2">
                           <div className="font-medium text-gray-900 text-sm">{stock.ticker}</div>
                         </td>
+                        <td className="px-2 py-2">
+                          <div className="text-gray-700 text-sm">{stock.guru || '-'}</div>
+                        </td>
                         <td className="px-2 py-2 text-center">
                           <span className={clsx(
                             getSentimentColor(stock.sentiment_score),
@@ -1037,6 +1121,12 @@ export default function PortfolioListWithDateRange() {
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
                           {formatLargeNumber(stock.pbt || stock.guru)}
+                        </td>
+                        <td className="px-2 py-2 text-center text-sm">
+                          {stock.last_action || '-'}
+                        </td>
+                        <td className="px-2 py-2 text-center text-sm">
+                          {stock.per_portfolio ? (String(stock.per_portfolio).endsWith('%') ? stock.per_portfolio : `${stock.per_portfolio}%`) : '-'}
                         </td>
                         <td className="px-2 py-2">
                           <span className={clsx("px-1.5 py-0.5 rounded text-xs", 
@@ -1177,7 +1267,7 @@ export default function PortfolioListWithDateRange() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">Add New Portfolio Stock</h3>
-                  <p className="text-sm text-gray-500">Add a new monitor stock to your portfolio</p>
+                  <p className="text-sm text-gray-500">Add a new dan_portfolio_list stock to your portfolio</p>
                 </div>
               </div>
               
@@ -1196,7 +1286,7 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Source</label>
                   <input
                     type="text"
-                    value="monitor"
+                    value="dan_portfolio_list"
                     disabled
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
                   />
@@ -1246,8 +1336,8 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Upside</label>
                   <input
                     type="text"
-                    value={newStock.per_upside || newStock.pe}
-                    onChange={(e) => setNewStock({...newStock, per_upside: e.target.value, pe: e.target.value})}
+                    value={newStock.pe}
+                    onChange={(e) => setNewStock({...newStock, pe: e.target.value, per_upside: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1255,8 +1345,8 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
                   <input
                     type="text"
-                    value={newStock.last_price || newStock.current_ratio}
-                    onChange={(e) => setNewStock({...newStock, last_price: e.target.value, current_ratio: e.target.value})}
+                    value={newStock.current_ratio}
+                    onChange={(e) => setNewStock({...newStock, current_ratio: e.target.value, last_price: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1282,8 +1372,8 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Comp</label>
                   <input
                     type="text"
-                    value={newStock.last_gr || newStock.dividend}
-                    onChange={(e) => setNewStock({...newStock, last_gr: e.target.value, dividend: e.target.value})}
+                    value={newStock.dividend}
+                    onChange={(e) => setNewStock({...newStock, dividend: e.target.value, last_gr: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1291,8 +1381,8 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Growth</label>
                   <input
                     type="text"
-                    value={newStock.long_gr || newStock.cash_per_share}
-                    onChange={(e) => setNewStock({...newStock, long_gr: e.target.value, cash_per_share: e.target.value})}
+                    value={newStock.cash_per_share}
+                    onChange={(e) => setNewStock({...newStock, cash_per_share: e.target.value, long_gr: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -1300,10 +1390,30 @@ export default function PortfolioListWithDateRange() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">PBT</label>
                   <input
                     type="text"
-                    value={newStock.pbt || newStock.guru}
-                    onChange={(e) => setNewStock({...newStock, pbt: e.target.value, guru: e.target.value})}
+                    value={newStock.guru}
+                    onChange={(e) => setNewStock({...newStock, guru: e.target.value, pbt: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="10.5 years"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Action</label>
+                  <input
+                    type="text"
+                    value={newStock.last_action || ''}
+                    onChange={(e) => setNewStock({...newStock, last_action: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="Buy/Sell/Hold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">% Portfolio</label>
+                  <input
+                    type="number"
+                    value={newStock.per_portfolio || ''}
+                    onChange={(e) => setNewStock({...newStock, per_portfolio: e.target.value ? Number(e.target.value) : undefined})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="5"
                   />
                 </div>
               </div>

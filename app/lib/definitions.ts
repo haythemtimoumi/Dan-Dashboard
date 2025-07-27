@@ -10,7 +10,7 @@ export type Stock = {
   pe: number;
   buy_price: number;
   guru: string;
-  source: 'rule1' | 'manual'| 'target'| 'monitor'| 'guru_list';
+  source: 'rule1' | 'manual'| 'target'| 'monitor'| 'guru_list'| 'dan_portfolio_list';
   highlight: boolean;
   created_at: string;
   updated_at: string;
@@ -28,6 +28,8 @@ export type Stock = {
   last_gr?: string; // Last saved composite growth rate (replaces dividend)
   long_gr?: string; // Analyst estimated long-term growth rate (replaces cash_per_share)
   pbt?: string; // Payback time (replaces guru)
+  last_action?: string; // Last action taken on the stock
+  per_portfolio?: number; // Percentage of portfolio
 };
 
 export type StocksTable = {
@@ -38,7 +40,7 @@ export type StocksTable = {
   pe: number;
   buy_price: number;
   guru: string;
-  source: 'rule1' | 'manual' | 'target' | 'monitor' | 'guru_list';
+  source: 'rule1' | 'manual' | 'target' | 'monitor' | 'guru_list' | 'dan_portfolio_list';
   highlight: boolean;
   created_at: string;
   updated_at: string;
@@ -56,6 +58,8 @@ export type StocksTable = {
   last_gr?: string; // Last saved composite growth rate (replaces dividend)
   long_gr?: string; // Analyst estimated long-term growth rate (replaces cash_per_share)
   pbt?: string; // Payback time (replaces guru)
+  last_action?: string; // Last action taken on the stock
+  per_portfolio?: number; // Percentage of portfolio
 };
 
 export type LatestStock = {
@@ -73,7 +77,7 @@ export type StockForm = {
   pe: number;
   buy_price: number;
   guru: string;
-  source: 'rule1' | 'manual' | 'target' | 'monitor' | 'guru_list';
+  source: 'rule1' | 'manual' | 'target' | 'monitor' | 'guru_list' | 'dan_portfolio_list';
   highlight: boolean;
 };
 

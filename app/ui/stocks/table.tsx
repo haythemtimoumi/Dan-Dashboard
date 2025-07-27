@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { UpdateStock, DeleteStock } from '@/app/ui/stocks/buttons';
-import { formatCurrency, getSentimentColor, getSourceBadgeColor } from '@/app/lib/utils';
+import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatLargeNumber } from '@/app/lib/utils';
 import { StocksTable } from '@/app/lib/definitions';
 import clsx from 'clsx';
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
@@ -284,16 +284,16 @@ export default function StocksTable({
                       </p>
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">
-                      {stock.rule1_score !== null ? stock.rule1_score : '-'}
+                      {formatLargeNumber(stock.rule1_score)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">
-                      {stock.moat_score !== null ? stock.moat_score : '-'}
+                      {formatLargeNumber(stock.moat_score)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">
-                      {stock.management_score !== null ? stock.management_score : '-'}
+                      {formatLargeNumber(stock.management_score)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">
-                      {stock.pe}
+                      {formatLargeNumber(stock.pe)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">
                       {formatCurrency(stock.buy_price)}

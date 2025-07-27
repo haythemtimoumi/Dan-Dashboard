@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Stock } from '@/app/lib/definitions';
-import { formatCurrency, getSentimentColor, getSourceBadgeColor } from '@/app/lib/utils';
+import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatLargeNumber } from '@/app/lib/utils';
 import clsx from 'clsx';
 import { useSettings } from '@/app/contexts/settings-context';
 import { useAuth } from '@/app/contexts/auth-context';
@@ -54,6 +54,8 @@ export default function PortfolioListWithDateRange() {
     last_gr: string;
     long_gr: string;
     pbt: string;
+    last_action?: string;
+    per_portfolio?: number;
   }>({
     ticker: '',
     sentiment_score: 0,
@@ -72,7 +74,9 @@ export default function PortfolioListWithDateRange() {
     per_upside: '',
     last_gr: '',
     long_gr: '',
-    pbt: ''
+    pbt: '',
+    last_action: '',
+    per_portfolio: undefined
   });
 
   // Load data from localStorage on component mount
@@ -336,6 +340,8 @@ export default function PortfolioListWithDateRange() {
       if (newStock.last_gr && newStock.last_gr.trim()) stockData.last_gr = newStock.last_gr;
       if (newStock.long_gr && newStock.long_gr.trim()) stockData.long_gr = newStock.long_gr;
       if (newStock.pbt && newStock.pbt.trim()) stockData.pbt = newStock.pbt;
+      if (newStock.last_action && newStock.last_action.trim()) stockData.last_action = newStock.last_action;
+      if (newStock.per_portfolio !== undefined) stockData.per_portfolio = newStock.per_portfolio;
 
       const response = await fetch(`${API_URL}/stocks`, {
         method: 'POST',
@@ -390,7 +396,9 @@ export default function PortfolioListWithDateRange() {
         per_upside: '',
         last_gr: '',
         long_gr: '',
-        pbt: ''
+        pbt: '',
+        last_action: '',
+        per_portfolio: undefined
       });
     } catch (error) {
       console.error('Error adding stock:', error);
@@ -733,11 +741,11 @@ export default function PortfolioListWithDateRange() {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Signal Score</p>
-                          <p className="text-lg font-semibold">{stock.signal_score ? String(stock.signal_score).replace(/,/g, '') : '-'}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.signal_score)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Rule1 Score</p>
-                          <p className="text-lg font-semibold">{stock.rule1_score !== null ? String(stock.rule1_score).replace(/,/g, '') : '-'}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.rule1_score)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Target Buy Price</p>
@@ -749,19 +757,27 @@ export default function PortfolioListWithDateRange() {
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Last Price</p>
-                          <p className="text-lg font-semibold">{(stock.last_price || stock.current_ratio) ? String(stock.last_price || stock.current_ratio).replace(/,/g, '') : '-'}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.last_price || stock.current_ratio)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Last Saved Composite GR</p>
-                          <p className="text-lg font-semibold">{(stock.last_gr || stock.dividend) ? String(stock.last_gr || stock.dividend).replace(/,/g, '') : '-'}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.last_gr || stock.dividend)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Analyst Estimated Long-Term GR</p>
-                          <p className="text-lg font-semibold">{(stock.long_gr || stock.cash_per_share) ? String(stock.long_gr || stock.cash_per_share).replace(/,/g, '') : '-'}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.long_gr || stock.cash_per_share)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">PBT</p>
-                          <p className="text-lg font-semibold">{(stock.pbt || stock.guru) ? String(stock.pbt || stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.pbt || stock.guru)}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Last Action</p>
+                          <p className="text-lg font-semibold">{stock.last_action || '-'}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">% Portfolio</p>
+                          <p className="text-lg font-semibold">{stock.per_portfolio ? (String(stock.per_portfolio).endsWith('%') ? stock.per_portfolio : `${stock.per_portfolio}%`) : '-'}</p>
                         </div>
                       </div>
                       
@@ -946,6 +962,18 @@ export default function PortfolioListWithDateRange() {
                           {(sortBy === 'pbt' || sortBy === 'guru') && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('last_action')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Last Action</span>
+                          {sortBy === 'last_action' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('per_portfolio')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>% Portfolio</span>
+                          {sortBy === 'per_portfolio' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
                       <th className="px-2 py-2 text-left text-gray-700">Source</th>
                       <th className="px-2 py-2 text-left text-gray-700">Date</th>
                     </tr>
@@ -1053,7 +1081,7 @@ export default function PortfolioListWithDateRange() {
                             getSentimentColor(stock.sentiment_score),
                             "px-1.5 py-0.5 rounded text-xs font-medium"
                           )}>
-                            {stock.sentiment_score ? String(stock.sentiment_score).replace(/,/g, '') : '-'}
+                            {formatLargeNumber(stock.sentiment_score)}
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center">
@@ -1061,17 +1089,17 @@ export default function PortfolioListWithDateRange() {
                             getSentimentColor(stock.signal_score),
                             "px-1.5 py-0.5 rounded text-xs font-medium"
                           )}>
-                            {stock.signal_score ? String(stock.signal_score).replace(/,/g, '') : '-'}
+                            {formatLargeNumber(stock.signal_score)}
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.rule1_score !== null ? String(stock.rule1_score).replace(/,/g, '') : '-'}
+                          {formatLargeNumber(stock.rule1_score)}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.moat_score !== null ? String(stock.moat_score).replace(/,/g, '') : '-'}
+                          {formatLargeNumber(stock.moat_score)}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {stock.management_score !== null ? String(stock.management_score).replace(/,/g, '') : '-'}
+                          {formatLargeNumber(stock.management_score)}
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
                           {formatCurrency(stock.buy_price)}
@@ -1080,19 +1108,25 @@ export default function PortfolioListWithDateRange() {
                           {formatCurrency(stock.buy_price * 2)}
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
-                          {(stock.last_price || stock.current_ratio) ? String(stock.last_price || stock.current_ratio).replace(/,/g, '') : '-'}
+                          {formatLargeNumber(stock.last_price || stock.current_ratio)}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {(stock.per_upside || stock.pe) ? String(stock.per_upside || stock.pe).replace(/,/g, '') + '%' : '-'}
+                          {formatLargeNumber(stock.per_upside || stock.pe)}{(stock.per_upside || stock.pe) ? '%' : ''}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {(stock.last_gr || stock.dividend) ? String(stock.last_gr || stock.dividend).replace(/,/g, '') : '-'}
+                          {formatLargeNumber(stock.last_gr || stock.dividend)}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {(stock.long_gr || stock.cash_per_share) ? String(stock.long_gr || stock.cash_per_share).replace(/,/g, '') : '-'}
+                          {formatLargeNumber(stock.long_gr || stock.cash_per_share)}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
-                          {(stock.pbt || stock.guru) ? String(stock.pbt || stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}
+                          {formatLargeNumber(stock.pbt || stock.guru)}
+                        </td>
+                        <td className="px-2 py-2 text-center text-sm">
+                          {stock.last_action || '-'}
+                        </td>
+                        <td className="px-2 py-2 text-center text-sm">
+                          {stock.per_portfolio ? (String(stock.per_portfolio).endsWith('%') ? stock.per_portfolio : `${stock.per_portfolio}%`) : '-'}
                         </td>
                         <td className="px-2 py-2">
                           <span className={clsx("px-1.5 py-0.5 rounded text-xs", 
@@ -1360,6 +1394,26 @@ export default function PortfolioListWithDateRange() {
                     onChange={(e) => setNewStock({...newStock, guru: e.target.value, pbt: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="10.5 years"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Action</label>
+                  <input
+                    type="text"
+                    value={newStock.last_action || ''}
+                    onChange={(e) => setNewStock({...newStock, last_action: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="Buy/Sell/Hold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">% Portfolio</label>
+                  <input
+                    type="number"
+                    value={newStock.per_portfolio || ''}
+                    onChange={(e) => setNewStock({...newStock, per_portfolio: e.target.value ? Number(e.target.value) : undefined})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="5"
                   />
                 </div>
               </div>
