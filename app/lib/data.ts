@@ -15,7 +15,7 @@ import {
 // In development, use the direct API URL
 // In production, use our proxy API to avoid mixed content issues
 const isProduction = process.env.NODE_ENV === 'production';
-const directApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://www.mytickerlist.com/api';
+const directApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://dan-dashboard-chi.vercel.app/');
 
 // In production, we'll use our proxy API route
@@ -24,7 +24,7 @@ const API_URL = isProduction ? '/api/proxy' : directApiUrl;
 // Function to create API URLs based on environment
 function createApiUrl(path: string, params?: Record<string, string>) {
   const base = isProduction 
-    ? 'https://www.mytickerlist.com/' 
+    ? 'http://localhost:3000/' 
     : directApiUrl;
 
   // Ensure path starts with /api
@@ -419,7 +419,7 @@ export async function fetchStockById(id: string): Promise<Stock | null> {
       'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MjcxNDQxNywiZXhwIjoxNzUyODAwODE3fQ.FB0oi_TFyDaz56zWp8s0HC59pdBjVAlnfpf64zqSwqM'
     };
     
-    const response = await fetch(`https://www.mytickerlist.com/api/stocks/${id}`, { headers });
+    const response = await fetch(`http://localhost:3000/api/stocks/${id}`, { headers });
     
     if (response.status === 404) {
       console.warn(`Stock with ID ${id} not found`);
@@ -631,7 +631,7 @@ export async function fetchStockHistory(
   noStore();
   try {
     // Build the URL with optional query parameters
-    const url = new URL(`https://www.mytickerlist.com/api/stocks/${id}/history`);
+    const url = new URL(`http://localhost:3000/api/stocks/${id}/history`);
     if (fromDate) {
       url.searchParams.append('from', fromDate);
     }

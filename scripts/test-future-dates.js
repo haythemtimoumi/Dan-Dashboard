@@ -6,7 +6,7 @@ async function testFutureDates() {
     console.log('Testing API with future dates (06/06/2025 to 07/06/2025)...');
     
     // Test with the specific date range from the request
-    const response = await fetch('https://www.mytickerlist.com/api/stocks/date-range?startDate=06/06/2025&endDate=07/06/2025');
+    const response = await fetch('http://localhost:3000/api/stocks/date-range?startDate=06/06/2025&endDate=07/06/2025');
     
     if (!response.ok) {
       throw new Error(`API request failed with status: ${response.status}`);

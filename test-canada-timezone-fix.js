@@ -43,11 +43,11 @@ console.log(`Formatted back to portfolio API:`, dateUtils.formatDateForPortfolio
 console.log('\n=== Testing API URL Construction ===');
 
 // For highlighted stocks API
-const highlightedApiUrl = `https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=${dateUtils.formatDateForHighlightedAPI(testDate)}&endDate=${dateUtils.formatDateForHighlightedAPI(testDate)}`;
+const highlightedApiUrl = `http://localhost:3000/api/stocks/highlighted/filter?startDate=${dateUtils.formatDateForHighlightedAPI(testDate)}&endDate=${dateUtils.formatDateForHighlightedAPI(testDate)}`;
 console.log('Highlighted API URL:', highlightedApiUrl);
 
 // For portfolio API
-const portfolioApiUrl = `https://www.mytickerlist.com/api/stocks/filter-by-date-source?date=${dateUtils.formatDateForPortfolioAPI(testDate)}&source=manual`;
+const portfolioApiUrl = `http://localhost:3000/api/stocks/filter-by-date-source?date=${dateUtils.formatDateForPortfolioAPI(testDate)}&source=manual`;
 console.log('Portfolio API URL:', portfolioApiUrl);
 
 // Simulate API date filtering

@@ -1,5 +1,5 @@
 // Debug what the frontend is actually sending
-const API_URL = 'https://www.mytickerlist.com/api';
+const API_URL = 'http://localhost:3000/api';
 
 async function debugFrontendRequest() {
   console.log('🔍 Debugging Frontend Request Data\n');

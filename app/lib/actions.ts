@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { StockForm } from './definitions';
 
-const API_URL = 'https://www.mytickerlist.com/';
+const API_URL = 'http://localhost:3000/';
 
 const StockFormSchema = z.object({
   id: z.string().optional(),

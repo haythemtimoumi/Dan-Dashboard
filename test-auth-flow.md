@@ -7,7 +7,7 @@ The "Add Stock" button returns a 400 Bad Request because the API requires admin 
 
 ### 1. Login Test ✅
 ```bash
-curl -X POST "https://www.mytickerlist.com/api/auth/login" \
+curl -X POST "http://localhost:3000/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"username":"admindan","password":"Stockscreener99#"}'
 ```
@@ -15,7 +15,7 @@ curl -X POST "https://www.mytickerlist.com/api/auth/login" \
 
 ### 2. Add Stock Test ✅
 ```bash
-curl -X POST "https://www.mytickerlist.com/api/stocks" \
+curl -X POST "http://localhost:3000/api/stocks" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer [admin-token]" \
   -d '{"ticker":"TEST","source":"manual","sentiment_score":50,"signal_score":50,"date":"07/18/2025"}'

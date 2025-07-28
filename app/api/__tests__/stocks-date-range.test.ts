@@ -65,7 +65,7 @@ describe('Stocks Date Range API', () => {
 
   describe('GET /api/stocks/date-range', () => {
     it('should return 400 if startDate or endDate is missing', async () => {
-      const request = new Request('https://www.mytickerlist.com/api/stocks/date-range');
+      const request = new Request('http://localhost:3000/api/stocks/date-range');
       await getStocksByDateRange(request);
       
       expect(mockJson).toHaveBeenCalledWith(
@@ -75,7 +75,7 @@ describe('Stocks Date Range API', () => {
     });
 
     it('should return stocks filtered by date range with MM/DD/YYYY format', async () => {
-      const request = new Request('https://www.mytickerlist.com/api/stocks/date-range?startDate=01/01/2023&endDate=06/30/2023');
+      const request = new Request('http://localhost:3000/api/stocks/date-range?startDate=01/01/2023&endDate=06/30/2023');
       await getStocksByDateRange(request);
       
       expect(mockJson).toHaveBeenCalled();
@@ -85,7 +85,7 @@ describe('Stocks Date Range API', () => {
     });
 
     it('should return stocks filtered by date range with YYYY-MM-DD format', async () => {
-      const request = new Request('https://www.mytickerlist.com/api/stocks/date-range?startDate=2023-01-01&endDate=2023-06-30');
+      const request = new Request('http://localhost:3000/api/stocks/date-range?startDate=2023-01-01&endDate=2023-06-30');
       await getStocksByDateRange(request);
       
       expect(mockJson).toHaveBeenCalled();
@@ -95,7 +95,7 @@ describe('Stocks Date Range API', () => {
     });
 
     it('should return 400 for invalid date format', async () => {
-      const request = new Request('https://www.mytickerlist.com/api/stocks/date-range?startDate=invalid&endDate=invalid');
+      const request = new Request('http://localhost:3000/api/stocks/date-range?startDate=invalid&endDate=invalid');
       await getStocksByDateRange(request);
       
       expect(mockJson).toHaveBeenCalledWith(
@@ -107,7 +107,7 @@ describe('Stocks Date Range API', () => {
 
   describe('GET /api/stocks/highlighted/filter', () => {
     it('should return all highlighted stocks if no date range is provided', async () => {
-      const request = new Request('https://www.mytickerlist.com/api/stocks/highlighted/filter');
+      const request = new Request('http://localhost:3000/api/stocks/highlighted/filter');
       await getHighlightedStocksByDateRange(request);
       
       expect(mockJson).toHaveBeenCalled();
@@ -117,7 +117,7 @@ describe('Stocks Date Range API', () => {
     });
 
     it('should return highlighted stocks filtered by date range with YYYY-MM-DD format', async () => {
-      const request = new Request('https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=2023-01-01&endDate=2023-03-01');
+      const request = new Request('http://localhost:3000/api/stocks/highlighted/filter?startDate=2023-01-01&endDate=2023-03-01');
       await getHighlightedStocksByDateRange(request);
       
       expect(mockJson).toHaveBeenCalled();
@@ -128,7 +128,7 @@ describe('Stocks Date Range API', () => {
     });
 
     it('should return highlighted stocks filtered by date range with MM/DD/YYYY format', async () => {
-      const request = new Request('https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=01/01/2023&endDate=03/01/2023');
+      const request = new Request('http://localhost:3000/api/stocks/highlighted/filter?startDate=01/01/2023&endDate=03/01/2023');
       await getHighlightedStocksByDateRange(request);
       
       expect(mockJson).toHaveBeenCalled();
@@ -139,14 +139,14 @@ describe('Stocks Date Range API', () => {
     });
 
     it('should return empty array if no highlighted stocks in date range', async () => {
-      const request = new Request('https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=2024-01-01&endDate=2024-03-01');
+      const request = new Request('http://localhost:3000/api/stocks/highlighted/filter?startDate=2024-01-01&endDate=2024-03-01');
       await getHighlightedStocksByDateRange(request);
       
       expect(mockJson).toHaveBeenCalledWith([], { status: 200 });
     });
 
     it('should return 400 for invalid date format', async () => {
-      const request = new Request('https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=invalid&endDate=invalid');
+      const request = new Request('http://localhost:3000/api/stocks/highlighted/filter?startDate=invalid&endDate=invalid');
       await getHighlightedStocksByDateRange(request);
       
       expect(mockJson).toHaveBeenCalledWith(

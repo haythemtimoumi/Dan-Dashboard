@@ -77,7 +77,7 @@ export default function TestTimezone() {
       // Test highlighted API
       results.push('');
       results.push('Testing Highlighted Stocks API...');
-      const highlightedUrl = `https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=${highlightedDate}&endDate=${highlightedDate}`;
+      const highlightedUrl = `http://localhost:3000/api/stocks/highlighted/filter?startDate=${highlightedDate}&endDate=${highlightedDate}`;
       results.push(`URL: ${highlightedUrl}`);
       
       const highlightedResponse = await fetch(highlightedUrl);
@@ -102,7 +102,7 @@ export default function TestTimezone() {
       // Test portfolio API
       results.push('');
       results.push('Testing Portfolio List API...');
-      const portfolioUrl = `https://www.mytickerlist.com/api/stocks/filter-by-date-source?date=${encodeURIComponent(portfolioDate)}&source=manual`;
+      const portfolioUrl = `http://localhost:3000/api/stocks/filter-by-date-source?date=${encodeURIComponent(portfolioDate)}&source=manual`;
       results.push(`URL: ${portfolioUrl}`);
       
       const portfolioResponse = await fetch(portfolioUrl);

@@ -6,7 +6,7 @@
 echo "=== Canada Timezone Fix Verification ==="
 
 # Base URL - change this if testing locally
-API_BASE="https://www.mytickerlist.com/api"
+API_BASE="http://localhost:3000/api"
 # Uncomment the line below if testing locally
 # API_BASE="http://localhost:3000/api"
 

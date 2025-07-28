@@ -8,7 +8,7 @@ echo "Testing dates: July 17, 2025 and July 18, 2025"
 echo ""
 
 # Base URL
-API_BASE="https://www.mytickerlist.com/api"
+API_BASE="http://localhost:3000/api"
 
 # Test Highlighted Stocks API
 echo "=== Testing Highlighted Stocks API ==="

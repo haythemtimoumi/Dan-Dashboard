@@ -62,7 +62,7 @@ This approach:
 
 ## How to Verify the Fix
 
-1. Visit the test page: https://www.mytickerlist.com/test-timezone
+1. Visit the test page: http://localhost:3000/test-timezone
 2. Check your timezone information
 3. Select July 17, 2025 and test the date utilities and API endpoints
 4. Verify that the API returns July 17 data (not July 16)

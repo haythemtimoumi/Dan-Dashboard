@@ -13,14 +13,14 @@ Use this checklist to verify that the timezone fix is working correctly for both
 - [ ] Run `node verify-timezone-fix.js` to verify date handling
 
 ### 2. Test Highlighted Stocks Screen
-- [ ] Navigate to https://www.mytickerlist.com/dashboard/highlighted
+- [ ] Navigate to http://localhost:3000/dashboard/highlighted
 - [ ] Select July 17, 2025 in the date picker
 - [ ] Verify that data for July 17, 2025 is displayed
 - [ ] Select July 18, 2025 in the date picker
 - [ ] Verify that data for July 18, 2025 is displayed
 
 ### 3. Test Portfolio List Screen
-- [ ] Navigate to https://www.mytickerlist.com/dashboard/portfolio-list
+- [ ] Navigate to http://localhost:3000/dashboard/portfolio-list
 - [ ] Select July 17, 2025 in the date picker
 - [ ] Verify that data for July 17, 2025 is displayed
 - [ ] Select July 18, 2025 in the date picker

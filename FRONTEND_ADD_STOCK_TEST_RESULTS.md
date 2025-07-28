@@ -7,7 +7,7 @@ The add stock button functionality has been **successfully tested and verified**
 
 ### ✅ Authentication Test
 ```bash
-curl -X POST "https://www.mytickerlist.com/api/auth/login" \
+curl -X POST "http://localhost:3000/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"username":"admindan","password":"Stockscreener99#"}'
 ```
@@ -15,7 +15,7 @@ curl -X POST "https://www.mytickerlist.com/api/auth/login" \
 
 ### ✅ Add Stock Test (Valid Ticker)
 ```bash
-curl -X POST "https://www.mytickerlist.com/api/stocks" \
+curl -X POST "http://localhost:3000/api/stocks" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer [admin-token]" \
   -d '{"ticker":"AAPL","source":"manual","sentiment_score":85,"signal_score":90,"date":"07/18/2025"}'
@@ -24,7 +24,7 @@ curl -X POST "https://www.mytickerlist.com/api/stocks" \
 
 ### ✅ Validation Test (Invalid Ticker)
 ```bash
-curl -X POST "https://www.mytickerlist.com/api/stocks" \
+curl -X POST "http://localhost:3000/api/stocks" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer [admin-token]" \
   -d '{"ticker":"INVALID","source":"manual","sentiment_score":85,"signal_score":90,"date":"07/18/2025"}'

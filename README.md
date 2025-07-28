@@ -25,7 +25,7 @@ POSTGRES_DATABASE=
 
 // Auth
 AUTH_SECRET=
-AUTH_URL=https://www.mytickerlist.com/
+AUTH_URL=http://localhost:3000/
 
 ```
 

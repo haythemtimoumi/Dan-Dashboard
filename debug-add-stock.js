@@ -1,6 +1,6 @@
 // Debug script to see exact error from add stock API
 
-const API_URL = 'https://www.mytickerlist.com/api';
+const API_URL = 'http://localhost:3000/api';
 
 async function debugAddStock() {
   try {

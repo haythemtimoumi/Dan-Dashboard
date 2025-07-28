@@ -13,7 +13,7 @@ async function proxyRequest(request: NextRequest, method: string, params: { path
   const body = method === 'POST' ? await request.text() : undefined;
   
   try {
-    const response = await fetch(`https://www.mytickerlist.com/api/${path}${queryString}`, {
+    const response = await fetch(`http://localhost:3000/api/${path}${queryString}`, {
       method,
       headers,
       body,
