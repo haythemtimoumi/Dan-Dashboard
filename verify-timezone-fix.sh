@@ -8,7 +8,7 @@ echo "=== Canada Timezone Fix Verification ==="
 # Base URL - change this if testing locally
 API_BASE="https://www.mytickerlist.com/api"
 # Uncomment the line below if testing locally
-# API_BASE="http://localhost:3000/api"
+# API_BASE="https://www.mytickerlist.com/api"
 
 # Test date - focus on July 17 which is showing as July 16
 TEST_DATE="2025-07-17"

@@ -11,7 +11,7 @@ import DatePickerInput from '@/app/ui/date-picker';
 import { formatDateForPortfolioAPI, getTodayLocal, addDays, subtractDays } from '@/app/lib/date-utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.mytickerlist.com/api';
-//const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+//const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.mytickerlist.com/api';
 
 
 export default function PortfolioListWithDateRange() {

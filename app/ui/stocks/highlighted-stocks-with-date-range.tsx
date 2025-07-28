@@ -65,7 +65,7 @@ registerLocale('fr', fr);
 
 // Get API URL from environment variable - point directly to Dan-API server
 const API_URL = 'https://www.mytickerlist.com/api';
-//const API_URL = 'http://localhost:3000/api';
+//const API_URL = 'https://www.mytickerlist.com/api';
 // No pagination - show all items
 
 // No pagination component needed

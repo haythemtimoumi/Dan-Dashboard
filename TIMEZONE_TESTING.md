@@ -36,7 +36,7 @@ We've also created a browser-based test page that you can use to verify the time
 
 2. Visit the test page at:
    ```
-   http://localhost:3000/timezone-test
+   https://www.mytickerlist.com/timezone-test
    ```
 
 3. The page will show:

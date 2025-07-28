@@ -38,6 +38,9 @@ export default function Form() {
             Upload a CSV file containing stock data. The CSV should have the following columns:
             ticker, sentiment_score, signal_score, pe, target_buy_price, guru, source, highlight
           </p>
+          <p className="text-xs text-blue-600 mb-4">
+            Note: Ticker management is now handled in the dedicated Tickers page.
+          </p>
           
           <div className="flex items-center justify-center w-full">
             <label 

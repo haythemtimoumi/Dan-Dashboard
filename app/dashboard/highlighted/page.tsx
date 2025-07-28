@@ -19,7 +19,7 @@ export default function HighlightedStocksPage({
 }) {
   // Use a default date that will be overridden on client-side
   // This prevents timezone issues between server and client
-  const defaultDate = '2024-01-01'; // Fallback date
+  const defaultDate = '2025-07-01'; // Fallback date
   
   // Default to fallback date if no dates provided - will be updated client-side
   const startDate = searchParams?.startDate || defaultDate;
