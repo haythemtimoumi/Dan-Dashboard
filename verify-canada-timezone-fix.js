@@ -29,7 +29,7 @@ console.log('Highlighted API format:', highlightedApiDate);
 console.log('Portfolio API format:', portfolioApiDate);
 
 // API URLs
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://www.mytickerlist.com/api';
 const highlightedApiUrl = `${API_BASE_URL}/stocks/highlighted/filter?startDate=${highlightedApiDate}&endDate=${highlightedApiDate}`;
 const portfolioApiUrl = `${API_BASE_URL}/stocks/filter-by-date-source?date=${portfolioApiDate}&source=manual`;
 

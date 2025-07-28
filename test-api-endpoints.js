@@ -5,7 +5,7 @@
 const https = require('https');
 
 // Base API URL
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://www.mytickerlist.com/api';
 
 // Test dates
 const TEST_DATES = [

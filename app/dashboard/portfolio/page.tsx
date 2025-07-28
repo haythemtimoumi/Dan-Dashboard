@@ -9,7 +9,7 @@ import { useSettings } from '@/app/contexts/settings-context';
 import { useAuth } from '@/app/contexts/auth-context';
 import { HighlightedStocksExternalSkeleton } from '@/app/ui/stocks/highlighted-stocks-external';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.mytickerlist.com/api';
 
 // Utility function to format numbers
 const formatNumber = (value: any): string => {
@@ -49,8 +49,8 @@ export default function UnifiedPortfolioPage() {
   const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [currentComment, setCurrentComment] = useState<string>('');
-  const [deletingStocks, setDeletingStocks] = useState<Set<string>>(new Set());
-  const [flipAnimations, setFlipAnimations] = useState<Set<string>>(new Set());
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -94,69 +94,35 @@ export default function UnifiedPortfolioPage() {
     setShowCommentModal(stockId);
   };
 
-  const handleDeleteStock = async (stockId: string) => {
-    const stock = stocks.find(s => s.id === stockId);
-    if (!stock) return;
 
-    setFlipAnimations(prev => new Set(prev).add(stockId));
-    
-    setTimeout(async () => {
-      setFlipAnimations(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(stockId);
-        return newSet;
-      });
-      
-      setDeletingStocks(prev => new Set(prev).add(stockId));
-
-      try {
-        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        const response = await fetch(`/api/stocks/${stockId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to delete stock: ${response.statusText}`);
-        }
-
-        setStocks(prev => prev.filter(s => s.id !== stockId));
-        
-      } catch (error) {
-        console.error('Error deleting stock:', error);
-      } finally {
-        setDeletingStocks(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(stockId);
-          return newSet;
-        });
-      }
-    }, 600);
-  };
 
   // Load available sources on mount
   useEffect(() => {
     const fetchSources = async () => {
       try {
         setLoadingSources(true);
-        const response = await fetch(`${API_URL}/stocks/sources`);
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const response = await fetch(`${API_URL}/oldstock`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch sources: ${response.statusText}`);
+          throw new Error(`Failed to fetch old stocks: ${response.statusText}`);
         }
         
-        const sourcesData = await response.json();
-        setSources(sourcesData);
+        const stocksData = await response.json();
+        const uniqueSources = Array.from(new Set(stocksData.map((stock: any) => stock.source))) as string[];
+        setSources(uniqueSources);
         
         // Set default source if available
-        if (sourcesData.length > 0) {
-          setSelectedSource(sourcesData[0]);
+        if (uniqueSources.length > 0) {
+          setSelectedSource(uniqueSources[0]);
         }
       } catch (err) {
         console.error('Error fetching sources:', err);
-        setError('Failed to load portfolio sources. Please try again later.');
+        setError('Failed to load old portfolio sources. Please try again later.');
       } finally {
         setLoadingSources(false);
       }
@@ -165,33 +131,46 @@ export default function UnifiedPortfolioPage() {
     fetchSources();
   }, []);
 
-  // Load stocks when source changes
+  // Load stocks when source or date filters change
   useEffect(() => {
-    const fetchStocksBySource = async () => {
+    const fetchOldStocks = async () => {
       if (!selectedSource) return;
       
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`${API_URL}/stocks/by-source?source=${selectedSource}`);
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        let url = `${API_URL}/oldstock`;
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch stocks: ${response.statusText}`);
+        // Add date filtering if dates are selected
+        if (startDate && endDate) {
+          url = `${API_URL}/oldstock/filter?startDate=${startDate}&endDate=${endDate}`;
         }
         
-        const stocksData = await response.json();
-        setStocks(stocksData);
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch old stocks: ${response.statusText}`);
+        }
+        
+        const allStocks = await response.json();
+        const filteredStocks = allStocks.filter((stock: any) => stock.source === selectedSource);
+        setStocks(filteredStocks);
       } catch (err) {
-        console.error('Error fetching stocks by source:', err);
-        setError('Failed to load portfolio stocks. Please try again later.');
+        console.error('Error fetching old stocks:', err);
+        setError('Failed to load old portfolio stocks. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStocksBySource();
-  }, [selectedSource]);
+    fetchOldStocks();
+  }, [selectedSource, startDate, endDate]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -294,14 +273,14 @@ export default function UnifiedPortfolioPage() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('portfolio')}</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Old Portfolio Data (temp)</h1>
               </div>
               <span className="bg-gradient-to-r from-green-100 to-blue-100 text-green-800 px-3 py-1.5 rounded-full text-sm font-semibold">
                 {stocks.length} {t('stocks')}
               </span>
             </div>
             
-            {/* Source Selector */}
+            {/* Source Selector and Date Filters */}
             <div className="flex items-center gap-4">
               <div className="min-w-[200px]">
                 <select
@@ -316,6 +295,36 @@ export default function UnifiedPortfolioPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              
+              {/* Date Range Filters */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Start Date"
+                />
+                <span className="text-gray-500">to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="End Date"
+                />
+                {(startDate || endDate) && (
+                  <button
+                    onClick={() => {
+                      setStartDate('');
+                      setEndDate('');
+                    }}
+                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -422,19 +431,7 @@ export default function UnifiedPortfolioPage() {
                           <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" />
                         </svg>
                       </button>
-                      {isAdmin && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteStock(stock.id);
-                          }}
-                          className="p-2 rounded-xl hover:bg-red-100 transition-colors text-red-500 shadow-sm"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
+
                     </div>
                   </div>
                   
@@ -487,7 +484,7 @@ export default function UnifiedPortfolioPage() {
               <table className="min-w-full text-gray-900 text-sm">
                 <thead>
                   <tr className="bg-gradient-to-r from-gray-50 to-blue-50 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider border-b border-gray-200">
-                    <th className="px-2 py-3 text-center text-gray-700">{language === 'fr' ? 'Actions' : 'Actions'}</th>
+                    <th className="px-2 py-3 text-center text-gray-700">{language === 'fr' ? 'Couleur' : 'Color'}</th>
                     <th className="px-2 py-3 text-center text-gray-700">{language === 'fr' ? 'Commentaire' : 'Comment'}</th>
                     <th className="px-2 py-3 text-left text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('ticker')}>
                       <div className="flex items-center gap-1">
@@ -601,29 +598,7 @@ export default function UnifiedPortfolioPage() {
                               <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" />
                             </svg>
                           </button>
-                          {isAdmin && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteStock(stock.id);
-                              }}
-                              disabled={deletingStocks.has(stock.id)}
-                              className={`p-1 rounded-lg hover:bg-red-100 transition-all duration-300 text-red-500 hover:text-red-700 disabled:opacity-50 shadow-sm ${
-                                flipAnimations.has(stock.id) ? 'animate-pulse transform rotate-180 scale-110' : ''
-                              }`}
-                            >
-                              {deletingStocks.has(stock.id) ? (
-                                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                              ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              )}
-                            </button>
-                          )}
+
                         </div>
                       </td>
                       <td className="px-2 py-3 text-center">

@@ -92,7 +92,7 @@
                 // Format date for API using the UTC noon approach
                 const formattedDate = formatDateForHighlightedAPI(selectedDate);
                 
-                const apiUrl = `http://localhost:3000/api/stocks/highlighted/filter?startDate=${formattedDate}&endDate=${formattedDate}`;
+                const apiUrl = `https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=${formattedDate}&endDate=${formattedDate}`;
                 
                 resultDiv.innerHTML += `\nTesting URL: ${apiUrl}`;
                 
@@ -134,7 +134,7 @@
                 // Format date for API using the UTC noon approach
                 const formattedDate = formatDateForPortfolioAPI(selectedDate);
                 
-                const apiUrl = `http://localhost:3000/api/stocks/filter-by-date-source?date=${formattedDate}&source=manual`;
+                const apiUrl = `https://www.mytickerlist.com/api/stocks/filter-by-date-source?date=${formattedDate}&source=manual`;
                 
                 resultDiv.innerHTML += `\nTesting URL: ${apiUrl}`;
                 

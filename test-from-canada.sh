@@ -4,7 +4,7 @@
 # This script uses a combination of timezone settings and browser simulation
 
 echo "=== Testing Live Website from Canadian Perspective ==="
-echo "Website: http://localhost:3000"
+echo "Website: https://www.mytickerlist.com"
 
 # Set timezone to Eastern Canada (Toronto)
 export TZ="America/Toronto"
@@ -79,12 +79,12 @@ test_api() {
 }
 
 # Test the main pages
-test_page "http://localhost:3000/dashboard/highlighted?startDate=07%2F17%2F2025&endDate=07%2F17%2F2025" "Highlighted Stocks Page (July 17, 2025)"
-test_page "http://localhost:3000/dashboard/portfolio-list" "Portfolio List Page"
+test_page "https://www.mytickerlist.com/dashboard/highlighted?startDate=07%2F17%2F2025&endDate=07%2F17%2F2025" "Highlighted Stocks Page (July 17, 2025)"
+test_page "https://www.mytickerlist.com/dashboard/portfolio-list" "Portfolio List Page"
 
 # Test the API endpoints directly
-test_api "http://localhost:3000/api/stocks/highlighted/filter?startDate=2025-07-17&endDate=2025-07-17" "Highlighted Stocks API (July 17)"
-test_api "http://localhost:3000/api/stocks/filter-by-date-source?date=07%2F17%2F2025&source=manual" "Portfolio List API (July 17)"
+test_api "https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=2025-07-17&endDate=2025-07-17" "Highlighted Stocks API (July 17)"
+test_api "https://www.mytickerlist.com/api/stocks/filter-by-date-source?date=07%2F17%2F2025&source=manual" "Portfolio List API (July 17)"
 
 echo -e "\n=== Testing Complete ==="
 echo "Note: This script simulates a Canadian user by:"

@@ -69,12 +69,12 @@ After deploying, verify the fix by:
 
 1. Visit the highlighted stocks page:
    ```
-   http://localhost:3000/dashboard/highlighted
+   https://www.mytickerlist.com/dashboard/highlighted
    ```
 
 2. Visit the portfolio list page:
    ```
-   http://localhost:3000/dashboard/portfolio-list
+   https://www.mytickerlist.com/dashboard/portfolio-list
    ```
 
 3. Set the date to July 17, 2025 and verify that:
@@ -93,7 +93,7 @@ If issues are encountered after deployment:
 
 If Canadian users continue to experience issues after deployment, direct them to the test page:
 ```
-http://localhost:3000/timezone-test
+https://www.mytickerlist.com/timezone-test
 ```
 
 This page will help diagnose any remaining timezone issues by showing detailed date information.

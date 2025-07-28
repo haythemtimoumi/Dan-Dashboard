@@ -1,6 +1,6 @@
 // Test script to simulate frontend add stock functionality
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://www.mytickerlist.com/api';
 
 async function testFrontendAddStock() {
   console.log('🧪 Testing Frontend Add Stock Functionality\n');

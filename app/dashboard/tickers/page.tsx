@@ -24,7 +24,7 @@ interface TickerStats {
   active: number;
 }
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://www.mytickerlist.com/api';
 
 export default function TickersPage() {
   const { t, language } = useSettings();

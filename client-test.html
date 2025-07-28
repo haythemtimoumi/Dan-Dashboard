@@ -59,7 +59,7 @@ Current UTC time: ${now.toUTCString()}`;
                 // Format date using the UTC noon approach
                 const formattedDate = formatDate(2025, 7, 17);
                 
-                const response = await fetch(`http://localhost:3000/api/stocks/highlighted/filter?startDate=${formattedDate}&endDate=${formattedDate}`);
+                const response = await fetch(`https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=${formattedDate}&endDate=${formattedDate}`);
                 const data = await response.json();
                 
                 let output = `API call with date: ${formattedDate}\n\n`;
@@ -101,7 +101,7 @@ Current UTC time: ${now.toUTCString()}`;
                 // Format date using the UTC noon approach
                 const formattedDate = formatDate(2025, 7, 16);
                 
-                const response = await fetch(`http://localhost:3000/api/stocks/highlighted/filter?startDate=${formattedDate}&endDate=${formattedDate}`);
+                const response = await fetch(`https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=${formattedDate}&endDate=${formattedDate}`);
                 const data = await response.json();
                 
                 let output = `API call with date: ${formattedDate}\n\n`;

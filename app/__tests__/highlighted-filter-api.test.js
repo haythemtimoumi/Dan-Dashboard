@@ -19,7 +19,7 @@ describe('Highlighted Stocks Filter API', () => {
 
   it('should work without date parameters', async () => {
     // Test without date parameters
-    const request = new Request('http://localhost:3000/api/stocks/highlighted/filter');
+    const request = new Request('https://www.mytickerlist.com/api/stocks/highlighted/filter');
     
     const response = await GET(request);
     
@@ -29,7 +29,7 @@ describe('Highlighted Stocks Filter API', () => {
 
   it('should handle valid date parameters in MM/DD/YYYY format', async () => {
     // Test with valid date parameters
-    const request = new Request('http://localhost:3000/api/stocks/highlighted/filter?startDate=01/01/2023&endDate=12/31/2023');
+    const request = new Request('https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=01/01/2023&endDate=12/31/2023');
     
     const response = await GET(request);
     
@@ -39,7 +39,7 @@ describe('Highlighted Stocks Filter API', () => {
 
   it('should handle valid date parameters in YYYY-MM-DD format', async () => {
     // Test with valid date parameters
-    const request = new Request('http://localhost:3000/api/stocks/highlighted/filter?startDate=2023-01-01&endDate=2023-12-31');
+    const request = new Request('https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=2023-01-01&endDate=2023-12-31');
     
     const response = await GET(request);
     
@@ -49,7 +49,7 @@ describe('Highlighted Stocks Filter API', () => {
 
   it('should handle invalid date format', async () => {
     // Test with invalid date format
-    const request = new Request('http://localhost:3000/api/stocks/highlighted/filter?startDate=invalid&endDate=2023-12-31');
+    const request = new Request('https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=invalid&endDate=2023-12-31');
     
     const response = await GET(request);
     
@@ -62,7 +62,7 @@ describe('Highlighted Stocks Filter API', () => {
   it('should return empty array for no matching stocks', async () => {
     // Test with a date range that should return no stocks
     // Using a future date range that shouldn't have any stocks
-    const request = new Request('http://localhost:3000/api/stocks/highlighted/filter?startDate=2050-01-01&endDate=2050-12-31');
+    const request = new Request('https://www.mytickerlist.com/api/stocks/highlighted/filter?startDate=2050-01-01&endDate=2050-12-31');
     
     const response = await GET(request);
     

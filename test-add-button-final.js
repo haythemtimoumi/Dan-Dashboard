@@ -1,5 +1,5 @@
 // Final test of the add stock button functionality
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://www.mytickerlist.com/api';
 
 async function testAddStockButton() {
   console.log('🧪 Testing Add Stock Button - Final Test\n');

@@ -2,6 +2,6 @@
 const cors = require('cors');
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://mytickerlist.com'],
+  origin: ['https://www.mytickerlist.com', 'https://mytickerlist.com'],
   credentials: true
 }));
