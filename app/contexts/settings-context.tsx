@@ -134,7 +134,7 @@ const translations = {
     
     // Stock Update specific
     buyPrice: 'Buy Price',
-    stickerPrice: 'Sticker',
+    stickerPrice: 'Sticker Price',
     current: 'Current',
     manual: 'Manual',
     
@@ -349,7 +349,7 @@ const translations = {
     
     // Stock Update specific
     buyPrice: 'Prix d\'achat',
-    stickerPrice: 'Autocollant',
+    stickerPrice: 'Prix Sticker',
     current: 'Actuel',
     manual: 'Manuel',
     

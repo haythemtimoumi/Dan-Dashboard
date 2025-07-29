@@ -467,7 +467,7 @@ export default function NewPortfolioPage() {
                       {language === 'fr' ? 'Prix Achat' : 'Buy Price'}
                     </th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      {language === 'fr' ? 'Prix Sticker' : 'Sticker Price'}
+                      {t('stickerPrice')}
                     </th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('per_upside')}>
                       {language === 'fr' ? '% Hausse' : '% Upside'}
@@ -544,7 +544,18 @@ export default function NewPortfolioPage() {
                           {formatBuyPrice(stock.buy_price)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.buy_price ? formatCurrency(Number(stock.buy_price) * 2) : '-'}
+                          {(() => {
+                            if (!stock.buy_price) {
+                              return '-';
+                            }
+                            const buyPriceStr = String(stock.buy_price);
+                            if (buyPriceStr === '$0' || buyPriceStr === '0') {
+                              return '-';
+                            }
+                            const buyPrice = parseFloat(buyPriceStr.replace(/[$,]/g, ''));
+                            return isNaN(buyPrice) || buyPrice === 0 ? '-' : formatCurrency(buyPrice * 2);
+                          })()
+                          }
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {stock.per_upside || '-'}
