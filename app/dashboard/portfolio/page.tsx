@@ -8,8 +8,8 @@ import clsx from 'clsx';
 import { useSettings } from '@/app/contexts/settings-context';
 import { useAuth } from '@/app/contexts/auth-context';
 import { HighlightedStocksExternalSkeleton } from '@/app/ui/stocks/highlighted-stocks-external';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.mytickerlist.com/api';
+import { StockTooltip } from '@/app/ui/stocks/stock-tooltip';
+import { EnhancedCommentModal } from '@/app/ui/stocks/enhanced-comment-modal';
 
 // Utility function to format numbers
 const formatNumber = (value: any): string => {
@@ -17,7 +17,8 @@ const formatNumber = (value: any): string => {
   
   let num: number;
   if (typeof value === 'string') {
-    num = parseFloat(value.replace(/,/g, ''));
+    // Remove currency symbols and commas
+    num = parseFloat(value.replace(/[$,]/g, ''));
   } else {
     num = Number(value);
   }
@@ -28,14 +29,33 @@ const formatNumber = (value: any): string => {
   return rounded.toString();
 };
 
+// Utility function to format buy price
+const formatBuyPrice = (value: any): string => {
+  if (value === null || value === undefined || value === '') return '-';
+  
+  if (typeof value === 'string') {
+    // If it already has $ symbol, clean it and reformat
+    const cleanValue = value.replace(/[$,]/g, '');
+    const num = parseFloat(cleanValue);
+    if (isNaN(num)) return '-';
+    if (num === 0) return '$0';
+    return formatCurrency(num);
+  }
+  
+  const num = Number(value);
+  if (isNaN(num)) return '-';
+  if (num === 0) return '$0';
+  return formatCurrency(num);
+};
+
 interface StockWithHighlight extends Omit<Stock, 'highlight'> {
   highlight?: boolean;
 }
 
-export default function UnifiedPortfolioPage() {
+export default function NewPortfolioPage() {
   const router = useRouter();
   const { t, language } = useSettings();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   
   const [sources, setSources] = useState<string[]>([]);
   const [selectedSource, setSelectedSource] = useState<string>('');
@@ -51,6 +71,8 @@ export default function UnifiedPortfolioPage() {
   const [currentComment, setCurrentComment] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [tooltip, setTooltip] = useState<{ stock: Stock; position: { x: number; y: number } } | null>(null);
+  const [stocksWithComments, setStocksWithComments] = useState<Set<string>>(new Set());
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -85,92 +107,164 @@ export default function UnifiedPortfolioPage() {
     const newComments = { ...stockComments, [key]: comment };
     setStockComments(newComments);
     localStorage.setItem('stockComments', JSON.stringify(newComments));
+    
+    // Update stocks with comments set
+    if (stock) {
+      const newStocksWithComments = new Set(stocksWithComments);
+      if (comment.trim()) {
+        newStocksWithComments.add(stock.ticker);
+      } else {
+        newStocksWithComments.delete(stock.ticker);
+      }
+      setStocksWithComments(newStocksWithComments);
+    }
+    
     setCurrentComment('');
     setShowCommentModal(null);
   };
 
-  const openCommentModal = (stockId: string) => {
+  const openCommentModal = async (stockId: string) => {
+    const stock = stocks.find(s => s.id === stockId);
+    if (stock) {
+      // Check if this stock has comments
+      try {
+        const response = await fetch(`https://www.mytickerlist.com/api/comments/ticker/${stock.ticker}`);
+        if (response.ok) {
+          const comments = await response.json();
+          const newStocksWithComments = new Set(stocksWithComments);
+          if (comments.length > 0) {
+            newStocksWithComments.add(stock.ticker);
+          } else {
+            newStocksWithComments.delete(stock.ticker);
+          }
+          setStocksWithComments(newStocksWithComments);
+        }
+      } catch (error) {
+        console.error('Error checking comments:', error);
+      }
+    }
     setCurrentComment('');
     setShowCommentModal(stockId);
   };
 
+  const handleDeleteStock = async (stockId: string) => {
+    const stock = stocks.find(s => s.id === stockId);
+    if (!stock) return;
+    
+    const confirmMessage = language === 'fr' 
+      ? `Êtes-vous sûr de vouloir supprimer ${stock.ticker} ?`
+      : `Are you sure you want to delete ${stock.ticker}?`;
+    
+    if (confirm(confirmMessage)) {
+      try {
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const response = await fetch(`https://www.mytickerlist.com/api/stocks/${stockId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          // Remove stock from local state
+          setStocks(stocks.filter(s => s.id !== stockId));
+          
+          // Remove from local storage
+          const stockKey = stock.ticker;
+          const newColors = { ...stockColors };
+          const newComments = { ...stockComments };
+          delete newColors[stockKey];
+          delete newComments[stockKey];
+          setStockColors(newColors);
+          setStockComments(newComments);
+          localStorage.setItem('stockColors', JSON.stringify(newColors));
+          localStorage.setItem('stockComments', JSON.stringify(newComments));
+          
+          // Update stocks with comments set
+          const newStocksWithComments = new Set(stocksWithComments);
+          newStocksWithComments.delete(stock.ticker);
+          setStocksWithComments(newStocksWithComments);
+        } else {
+          const errorMessage = language === 'fr' 
+            ? 'Erreur lors de la suppression. Veuillez réessayer.'
+            : 'Failed to delete stock. Please try again.';
+          alert(errorMessage);
+        }
+      } catch (error) {
+        console.error('Error deleting stock:', error);
+        const errorMessage = language === 'fr' 
+          ? 'Erreur lors de la suppression. Veuillez réessayer.'
+          : 'Failed to delete stock. Please try again.';
+        alert(errorMessage);
+      }
+    }
+  };
 
+  const handleMouseEnter = (event: React.MouseEvent, stock: StockWithHighlight) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTooltip({
+      stock: stock as Stock,
+      position: { x: event.clientX, y: event.clientY }
+    });
+  };
 
-  // Load available sources on mount
+  const handleMouseLeave = () => {
+    setTooltip(null);
+  };
+
+  // Load sources from API
   useEffect(() => {
     const fetchSources = async () => {
       try {
         setLoadingSources(true);
-        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        const response = await fetch(`${API_URL}/oldstock`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch old stocks: ${response.statusText}`);
-        }
-        
-        const stocksData = await response.json();
-        const uniqueSources = Array.from(new Set(stocksData.map((stock: any) => stock.source))) as string[];
-        setSources(uniqueSources);
-        
-        // Set default source if available
-        if (uniqueSources.length > 0) {
-          setSelectedSource(uniqueSources[0]);
+        const response = await fetch('https://www.mytickerlist.com/api/scraper-tasks/list-types');
+        if (response.ok) {
+          const sourcesData = await response.json();
+          setSources(sourcesData);
         }
       } catch (err) {
         console.error('Error fetching sources:', err);
-        setError('Failed to load old portfolio sources. Please try again later.');
       } finally {
         setLoadingSources(false);
       }
     };
-
     fetchSources();
   }, []);
 
-  // Load stocks when source or date filters change
+  // Load stocks with date filtering
   useEffect(() => {
-    const fetchOldStocks = async () => {
-      if (!selectedSource) return;
-      
+    const fetchStocks = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        let url = `${API_URL}/oldstock`;
-        
-        // Add date filtering if dates are selected
-        if (startDate && endDate) {
-          url = `${API_URL}/oldstock/filter?startDate=${startDate}&endDate=${endDate}`;
+        let url = 'https://www.mytickerlist.com/api/stocks';
+        if (startDate || endDate) {
+          url = 'https://www.mytickerlist.com/api/stocks/by-date-range';
+          const params = new URLSearchParams();
+          if (startDate) params.append('startDate', startDate);
+          if (endDate) params.append('endDate', endDate);
+          url += `?${params.toString()}`;
         }
         
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(url);
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch old stocks: ${response.statusText}`);
+          throw new Error(`Failed to fetch stocks: ${response.statusText}`);
         }
         
-        const allStocks = await response.json();
-        const filteredStocks = allStocks.filter((stock: any) => stock.source === selectedSource);
-        setStocks(filteredStocks);
+        const stocksData = await response.json();
+        setStocks(stocksData);
       } catch (err) {
-        console.error('Error fetching old stocks:', err);
-        setError('Failed to load old portfolio stocks. Please try again later.');
+        console.error('Error fetching stocks:', err);
+        setError('Failed to load portfolio stocks. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOldStocks();
-  }, [selectedSource, startDate, endDate]);
+    fetchStocks();
+  }, [startDate, endDate]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -181,7 +275,12 @@ export default function UnifiedPortfolioPage() {
     }
   };
 
-  const sortedStocks = [...stocks].sort((a, b) => {
+  // Filter stocks by selected source (date filtering is now handled by API)
+  const filteredStocks = stocks.filter(stock => {
+    return !selectedSource || stock.source === selectedSource;
+  });
+
+  const sortedStocks = [...filteredStocks].sort((a, b) => {
     let valueA = a[sortBy as keyof Stock];
     let valueB = b[sortBy as keyof Stock];
     
@@ -218,9 +317,11 @@ export default function UnifiedPortfolioPage() {
 
   const getSourceDisplayName = (source: string) => {
     const displayNames: { [key: string]: { en: string; fr: string } } = {
-      'guru_portfolio': { en: 'Guru Portfolio', fr: 'Portfolio Guru' },
-      'dan_portfolio_list': { en: 'Dan Portfolio', fr: 'Portfolio Dan' },
-      'stockscore_list': { en: 'Stock Score List', fr: 'Liste Score Actions' }
+      'rule1': { en: 'Rule #1', fr: 'Règle #1' },
+      'manual': { en: 'Manual Entry', fr: 'Saisie Manuelle' },
+      'guru_list': { en: 'Guru List', fr: 'Liste Guru' },
+      'target': { en: 'Target List', fr: 'Liste Cible' },
+      'monitor': { en: 'Monitor List', fr: 'Liste Surveillance' }
     };
     
     return displayNames[source]?.[language] || source;
@@ -249,511 +350,284 @@ export default function UnifiedPortfolioPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-red-800 dark:text-red-400 mb-2">{t('errorLoadingPortfolio')}</h2>
-        <p className="text-red-700 dark:text-red-300 max-w-md mx-auto">{error}</p>
-        <button 
-          onClick={() => window.location.reload()}
-          className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-        >
-          {t('tryAgain')}
-        </button>
+        <h2 className="text-xl font-bold text-red-800 dark:text-red-400 mb-2">{language === 'fr' ? 'Erreur de chargement des données' : 'Error loading data'}</h2>
+        <p className="text-red-600 dark:text-red-300">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="flow-root">
+    <div className="mt-6 flow-root">
       <div className="inline-block min-w-full align-middle">
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
-          <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Old Portfolio Data (temp)</h1>
-              </div>
-              <span className="bg-gradient-to-r from-green-100 to-blue-100 text-green-800 px-3 py-1.5 rounded-full text-sm font-semibold">
-                {stocks.length} {t('stocks')}
-              </span>
+        <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+          {/* Filters */}
+          <div className="mb-6 flex flex-wrap gap-4 items-center">
+            {/* Source Filter */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {language === 'fr' ? 'Source:' : 'Source:'}
+              </label>
+              <select
+                value={selectedSource}
+                onChange={(e) => setSelectedSource(e.target.value)}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                <option value="">
+                  {language === 'fr' ? 'Toutes les sources' : 'All sources'}
+                </option>
+                {sources.map(source => (
+                  <option key={source} value={source}>
+                    {getSourceDisplayName(source)}
+                  </option>
+                ))}
+              </select>
             </div>
-            
-            {/* Source Selector and Date Filters */}
-            <div className="flex items-center gap-4">
-              <div className="min-w-[200px]">
-                <select
-                  value={selectedSource}
-                  onChange={(e) => setSelectedSource(e.target.value)}
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">{language === 'fr' ? 'Sélectionner la source' : 'Select Portfolio Source'}</option>
-                  {sources.map((source) => (
-                    <option key={source} value={source}>
-                      {getSourceDisplayName(source)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Date Range Filters */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Start Date"
-                />
-                <span className="text-gray-500">to</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="End Date"
-                />
-                {(startDate || endDate) && (
-                  <button
-                    onClick={() => {
-                      setStartDate('');
-                      setEndDate('');
-                    }}
-                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* Average Metrics */}
-          {stocks.length > 0 && (
-            <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-b border-gray-200 dark:border-gray-700">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-6 w-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600 dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('averageSentiment')}</span>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {(stocks.reduce((sum, stock) => sum + (stock.sentiment_score || 0), 0) / stocks.length).toFixed(1)}
-                  </p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-6 w-6 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600 dark:text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{language === 'fr' ? 'Score Signal Moyen' : 'Average Signal'}</span>
-                  </div>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {(stocks.reduce((sum, stock) => sum + (stock.signal_score || 0), 0) / stocks.length).toFixed(1)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {loading ? (
-            <Suspense fallback={<HighlightedStocksExternalSkeleton />}>
-              <HighlightedStocksExternalSkeleton />
-            </Suspense>
-          ) : stocks.length === 0 ? (
-            <div className="py-12 text-center">
-              <div className="inline-flex items-center justify-center h-20 w-20 bg-green-100 rounded-full mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                {language === 'fr' ? 'Aucune action trouvée' : 'No stocks found'}
-              </h3>
-              <p className="text-gray-500 max-w-md mx-auto">
-                {language === 'fr' 
-                  ? 'Aucune action trouvée pour la source sélectionnée. Essayez de sélectionner une autre source.'
-                  : 'No stocks were found for the selected source. Try selecting a different source.'
-                }
-              </p>
-            </div>
-          ) : (
-            <>
-            {/* Mobile view */}
-            <div className="md:hidden space-y-4 p-4">
-              {sortedStocks.map((stock) => (
-                <div
-                  key={stock.id}
-                  className={clsx(
-                    "rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border-2",
-                    stockColors[stock.ticker] === 'red' && 'bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:from-red-100 hover:to-red-200',
-                    stockColors[stock.ticker] === 'green' && 'bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:from-green-100 hover:to-green-200',
-                    stockColors[stock.ticker] === 'yellow' && 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 hover:from-yellow-100 hover:to-yellow-200',
-                    !stockColors[stock.ticker] && 'bg-gradient-to-br from-white to-blue-50 border-blue-200 hover:from-blue-50 hover:to-blue-100'
-                  )}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    router.push(`/dashboard/highlighted/${stock.id}`);
-                  }}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                        {stock.ticker.substring(0, 2)}
-                      </div>
-                      <div>
-                        <p className="text-xl font-bold text-gray-900">{stock.ticker}</p>
-                        <p className="text-sm text-gray-500">{stock.source}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          cycleColor(stock.id);
-                        }}
-                        className={clsx(
-                          "p-2 rounded-xl hover:bg-white/50 transition-colors shadow-sm",
-                          stockColors[stock.ticker] === 'red' && 'text-red-500',
-                          stockColors[stock.ticker] === 'green' && 'text-green-500',
-                          stockColors[stock.ticker] === 'yellow' && 'text-yellow-500',
-                          !stockColors[stock.ticker] && 'text-gray-400'
-                        )}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" />
-                        </svg>
-                      </button>
 
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 shadow-sm">
-                      <p className="text-xs text-gray-600 mb-1">{language === 'fr' ? 'Sentiment' : 'Sentiment'}</p>
-                      <p className={clsx("text-lg font-bold", getSentimentColor(stock.sentiment_score).includes('text-') ? getSentimentColor(stock.sentiment_score) : 'text-gray-900')}>
-                        {stock.sentiment_score}
-                      </p>
-                    </div>
-                    <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 shadow-sm">
-                      <p className="text-xs text-gray-600 mb-1">{language === 'fr' ? 'Signal' : 'Signal'}</p>
-                      <p className={clsx("text-lg font-bold", getSentimentColor(stock.signal_score).includes('text-') ? getSentimentColor(stock.signal_score) : 'text-gray-900')}>
-                        {stock.signal_score}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="bg-white/50 rounded-lg p-2">
-                      <span className="text-gray-600">{language === 'fr' ? 'Rule1:' : 'Rule1:'}</span>
-                      <span className="ml-1 font-medium">{formatNumber(stock.rule1_score)}</span>
-                    </div>
-                    <div className="bg-white/50 rounded-lg p-2">
-                      <span className="text-gray-600">{language === 'fr' ? 'Prix d\'achat:' : 'Buy Price:'}</span>
-                      <span className="ml-1 font-medium">{formatNumber(stock.buy_price)}</span>
-                    </div>
-                    <div className="bg-white/50 rounded-lg p-2">
-                      <span className="text-gray-600">{language === 'fr' ? 'Prix:' : 'Price:'}</span>
-                      <span className="ml-1 font-medium">{formatNumber(stock.last_price || stock.current_ratio)}</span>
-                    </div>
-                    <div className="bg-white/50 rounded-lg p-2">
-                      <span className="text-gray-600">{language === 'fr' ? 'Hausse:' : 'Upside:'}</span>
-                      <span className="ml-1 font-medium">{formatNumber(stock.per_upside || stock.pe)}%</span>
-                    </div>
-                  </div>
-                  
-                  {stockComments[stock.ticker] && (
-                    <div className="mt-4 p-3 bg-white/70 rounded-xl">
-                      <p className="text-xs text-gray-600 mb-1">{language === 'fr' ? 'Commentaire:' : 'Comment:'}</p>
-                      <p className="text-sm text-gray-800">{stockComments[stock.ticker]}</p>
-                    </div>
-                  )}
-                </div>
+            {/* Date Filters */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {language === 'fr' ? 'Du:' : 'From:'}
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {language === 'fr' ? 'Au:' : 'To:'}
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+            </div>
+
+            {/* Clear Filters */}
+            {(selectedSource || startDate || endDate) && (
+              <button
+                onClick={() => {
+                  setSelectedSource('');
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500"
+              >
+                {language === 'fr' ? 'Effacer' : 'Clear'}
+              </button>
+            )}
+          </div>
+
+          {/* Results Count */}
+          <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            {language === 'fr' 
+              ? `${sortedStocks.length} résultat${sortedStocks.length !== 1 ? 's' : ''}`
+              : `${sortedStocks.length} result${sortedStocks.length !== 1 ? 's' : ''}`
+            }
+          </div>
+
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded-lg"></div>
               ))}
             </div>
-            
-            {/* Desktop view */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="min-w-full text-gray-900 text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-gray-50 to-blue-50 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider border-b border-gray-200">
-                    <th className="px-2 py-3 text-center text-gray-700">{language === 'fr' ? 'Couleur' : 'Color'}</th>
-                    <th className="px-2 py-3 text-center text-gray-700">{language === 'fr' ? 'Commentaire' : 'Comment'}</th>
-                    <th className="px-2 py-3 text-left text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('ticker')}>
-                      <div className="flex items-center gap-1">
-                        <span>{language === 'fr' ? 'Symbole' : 'Ticker'}</span>
-                        {sortBy === 'ticker' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('ticker')}>
+                      {language === 'fr' ? 'Symbole' : 'Ticker'}
                     </th>
-                    <th className="px-2 py-3 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('sentiment_score')}>
-                      <div className="flex items-center justify-center gap-1">
-                        <span>{language === 'fr' ? 'Sentiment' : 'Sentiment'}</span>
-                        {sortBy === 'sentiment_score' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('guru')}>
+                      {language === 'fr' ? 'Guru' : 'Guru'}
                     </th>
-                    <th className="px-2 py-3 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('signal_score')}>
-                      <div className="flex items-center justify-center gap-1">
-                        <span>{language === 'fr' ? 'Signal' : 'Signal'}</span>
-                        {sortBy === 'signal_score' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('signal_score')}>
+                      {language === 'fr' ? 'Signal' : 'Signal'}
                     </th>
-                    <th className="px-2 py-3 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('rule1_score')}>
-                      <div className="flex items-center justify-center gap-1">
-                        <span>Rule1</span>
-                        {sortBy === 'rule1_score' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('sentiment_score')}>
+                      {language === 'fr' ? 'Sentiment' : 'Sentiment'}
                     </th>
-                    <th className="px-2 py-3 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('moat_score')}>
-                      <div className="flex items-center justify-center gap-1">
-                        <span>{language === 'fr' ? 'Fossé' : 'Moat'}</span>
-                        {sortBy === 'moat_score' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('rule1_score')}>
+                      {language === 'fr' ? 'Règle #1' : 'Rule #1'}
                     </th>
-                    <th className="px-2 py-3 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('management_score')}>
-                      <div className="flex items-center justify-center gap-1">
-                        <span>{language === 'fr' ? 'Gestion' : 'Mgmt'}</span>
-                        {sortBy === 'management_score' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('moat_score')}>
+                      {language === 'fr' ? 'Fossé' : 'Moat'}
                     </th>
-                    <th className="px-2 py-3 text-right text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('buy_price')}>
-                      <div className="flex items-center justify-end gap-1">
-                        <span>{language === 'fr' ? 'Achat' : 'Buy'}</span>
-                        {sortBy === 'buy_price' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('management_score')}>
+                      {language === 'fr' ? 'Gestion' : 'Management'}
                     </th>
-                    <th className="px-2 py-3 text-right text-gray-700">{language === 'fr' ? 'Autocollant' : 'Sticker'}</th>
-                    <th className="px-2 py-3 text-right text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('last_price')}>
-                      <div className="flex items-center justify-end gap-1">
-                        <span>{language === 'fr' ? 'Prix' : 'Price'}</span>
-                        {sortBy === 'last_price' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('buy_price')}>
+                      {language === 'fr' ? 'Prix Achat' : 'Buy Price'}
                     </th>
-                    <th className="px-2 py-3 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('per_upside')}>
-                      <div className="flex items-center justify-center gap-1">
-                        <span>{language === 'fr' ? 'Hausse' : 'Upside'}</span>
-                        {sortBy === 'per_upside' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      {language === 'fr' ? 'Prix Sticker' : 'Sticker Price'}
                     </th>
-                    <th className="px-2 py-3 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('last_gr')}>
-                      <div className="flex items-center justify-center gap-1">
-                        <span>{language === 'fr' ? 'Comp' : 'Comp'}</span>
-                        {sortBy === 'last_gr' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('per_upside')}>
+                      {language === 'fr' ? '% Hausse' : '% Upside'}
                     </th>
-                    <th className="px-2 py-3 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('long_gr')}>
-                      <div className="flex items-center justify-center gap-1">
-                        <span>{language === 'fr' ? 'Croissance' : 'Growth'}</span>
-                        {sortBy === 'long_gr' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('last_price')}>
+                      {language === 'fr' ? 'Prix' : 'Price'}
                     </th>
-                    <th className="px-2 py-3 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('pbt')}>
-                      <div className="flex items-center justify-center gap-1">
-                        <span>PBT</span>
-                        {sortBy === 'pbt' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                      </div>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('long_gr')}>
+                      {language === 'fr' ? 'Croiss. Long' : 'Long Growth'}
                     </th>
-                    <th className="px-2 py-3 text-left text-gray-700">{language === 'fr' ? 'Source' : 'Source'}</th>
-                    <th className="px-2 py-3 text-left text-gray-700">{language === 'fr' ? 'Date' : 'Date'}</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('last_gr')}>
+                      {language === 'fr' ? 'Dern. Croiss.' : 'Last Growth'}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('pbt')}>
+                      {language === 'fr' ? 'PBT' : 'PBT'}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('created_at')}>
+                      {language === 'fr' ? 'Date' : 'Date'}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      {language === 'fr' ? 'Actions' : 'Actions'}
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
-                  {sortedStocks.map((stock) => (
-                    <tr
-                      key={stock.id}
-                      className={clsx(
-                        "cursor-pointer transition-all duration-300 border-b border-gray-100 last:border-b-0 hover:shadow-md",
-                        stockColors[stock.ticker] === 'red' && 'bg-red-50 hover:bg-red-100',
-                        stockColors[stock.ticker] === 'green' && 'bg-green-50 hover:bg-green-100',
-                        stockColors[stock.ticker] === 'yellow' && 'bg-yellow-50 hover:bg-yellow-100',
-                        !stockColors[stock.ticker] && 'hover:bg-blue-50/50'
-                      )}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        router.push(`/dashboard/highlighted/${stock.id}`);
-                      }}
-                    >
-                      <td className="px-2 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              cycleColor(stock.id);
-                            }}
-                            className={clsx(
-                              "p-1 rounded-lg hover:bg-white/50 transition-colors shadow-sm",
-                              stockColors[stock.ticker] === 'red' && 'text-red-500',
-                              stockColors[stock.ticker] === 'green' && 'text-green-500',
-                              stockColors[stock.ticker] === 'yellow' && 'text-yellow-500',
-                              !stockColors[stock.ticker] && 'text-gray-400'
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {sortedStocks.map((stock) => {
+                    const stockKey = stock.ticker || stock.id;
+                    const stockColor = stockColors[stockKey] || '';
+                    const hasComment = stocksWithComments.has(stock.ticker);
+                    
+                    return (
+                      <tr
+                        key={stock.id}
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                          stockColor === 'red' ? 'bg-red-50 dark:bg-red-900/20' :
+                          stockColor === 'green' ? 'bg-green-50 dark:bg-green-900/20' :
+                          stockColor === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''
+                        }`}
+                        onMouseEnter={(e) => handleMouseEnter(e, stock)}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => cycleColor(stock.id)}
+                              className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                              style={{ backgroundColor: stockColor || 'transparent' }}
+                            />
+                            {stock.ticker}
+                            {hasComment && (
+                              <span className="text-blue-500 text-xs">💬</span>
                             )}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" />
-                            </svg>
-                          </button>
-
-                        </div>
-                      </td>
-                      <td className="px-2 py-3 text-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openCommentModal(stock.id);
-                          }}
-                          className={clsx(
-                            "p-1 rounded-lg hover:bg-blue-100 transition-colors shadow-sm",
-                            stockComments[stock.ticker] ? "text-blue-600" : "text-gray-400"
-                          )}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                          </svg>
-                        </button>
-                      </td>
-                      <td className="px-2 py-3">
-                        <div className="font-bold text-gray-900 text-sm bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{stock.ticker}</div>
-                      </td>
-                      <td className="px-2 py-3 text-center">
-                        <span className={clsx(
-                          getSentimentColor(stock.sentiment_score),
-                          "px-2 py-1 rounded-lg text-xs font-bold shadow-sm"
-                        )}>
-                          {stock.sentiment_score}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-center">
-                        <span className={clsx(
-                          getSentimentColor(stock.signal_score),
-                          "px-2 py-1 rounded-lg text-xs font-bold shadow-sm"
-                        )}>
-                          {stock.signal_score}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-center text-sm font-medium">
-                        <span className={stock.rule1_score && stock.rule1_score < 0 ? 'text-red-600' : 'text-gray-900'}>
-                          {formatNumber(stock.rule1_score)}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-center text-sm font-medium">
-                        <span className={stock.moat_score && stock.moat_score < 0 ? 'text-red-600' : 'text-gray-900'}>
-                          {formatNumber(stock.moat_score)}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-center text-sm font-medium">
-                        <span className={stock.management_score && stock.management_score < 0 ? 'text-red-600' : 'text-gray-900'}>
-                          {formatNumber(stock.management_score)}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-right text-sm font-bold">
-                        <span className={stock.buy_price && stock.buy_price < 0 ? 'text-red-600' : 'text-green-600'}>
-                          {formatNumber(stock.buy_price)}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-right text-sm font-bold">
-                        <span className={stock.buy_price && (stock.buy_price * 2) < 0 ? 'text-red-600' : 'text-blue-600'}>
-                          {formatNumber(stock.buy_price * 2)}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-right text-sm font-medium">
-                        <span className={(stock.last_price || stock.current_ratio) && Number(stock.last_price || stock.current_ratio) < 0 ? 'text-red-600' : 'text-gray-900'}>
-                          {formatNumber(stock.last_price || stock.current_ratio)}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-center text-sm font-bold">
-                        <span className={clsx(
-                          "px-2 py-1 rounded-lg text-xs shadow-sm",
-                          (stock.per_upside || stock.pe) && Number(stock.per_upside || stock.pe) > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        )}>
-                          {formatNumber(stock.per_upside || stock.pe)}%
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-center text-sm font-medium">
-                        <span className={(stock.last_gr || stock.dividend) && Number(stock.last_gr || stock.dividend) < 0 ? 'text-red-600' : 'text-gray-900'}>
-                          {formatNumber(stock.last_gr || stock.dividend)}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-center text-sm font-medium">
-                        <span className={(stock.long_gr || stock.cash_per_share) && Number(stock.long_gr || stock.cash_per_share) < 0 ? 'text-red-600' : 'text-gray-900'}>
-                          {formatNumber(stock.long_gr || stock.cash_per_share)}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-center text-sm font-medium">
-                        {(stock.pbt || stock.guru) ? String(stock.pbt || stock.guru).replace(/\d+\.\d+/g, (match) => Math.round(parseFloat(match)).toString()) : '-'}
-                      </td>
-                      <td className="px-2 py-3">
-                        <span className={clsx("px-2 py-1 rounded-lg text-xs font-medium shadow-sm", 
-                          getSourceBadgeColor(stock.source)
-                        )}>
-                          {stock.source}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3 text-xs text-gray-500 font-medium">
-                        {(stock.date || stock.created_at) ? (stock.date || stock.created_at).split('T')[0] : '-'}
-                      </td>
-                    </tr>
-                  ))}
+                          </div>
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.guru || '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.signal_score || '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.sentiment_score || '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.rule1_score || '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.moat_score || '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.management_score || '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {formatBuyPrice(stock.buy_price)}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.buy_price ? formatCurrency(Number(stock.buy_price) * 2) : '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.per_upside || '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          ${stock.last_price || '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.long_gr ? `${stock.long_gr}%` : '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.last_gr ? `${stock.last_gr}%` : '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.pbt || '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {stock.created_at ? new Date(stock.created_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '-'}
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => openCommentModal(stock.id)}
+                              className={`p-1 rounded transition-colors ${
+                                hasComment 
+                                  ? 'text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900' 
+                                  : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                              }`}
+                              title={language === 'fr' ? 'Ajouter un commentaire' : 'Add comment'}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteStock(stock.id)}
+                              className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
+                              title={language === 'fr' ? 'Supprimer' : 'Delete'}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-            </>
           )}
         </div>
       </div>
-      
-      {/* Comment Modal */}
-      {showCommentModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCommentModal(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-100" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">{language === 'fr' ? 'Ajouter un commentaire' : 'Add Comment'}</h3>
-                  <p className="text-sm text-gray-500">{language === 'fr' ? 'Partagez vos réflexions sur cette action' : 'Share your thoughts about this stock'}</p>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'fr' ? 'Votre commentaire' : 'Your Comment'}</label>
-                  <textarea
-                    value={currentComment}
-                    onChange={(e) => setCurrentComment(e.target.value)}
-                    placeholder={language === 'fr' ? 'Que pensez-vous de cette action ?' : 'What are your thoughts on this stock?'}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-200"
-                    rows={4}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
-                <button
-                  onClick={() => handleCommentSave(showCommentModal, currentComment)}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl px-4 py-3 text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  {language === 'fr' ? 'Enregistrer le commentaire' : 'Save Comment'}
-                </button>
-                <button
-                  onClick={() => setShowCommentModal(null)}
-                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
-                >
-                  {language === 'fr' ? 'Annuler' : 'Cancel'}
-                </button>
-              </div>
-            </div>
-          </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="fixed z-50 bg-black text-white p-2 rounded shadow-lg text-sm max-w-xs"
+          style={{
+            left: tooltip.position.x + 10,
+            top: tooltip.position.y - 10,
+          }}
+        >
+          <div><strong>{tooltip.stock.ticker}</strong></div>
+          {tooltip.stock.full_name && (
+            <div className="text-gray-300">{tooltip.stock.full_name}</div>
+          )}
+          <div>{language === 'fr' ? 'Score:' : 'Score:'} {tooltip.stock.sentiment_score || 'N/A'}</div>
+          <div>{language === 'fr' ? 'Guru:' : 'Guru:'} {tooltip.stock.guru || 'N/A'}</div>
         </div>
+      )}
+
+      {/* Enhanced Comment Modal */}
+      {showCommentModal && (
+        <EnhancedCommentModal
+          isOpen={!!showCommentModal}
+          onClose={() => setShowCommentModal(null)}
+          ticker={stocks.find(s => s.id === showCommentModal)?.ticker || ''}
+          onSave={(comment) => handleCommentSave(showCommentModal, comment)}
+          currentComment={currentComment}
+          setCurrentComment={setCurrentComment}
+        />
       )}
     </div>
   );

@@ -10,7 +10,7 @@ async function proxyRequest(request: NextRequest, method: string, params: { path
     headers[key] = value;
   });
   
-  const body = method === 'POST' ? await request.text() : undefined;
+  const body = ['POST', 'PUT'].includes(method) ? await request.text() : undefined;
   
   try {
     const response = await fetch(`https://www.mytickerlist.com/api/${path}${queryString}`, {
@@ -32,4 +32,12 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
 
 export async function POST(request: NextRequest, { params }: { params: { path: string[] } }) {
   return proxyRequest(request, 'POST', params);
+}
+
+export async function PUT(request: NextRequest, { params }: { params: { path: string[] } }) {
+  return proxyRequest(request, 'PUT', params);
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: { path: string[] } }) {
+  return proxyRequest(request, 'DELETE', params);
 }

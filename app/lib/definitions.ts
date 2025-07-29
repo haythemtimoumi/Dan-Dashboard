@@ -30,6 +30,7 @@ export type Stock = {
   pbt?: string; // Payback time (replaces guru)
   last_action?: string; // Last action taken on the stock
   per_portfolio?: number; // Percentage of portfolio
+  full_name?: string; // Full company name
 };
 
 export type StocksTable = {

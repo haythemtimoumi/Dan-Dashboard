@@ -748,24 +748,36 @@ export default function PortfolioListWithDateRange() {
                           <p className="text-lg font-semibold">{formatLargeNumber(stock.rule1_score)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs text-gray-500 mb-1">Target Buy Price</p>
+                          <p className="text-xs text-gray-500 mb-1">Moat Score</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.moat_score)}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Management Score</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.management_score)}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Buy Price</p>
                           <p className="text-lg font-semibold">{formatCurrency(stock.buy_price)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Sticker Price</p>
-                          <p className="text-lg font-semibold">{formatCurrency(stock.buy_price * 2)}</p>
+                          <p className="text-lg font-semibold">{formatCurrency(Number(stock.buy_price) * 2)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs text-gray-500 mb-1">Last Price</p>
+                          <p className="text-xs text-gray-500 mb-1">% Upside</p>
+                          <p className="text-lg font-semibold">{stock.per_upside || stock.pe || '-'}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Price</p>
                           <p className="text-lg font-semibold">{formatLargeNumber(stock.last_price || stock.current_ratio)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs text-gray-500 mb-1">Last Saved Composite GR</p>
-                          <p className="text-lg font-semibold">{formatLargeNumber(stock.last_gr || stock.dividend)}</p>
+                          <p className="text-xs text-gray-500 mb-1">Long Growth</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.long_gr || stock.cash_per_share)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs text-gray-500 mb-1">Analyst Estimated Long-Term GR</p>
-                          <p className="text-lg font-semibold">{formatLargeNumber(stock.long_gr || stock.cash_per_share)}</p>
+                          <p className="text-xs text-gray-500 mb-1">Last Growth</p>
+                          <p className="text-lg font-semibold">{formatLargeNumber(stock.last_gr || stock.dividend)}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">PBT</p>
@@ -895,16 +907,16 @@ export default function PortfolioListWithDateRange() {
                           {sortBy === 'guru' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('sentiment_score')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>Sentiment</span>
-                          {sortBy === 'sentiment_score' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
-                      </th>
                       <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('signal_score')}>
                         <div className="flex items-center justify-center gap-1">
                           <span>Signal</span>
                           {sortBy === 'signal_score' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('sentiment_score')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>Sentiment</span>
+                          {sortBy === 'sentiment_score' && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
                       <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('rule1_score')}>
@@ -932,16 +944,16 @@ export default function PortfolioListWithDateRange() {
                         </div>
                       </th>
                       <th className="px-2 py-2 text-right text-gray-700">Sticker</th>
+                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('per_upside')}>
+                        <div className="flex items-center justify-center gap-1">
+                          <span>% Upside</span>
+                          {(sortBy === 'per_upside' || sortBy === 'pe') && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
                       <th className="px-2 py-2 text-right text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('last_price')}>
                         <div className="flex items-center justify-end gap-1">
                           <span>Price</span>
                           {(sortBy === 'last_price' || sortBy === 'current_ratio') && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                        </div>
-                      </th>
-                      <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('per_upside')}>
-                        <div className="flex items-center justify-center gap-1">
-                          <span>Upside</span>
-                          {(sortBy === 'per_upside' || sortBy === 'pe') && <span className="text-green-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                         </div>
                       </th>
                       <th className="px-2 py-2 text-center text-gray-700 cursor-pointer hover:bg-white/50 transition-all duration-200" onClick={() => handleSort('last_gr')}>
@@ -1078,18 +1090,18 @@ export default function PortfolioListWithDateRange() {
                         </td>
                         <td className="px-2 py-2 text-center">
                           <span className={clsx(
-                            getSentimentColor(stock.sentiment_score),
-                            "px-1.5 py-0.5 rounded text-xs font-medium"
-                          )}>
-                            {formatLargeNumber(stock.sentiment_score)}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2 text-center">
-                          <span className={clsx(
                             getSentimentColor(stock.signal_score),
                             "px-1.5 py-0.5 rounded text-xs font-medium"
                           )}>
                             {formatLargeNumber(stock.signal_score)}
+                          </span>
+                        </td>
+                        <td className="px-2 py-2 text-center">
+                          <span className={clsx(
+                            getSentimentColor(stock.sentiment_score),
+                            "px-1.5 py-0.5 rounded text-xs font-medium"
+                          )}>
+                            {formatLargeNumber(stock.sentiment_score)}
                           </span>
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
@@ -1105,13 +1117,13 @@ export default function PortfolioListWithDateRange() {
                           {formatCurrency(stock.buy_price)}
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
-                          {formatCurrency(stock.buy_price * 2)}
+                          {formatCurrency(Number(stock.buy_price) * 2)}
+                        </td>
+                        <td className="px-2 py-2 text-center text-sm">
+                          {stock.per_upside || stock.pe || '-'}
                         </td>
                         <td className="px-2 py-2 text-right text-sm">
                           {formatLargeNumber(stock.last_price || stock.current_ratio)}
-                        </td>
-                        <td className="px-2 py-2 text-center text-sm">
-                          {formatLargeNumber(stock.per_upside || stock.pe)}{(stock.per_upside || stock.pe) ? '%' : ''}
                         </td>
                         <td className="px-2 py-2 text-center text-sm">
                           {formatLargeNumber(stock.last_gr || stock.dividend)}
