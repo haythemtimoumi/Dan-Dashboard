@@ -30,7 +30,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
     { name: t('highlighted'), href: '/dashboard/highlighted', icon: StarIcon },
     { name: t('update'), href: '/dashboard/stock-update', icon: ArrowPathIcon },
     ...(isAdmin ? [{ name: t('addStock'), href: '/dashboard/stocks/create', icon: PlusCircleIcon }] : []),
-    ...(isAdmin ? [{ name: language === 'fr' ? 'Tickers' : 'Tickers', href: '/dashboard/tickers', icon: TagIcon }] : []),
+    ...(isAdmin ? [{ name: language === 'fr' ? 'Portfolio' : 'Portfolio', href: '/dashboard/tickers', icon: TagIcon }] : []),
     ...(isAdmin ? [{ name: t('scraperManagement'), href: '/dashboard/scraper', icon: ServerIcon }] : []),
   ];
   
@@ -68,7 +68,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
           );
         })}
         
-        {/* Portfolio Link */}
+        {/* Stock Data Link */}
         <Link
           href="/dashboard/portfolio"
           className={clsx(
@@ -78,12 +78,12 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
               : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white",
             isCollapsed && "justify-center px-2"
           )}
-          title={isCollapsed ? t('portfolio') : undefined}
+          title={isCollapsed ? (language === 'fr' ? 'Données Actions' : 'Stock Data') : undefined}
         >
           <DocumentTextIcon className="h-5 w-5 flex-shrink-0" />
           {!isCollapsed && (
             <>
-              <span className="truncate">{t('portfolio')}</span>
+              <span className="truncate">{language === 'fr' ? 'Données Actions' : 'Stock Data'}</span>
               {(pathname === '/dashboard/portfolio' || pathname.startsWith('/dashboard/portfolio')) && <div className="ml-auto w-1.5 h-1.5 bg-white dark:bg-black rounded-full" />}
             </>
           )}

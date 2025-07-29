@@ -28,3 +28,44 @@ input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Multi-Guru Display Styles */
+.guru-list {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.guru-badge {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.guru-count {
+  color: #666;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.analysis-date {
+  color: #888;
+  font-size: 11px;
+}
+
+/* Dark mode guru badges */
+.dark .guru-badge {
+  background: #1e3a8a;
+  color: #bfdbfe;
+}
+
+.dark .guru-count {
+  color: #9ca3af;
+}
+
+.dark .analysis-date {
+  color: #6b7280;
+}

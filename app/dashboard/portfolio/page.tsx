@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Stock } from '@/app/lib/definitions';
 import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatLargeNumber } from '@/app/lib/utils';
+import { formatGuruBadges, getGuruDisplay } from '@/app/lib/stock-utils';
+
 import clsx from 'clsx';
 import { useSettings } from '@/app/contexts/settings-context';
 import { useAuth } from '@/app/contexts/auth-context';
@@ -73,6 +75,7 @@ export default function NewPortfolioPage() {
   const [endDate, setEndDate] = useState<string>('');
   const [tooltip, setTooltip] = useState<{ stock: Stock; position: { x: number; y: number } } | null>(null);
   const [stocksWithComments, setStocksWithComments] = useState<Set<string>>(new Set());
+
 
   // Load data from localStorage on component mount
   useEffect(() => {
@@ -231,14 +234,15 @@ export default function NewPortfolioPage() {
     fetchSources();
   }, []);
 
-  // Load stocks with date filtering
+  // Load stocks with date filtering using new grouped endpoint
   useEffect(() => {
     const fetchStocks = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        let url = 'https://www.mytickerlist.com/api/stocks';
+        // Use grouped endpoint for main dashboard
+        let url = '/api/stocks/grouped';
         if (startDate || endDate) {
           url = 'https://www.mytickerlist.com/api/stocks/by-date-range';
           const params = new URLSearchParams();
@@ -275,12 +279,29 @@ export default function NewPortfolioPage() {
     }
   };
 
-  // Filter stocks by selected source (date filtering is now handled by API)
+  // Filter and deduplicate stocks by selected source and latest update
   const filteredStocks = stocks.filter(stock => {
     return !selectedSource || stock.source === selectedSource;
   });
+  
+  // Deduplicate by ticker, keeping only the latest updated record
+  const deduplicatedStocks = filteredStocks.reduce((acc, stock) => {
+    const existingStock = acc.find(s => s.ticker === stock.ticker);
+    if (!existingStock) {
+      acc.push(stock);
+    } else {
+      // Compare updated_at or created_at timestamps to keep the latest
+      const existingTime = new Date(existingStock.updated_at || existingStock.created_at).getTime();
+      const currentTime = new Date(stock.updated_at || stock.created_at).getTime();
+      if (currentTime > existingTime) {
+        const index = acc.findIndex(s => s.ticker === stock.ticker);
+        acc[index] = stock;
+      }
+    }
+    return acc;
+  }, [] as StockWithHighlight[]);
 
-  const sortedStocks = [...filteredStocks].sort((a, b) => {
+  const sortedStocks = [...deduplicatedStocks].sort((a, b) => {
     let valueA = a[sortBy as keyof Stock];
     let valueB = b[sortBy as keyof Stock];
     
@@ -501,18 +522,22 @@ export default function NewPortfolioPage() {
                     return (
                       <tr
                         key={stock.id}
-                        className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
                           stockColor === 'red' ? 'bg-red-50 dark:bg-red-900/20' :
                           stockColor === 'green' ? 'bg-green-50 dark:bg-green-900/20' :
                           stockColor === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''
                         }`}
                         onMouseEnter={(e) => handleMouseEnter(e, stock)}
                         onMouseLeave={handleMouseLeave}
+                        onClick={() => router.push(`/dashboard/portfolio/${stock.ticker}`)}
                       >
                         <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => cycleColor(stock.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cycleColor(stock.id);
+                              }}
                               className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400"
                               style={{ backgroundColor: stockColor || 'transparent' }}
                             />
@@ -523,62 +548,82 @@ export default function NewPortfolioPage() {
                           </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.guru || '-'}
+                          {(() => {
+                            const guruInfo = formatGuruBadges(stock, 2);
+                            const guruDisplay = getGuruDisplay(stock);
+                            
+                            if (guruDisplay.type === 'grouped') {
+                              return (
+                                <div className="flex flex-wrap gap-1 items-center">
+                                  {guruInfo.displayGurus.map((guru: string) => (
+                                    <span key={guru} className="guru-badge">
+                                      {guru}
+                                    </span>
+                                  ))}
+                                  {guruInfo.hasMore && (
+                                    <span className="guru-count">+{guruInfo.remainingCount}</span>
+                                  )}
+                                </div>
+                              );
+                            }
+                            
+                            return stock.guru || '-';
+                          })()
+                          }
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.signal_score || '-'}
+                          {formatNumber(stock.signal_score)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.sentiment_score || '-'}
+                          {formatNumber(stock.sentiment_score)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.rule1_score || '-'}
+                          {formatNumber(stock.rule1_score)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.moat_score || '-'}
+                          {formatNumber(stock.moat_score)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.management_score || '-'}
+                          {formatNumber(stock.management_score)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {formatBuyPrice(stock.buy_price)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {(() => {
-                            if (!stock.buy_price) {
-                              return '-';
-                            }
+                            if (!stock.buy_price) return '-';
                             const buyPriceStr = String(stock.buy_price);
-                            if (buyPriceStr === '$0' || buyPriceStr === '0') {
-                              return '-';
-                            }
+                            if (buyPriceStr === '$0' || buyPriceStr === '0') return '-';
                             const buyPrice = parseFloat(buyPriceStr.replace(/[$,]/g, ''));
                             return isNaN(buyPrice) || buyPrice === 0 ? '-' : formatCurrency(buyPrice * 2);
                           })()
                           }
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.per_upside || '-'}
+                          {formatNumber(stock.per_upside)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          ${stock.last_price || '-'}
+                          {stock.last_price ? `$${formatNumber(stock.last_price)}` : '-'}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.long_gr ? `${stock.long_gr}%` : '-'}
+                          {formatNumber(stock.long_gr)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.last_gr ? `${stock.last_gr}%` : '-'}
+                          {formatNumber(stock.last_gr)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.pbt || '-'}
+                          {formatNumber(stock.pbt)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.created_at ? new Date(stock.created_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '-'}
+                          {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '-'}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => openCommentModal(stock.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCommentModal(stock.id);
+                              }}
                               className={`p-1 rounded transition-colors ${
                                 hasComment 
                                   ? 'text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900' 
@@ -591,7 +636,10 @@ export default function NewPortfolioPage() {
                               </svg>
                             </button>
                             <button
-                              onClick={() => handleDeleteStock(stock.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteStock(stock.id);
+                              }}
                               className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
                               title={language === 'fr' ? 'Supprimer' : 'Delete'}
                             >
@@ -611,21 +659,55 @@ export default function NewPortfolioPage() {
         </div>
       </div>
 
-      {/* Tooltip */}
+      {/* Enhanced Multi-Guru Tooltip */}
       {tooltip && (
         <div
-          className="fixed z-50 bg-black text-white p-2 rounded shadow-lg text-sm max-w-xs"
+          className="fixed z-50 bg-black text-white p-3 rounded-lg shadow-xl text-sm max-w-sm"
           style={{
             left: tooltip.position.x + 10,
             top: tooltip.position.y - 10,
           }}
         >
-          <div><strong>{tooltip.stock.ticker}</strong></div>
+          <div className="font-bold text-lg mb-2">{tooltip.stock.ticker}</div>
           {tooltip.stock.full_name && (
-            <div className="text-gray-300">{tooltip.stock.full_name}</div>
+            <div className="text-gray-300 mb-2">{tooltip.stock.full_name}</div>
           )}
-          <div>{language === 'fr' ? 'Score:' : 'Score:'} {tooltip.stock.sentiment_score || 'N/A'}</div>
-          <div>{language === 'fr' ? 'Guru:' : 'Guru:'} {tooltip.stock.guru || 'N/A'}</div>
+          <div className="mb-2">{language === 'fr' ? 'Score:' : 'Score:'} {tooltip.stock.sentiment_score || 'N/A'}</div>
+          
+          {/* Multi-guru display for grouped data */}
+          {(() => {
+            const guruDisplay = getGuruDisplay(tooltip.stock);
+            
+            if (guruDisplay.type === 'grouped') {
+              return (
+                <div className="border-t border-gray-600 pt-2">
+                  <div className="text-gray-300 text-xs mb-1">{t('analyzedBy')}:</div>
+                  <div className="guru-list mb-1">
+                    {guruDisplay.gurus.map((guru: string) => (
+                      <span key={guru} className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                        {guru}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="guru-count">
+                    ({guruDisplay.count} {t('gurus')})
+                  </div>
+                </div>
+              );
+            }
+            
+            return (
+              <div>
+                {language === 'fr' ? 'Guru:' : 'Guru:'} {tooltip.stock.guru || 'N/A'}
+                {guruDisplay.type === 'single' && guruDisplay.date && (
+                  <div className="analysis-date mt-1">
+                    {new Date(guruDisplay.date).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+            );
+          })()
+          }
         </div>
       )}
 

@@ -230,6 +230,10 @@ const translations = {
     currentSchedule: 'Current Schedule',
     scheduleConfiguration: 'Schedule Configuration',
     configureMonthlySchedule: 'Configure monthly scraper schedule',
+    
+    // Multi-guru functionality
+    analyzedBy: 'Analyzed by',
+    gurus: 'gurus',
   },
   fr: {
     // Navigation
@@ -445,6 +449,10 @@ const translations = {
     currentSchedule: 'Planification Actuelle',
     scheduleConfiguration: 'Configuration de Planification',
     configureMonthlySchedule: 'Configurer la planification mensuelle du scraper',
+    
+    // Multi-guru functionality
+    analyzedBy: 'Analysé par',
+    gurus: 'gurus',
   },
 };
 

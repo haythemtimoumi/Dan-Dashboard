@@ -76,6 +76,17 @@ export default function TickersPage() {
     active: true
   });
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({
+    symbol: '',
+    list_type: 'manual',
+    scrape_type: 'daily',
+    current_step: 'pending',
+    scrape_status: 'pending',
+    guru_id: '',
+    active: true
+  });
+  const [addSaving, setAddSaving] = useState(false);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -380,6 +391,17 @@ export default function TickersPage() {
           <div className="text-sm text-gray-500">
             {language === 'fr' ? 'Affichage:' : 'Showing:'} <span className="font-medium text-gray-900 dark:text-white">{filteredTickers.length}</span> {language === 'fr' ? 'résultats' : 'results'}
           </div>
+          {isAdmin && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-colors flex items-center gap-2 text-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              {language === 'fr' ? 'Ajouter Ticker' : 'Add Ticker'}
+            </button>
+          )}
           {selectedTickers.size > 0 && isAdmin && (
             <button
               onClick={() => setShowBulkEdit(true)}
@@ -875,6 +897,127 @@ export default function TickersPage() {
                 </button>
                 <button
                   onClick={() => setEditingTicker(null)}
+                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
+                >
+                  {language === 'fr' ? 'Annuler' : 'Cancel'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Add Ticker Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-100" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-10 w-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">{language === 'fr' ? 'Ajouter un Ticker' : 'Add Ticker'}</h3>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'fr' ? 'Symbole' : 'Symbol'}</label>
+                  <input
+                    type="text"
+                    value={addForm.symbol}
+                    onChange={(e) => setAddForm({...addForm, symbol: e.target.value.toUpperCase()})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="AAPL"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Guru</label>
+                  <select
+                    value={addForm.guru_id}
+                    onChange={(e) => setAddForm({...addForm, guru_id: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">{language === 'fr' ? 'Aucun' : 'None'}</option>
+                    {guruObjects.map(guru => (
+                      <option key={guru.id} value={guru.id}>{guru.guru_name}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'fr' ? 'Source' : 'Source'}</label>
+                  <select
+                    value={addForm.list_type}
+                    onChange={(e) => setAddForm({...addForm, list_type: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    {sources.map(source => (
+                      <option key={source} value={source}>{source}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="addActive"
+                    checked={addForm.active}
+                    onChange={(e) => setAddForm({...addForm, active: e.target.checked})}
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  />
+                  <label htmlFor="addActive" className="ml-2 text-sm text-gray-700">
+                    {language === 'fr' ? 'Actif' : 'Active'}
+                  </label>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button
+                  onClick={async () => {
+                    if (!addForm.symbol.trim()) return;
+                    setAddSaving(true);
+                    try {
+                      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+                      const response = await fetch(`${API_URL}/tickers`, {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(addForm)
+                      });
+                      if (response.ok) {
+                        const newTicker = await response.json();
+                        setTickers(prev => [newTicker, ...prev]);
+                        setShowAddModal(false);
+                        setAddForm({
+                          symbol: '',
+                          list_type: 'manual',
+                          scrape_type: 'daily',
+                          current_step: 'pending',
+                          scrape_status: 'pending',
+                          guru_id: '',
+                          active: true
+                        });
+                      }
+                    } catch (error) {
+                      console.error('Error adding ticker:', error);
+                    } finally {
+                      setAddSaving(false);
+                    }
+                  }}
+                  disabled={addSaving || !addForm.symbol.trim()}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl px-4 py-3 text-sm font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
+                >
+                  {addSaving ? (language === 'fr' ? 'Ajout...' : 'Adding...') : (language === 'fr' ? 'Ajouter' : 'Add')}
+                </button>
+                <button
+                  onClick={() => setShowAddModal(false)}
                   className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
                 >
                   {language === 'fr' ? 'Annuler' : 'Cancel'}
