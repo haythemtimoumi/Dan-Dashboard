@@ -277,6 +277,25 @@ export default function NewPortfolioPage() {
     }
   };
 
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) {
+      return (
+        <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      );
+    }
+    return sortOrder === 'asc' ? (
+      <svg className="w-4 h-4 ml-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+      </svg>
+    ) : (
+      <svg className="w-4 h-4 ml-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    );
+  };
+
   // Filter stocks by selected source and ticker search (no deduplication needed - grouped API handles this)
   const filteredStocks = stocks.filter(stock => {
     const sourceMatch = !selectedSource || stock.source === selectedSource;
@@ -284,39 +303,73 @@ export default function NewPortfolioPage() {
     return sourceMatch && tickerMatch;
   });
 
+  const parseNumericValue = (value: any): number => {
+    if (value === null || value === undefined || value === '') return -Infinity;
+    if (typeof value === 'number') return value;
+    
+    // Handle percentage values
+    if (typeof value === 'string' && value.includes('%')) {
+      const num = parseFloat(value.replace('%', ''));
+      return isNaN(num) ? -Infinity : num;
+    }
+    
+    // Handle currency values
+    if (typeof value === 'string' && value.includes('$')) {
+      const num = parseFloat(value.replace(/[$,]/g, ''));
+      return isNaN(num) ? -Infinity : num;
+    }
+    
+    // Handle regular numeric strings
+    if (typeof value === 'string') {
+      const num = parseFloat(value.replace(/,/g, ''));
+      return isNaN(num) ? -Infinity : num;
+    }
+    
+    return -Infinity;
+  };
+
+  const parseDateValue = (value: any): number => {
+    if (!value) return 0;
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? 0 : date.getTime();
+  };
+
   const sortedStocks = [...filteredStocks].sort((a, b) => {
     let valueA = a[sortBy as keyof Stock];
     let valueB = b[sortBy as keyof Stock];
     
+    // Handle empty values
     const isAEmpty = valueA === null || valueA === undefined || valueA === '';
     const isBEmpty = valueB === null || valueB === undefined || valueB === '';
     
     if (isAEmpty && isBEmpty) return 0;
-    if (isAEmpty) return 1;
-    if (isBEmpty) return -1;
+    if (isAEmpty) return sortOrder === 'asc' ? 1 : -1;
+    if (isBEmpty) return sortOrder === 'asc' ? -1 : 1;
     
-    if (typeof valueA === 'string' && !isNaN(Number(valueA))) {
-      valueA = Number(valueA);
+    // Special handling for different field types
+    let comparison = 0;
+    
+    // Date fields
+    if (sortBy === 'created_at' || sortBy === 'date') {
+      const dateA = parseDateValue(valueA);
+      const dateB = parseDateValue(valueB);
+      comparison = dateA - dateB;
     }
-    if (typeof valueB === 'string' && !isNaN(Number(valueB))) {
-      valueB = Number(valueB);
+    // Numeric fields (scores, prices, percentages)
+    else if (['signal_score', 'sentiment_score', 'rule1_score', 'moat_score', 'management_score', 
+              'buy_price', 'last_price', 'per_upside', 'long_gr', 'last_gr', 'pbt'].includes(sortBy)) {
+      const numA = parseNumericValue(valueA);
+      const numB = parseNumericValue(valueB);
+      comparison = numA - numB;
+    }
+    // String fields (ticker, guru, full_name, source)
+    else {
+      const strA = String(valueA).toLowerCase();
+      const strB = String(valueB).toLowerCase();
+      comparison = strA.localeCompare(strB);
     }
     
-    if (typeof valueA === 'number' && typeof valueB === 'number') {
-      return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
-    }
-    
-    if (typeof valueA === 'string' && typeof valueB === 'string') {
-      return sortOrder === 'asc' 
-        ? valueA.localeCompare(valueB) 
-        : valueB.localeCompare(valueA);
-    }
-    
-    const strA = String(valueA);
-    const strB = String(valueB);
-    return sortOrder === 'asc' 
-      ? strA.localeCompare(strB) 
-      : strB.localeCompare(strA);
+    return sortOrder === 'asc' ? comparison : -comparison;
   });
 
   const getSourceDisplayName = (source: string) => {
@@ -462,50 +515,92 @@ export default function NewPortfolioPage() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('ticker')}>
-                      {language === 'fr' ? 'Symbole' : 'Ticker'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('ticker')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Symbole' : 'Ticker'}
+                        {getSortIcon('ticker')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('guru')}>
-                      {language === 'fr' ? 'Guru' : 'Guru'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('guru')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Guru' : 'Guru'}
+                        {getSortIcon('guru')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('signal_score')}>
-                      {language === 'fr' ? 'Signal' : 'Signal'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('signal_score')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Signal' : 'Signal'}
+                        {getSortIcon('signal_score')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('sentiment_score')}>
-                      {language === 'fr' ? 'Sentiment' : 'Sentiment'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('sentiment_score')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Sentiment' : 'Sentiment'}
+                        {getSortIcon('sentiment_score')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('rule1_score')}>
-                      {language === 'fr' ? 'Règle #1' : 'Rule #1'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('rule1_score')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Règle #1' : 'Rule #1'}
+                        {getSortIcon('rule1_score')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('moat_score')}>
-                      {language === 'fr' ? 'Fossé' : 'Moat'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('moat_score')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Fossé' : 'Moat'}
+                        {getSortIcon('moat_score')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('management_score')}>
-                      {language === 'fr' ? 'Gestion' : 'Management'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('management_score')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Gestion' : 'Management'}
+                        {getSortIcon('management_score')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('buy_price')}>
-                      {language === 'fr' ? 'Prix Achat' : 'Buy Price'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('buy_price')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Prix Achat' : 'Buy Price'}
+                        {getSortIcon('buy_price')}
+                      </div>
                     </th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       {t('stickerPrice')}
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('per_upside')}>
-                      {language === 'fr' ? '% Hausse' : '% Upside'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('per_upside')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? '% Hausse' : '% Upside'}
+                        {getSortIcon('per_upside')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('last_price')}>
-                      {language === 'fr' ? 'Prix' : 'Price'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('last_price')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Prix' : 'Price'}
+                        {getSortIcon('last_price')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('long_gr')}>
-                      {language === 'fr' ? 'Croiss. Long' : 'Long Growth'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('long_gr')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Croiss. Long' : 'Long Growth'}
+                        {getSortIcon('long_gr')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('last_gr')}>
-                      {language === 'fr' ? 'Dern. Croiss.' : 'Last Growth'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('last_gr')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Dern. Croiss.' : 'Last Growth'}
+                        {getSortIcon('last_gr')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('pbt')}>
-                      {language === 'fr' ? 'PBT' : 'PBT'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('pbt')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'PBT' : 'PBT'}
+                        {getSortIcon('pbt')}
+                      </div>
                     </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('created_at')}>
-                      {language === 'fr' ? 'Date' : 'Date'}
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('created_at')}>
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Date' : 'Date'}
+                        {getSortIcon('created_at')}
+                      </div>
                     </th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       {language === 'fr' ? 'Actions' : 'Actions'}

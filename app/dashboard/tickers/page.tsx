@@ -16,7 +16,7 @@ interface Ticker {
   scrape_status: string;
   scrape_type: string;
   last_action?: string;
-  per_portfolio?: boolean;
+  target: boolean;
   last_updated_at: string;
 }
 
@@ -35,58 +35,35 @@ export default function TickersPage() {
   const [tickers, setTickers] = useState<Ticker[]>([]);
   const [filteredTickers, setFilteredTickers] = useState<Ticker[]>([]);
   const [stats, setStats] = useState<TickerStats>({ total: 0, active: 0 });
-  const [gurus, setGurus] = useState<string[]>([]);
-  const [guruObjects, setGuruObjects] = useState<{id: string, guru_name: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGuru, setSelectedGuru] = useState('');
-  const [selectedSource, setSelectedSource] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [selectedStep, setSelectedStep] = useState('');
-  const [selectedScrapeType, setSelectedScrapeType] = useState('');
   const [showActiveOnly, setShowActiveOnly] = useState(false);
+  const [targetFilter, setTargetFilter] = useState<string>(''); // '' = all, 'true' = target only, 'false' = non-target only
   
   // Delete/Edit states
   const [deletingTickers, setDeletingTickers] = useState<Set<string>>(new Set());
-  const [sources, setSources] = useState<string[]>([]);
-  const [filterValues, setFilterValues] = useState<{
-    statuses: string[];
-    steps: string[];
-    scrapeTypes: string[];
-  }>({ statuses: [], steps: [], scrapeTypes: [] });
   const [editingTicker, setEditingTicker] = useState<Ticker | null>(null);
   const [editForm, setEditForm] = useState({
     symbol: '',
-    list_type: '',
-    scrape_type: '',
-    current_step: '',
-    scrape_status: '',
-    guru_id: '',
     active: true
   });
   const [saving, setSaving] = useState(false);
   const [selectedTickers, setSelectedTickers] = useState<Set<string>>(new Set());
   const [showBulkEdit, setShowBulkEdit] = useState(false);
   const [bulkEditForm, setBulkEditForm] = useState({
-    scrape_type: 'daily',
-    scrape_status: 'pending',
     active: true
   });
   const [bulkSaving, setBulkSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
-    symbol: '',
-    list_type: 'manual',
-    scrape_type: 'daily',
-    current_step: 'pending',
-    scrape_status: 'pending',
-    guru_id: '',
+    tickers: '',
     active: true
   });
   const [addSaving, setAddSaving] = useState(false);
+  const [addResult, setAddResult] = useState<{added: string[], updated: string[]} | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -97,43 +74,25 @@ export default function TickersPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [tickersRes, statsRes, gurusRes] = await Promise.all([
+        const [tickersRes, statsRes] = await Promise.all([
           fetch(`${API_URL}/tickers`),
-          fetch(`${API_URL}/tickers/stats`),
-          fetch(`${API_URL}/tickers/gurus`)
+          fetch(`${API_URL}/tickers/stats`)
         ]);
 
-        if (!tickersRes.ok || !statsRes.ok || !gurusRes.ok) {
+        if (!tickersRes.ok || !statsRes.ok) {
           throw new Error('Failed to fetch data');
         }
 
-        const [tickersData, statsData, gurusData] = await Promise.all([
+        const [tickersData, statsData] = await Promise.all([
           tickersRes.json(),
-          statsRes.json(),
-          gurusRes.json()
+          statsRes.json()
         ]);
 
         // Ensure all data is properly formatted
         const cleanedTickers = Array.isArray(tickersData) ? tickersData : [];
-        const cleanedGurus = Array.isArray(gurusData) ? gurusData.map(g => g.guru_name) : [];
-        const cleanedGuruObjects = Array.isArray(gurusData) ? gurusData : [];
-        const uniqueSources = Array.from(new Set(cleanedTickers.map(t => t.list_type).filter(Boolean)));
         
         setTickers(cleanedTickers);
         setStats(statsData);
-        setGurus(cleanedGurus);
-        setGuruObjects(cleanedGuruObjects);
-        setSources(uniqueSources);
-        // Extract dynamic filter values from actual ticker data
-        const uniqueStatuses = Array.from(new Set(cleanedTickers.map(t => t.scrape_status).filter(Boolean)));
-        const uniqueSteps = Array.from(new Set(cleanedTickers.map(t => t.current_step).filter(Boolean)));
-        const uniqueScrapeTypes = Array.from(new Set(cleanedTickers.map(t => t.scrape_type).filter(Boolean)));
-        
-        setFilterValues({
-          statuses: uniqueStatuses,
-          steps: uniqueSteps,
-          scrapeTypes: uniqueScrapeTypes
-        });
       } catch (err) {
         setError('Failed to load tickers data');
         console.error(err);
@@ -148,7 +107,7 @@ export default function TickersPage() {
   // Filter tickers - only show data when filters are applied
   useEffect(() => {
     // Check if any filter is applied
-    const hasFilters = searchTerm || selectedGuru || selectedSource || selectedStatus || selectedStep || selectedScrapeType || showActiveOnly;
+    const hasFilters = searchTerm || showActiveOnly || targetFilter;
     
     if (!hasFilters) {
       setFilteredTickers([]);
@@ -164,33 +123,18 @@ export default function TickersPage() {
       );
     }
 
-    if (selectedGuru) {
-      filtered = filtered.filter(ticker => ticker.guru_name === selectedGuru);
-    }
-
-    if (selectedSource) {
-      filtered = filtered.filter(ticker => ticker.list_type === selectedSource);
-    }
-
-    if (selectedStatus) {
-      filtered = filtered.filter(ticker => ticker.scrape_status === selectedStatus);
-    }
-
-    if (selectedStep) {
-      filtered = filtered.filter(ticker => ticker.current_step === selectedStep);
-    }
-
-    if (selectedScrapeType) {
-      filtered = filtered.filter(ticker => ticker.scrape_type === selectedScrapeType);
-    }
-
     if (showActiveOnly) {
       filtered = filtered.filter(ticker => ticker.active);
     }
 
+    if (targetFilter) {
+      const isTarget = targetFilter === 'true';
+      filtered = filtered.filter(ticker => ticker.target === isTarget);
+    }
+
     setFilteredTickers(filtered);
     setCurrentPage(1);
-  }, [tickers, searchTerm, selectedGuru, selectedSource, selectedStatus, selectedStep, selectedScrapeType, showActiveOnly]);
+  }, [tickers, searchTerm, showActiveOnly, targetFilter]);
 
   // Delete handler
   const handleDeleteTicker = async (tickerId: string) => {
@@ -223,15 +167,9 @@ export default function TickersPage() {
 
   // Edit handlers
   const openEditModal = (ticker: Ticker) => {
-    const guruObj = guruObjects.find(g => g.guru_name === ticker.guru_name);
     setEditingTicker(ticker);
     setEditForm({
       symbol: ticker.symbol,
-      list_type: ticker.list_type,
-      scrape_type: ticker.scrape_type,
-      current_step: ticker.current_step,
-      scrape_status: ticker.scrape_status,
-      guru_id: guruObj?.id || '',
       active: ticker.active
     });
   };
@@ -308,8 +246,6 @@ export default function TickersPage() {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            scrape_type: bulkEditForm.scrape_type,
-            scrape_status: bulkEditForm.scrape_status,
             active: bulkEditForm.active
           })
         })
@@ -320,7 +256,7 @@ export default function TickersPage() {
       // Update local state
       setTickers(prev => prev.map(ticker => 
         selectedTickers.has(ticker.id) 
-          ? { ...ticker, scrape_type: bulkEditForm.scrape_type, scrape_status: bulkEditForm.scrape_status, active: bulkEditForm.active }
+          ? { ...ticker, active: bulkEditForm.active }
           : ticker
       ));
       
@@ -333,23 +269,7 @@ export default function TickersPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  const getStepColor = (step: string) => {
-    switch (step) {
-      case 'rule1': return 'bg-blue-100 text-blue-800';
-      case 'analysis': return 'bg-purple-100 text-purple-800';
-      case 'complete': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   if (loading) {
     return (
@@ -443,58 +363,13 @@ export default function TickersPage() {
             </div>
             
             <select
-              value={selectedGuru}
-              onChange={(e) => setSelectedGuru(e.target.value)}
+              value={targetFilter}
+              onChange={(e) => setTargetFilter(e.target.value)}
               className="bg-gray-50 dark:bg-gray-700 border-0 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">{language === 'fr' ? '👤 Tous les gurus' : '👤 All Gurus'}</option>
-              {gurus.map(guru => (
-                <option key={guru} value={guru}>{guru}</option>
-              ))}
-            </select>
-            
-            <select
-              value={selectedSource}
-              onChange={(e) => setSelectedSource(e.target.value)}
-              className="bg-gray-50 dark:bg-gray-700 border-0 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">{language === 'fr' ? '📊 Toutes sources' : '📊 All Sources'}</option>
-              {sources.map(source => (
-                <option key={source} value={source}>{source}</option>
-              ))}
-            </select>
-            
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-gray-50 dark:bg-gray-700 border-0 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">{language === 'fr' ? '🔄 Tous statuts' : '🔄 All Status'}</option>
-              {filterValues.statuses.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-            
-            <select
-              value={selectedStep}
-              onChange={(e) => setSelectedStep(e.target.value)}
-              className="bg-gray-50 dark:bg-gray-700 border-0 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">{language === 'fr' ? '⚡ Toutes étapes' : '⚡ All Steps'}</option>
-              {filterValues.steps.map(step => (
-                <option key={step} value={step}>{step}</option>
-              ))}
-            </select>
-            
-            <select
-              value={selectedScrapeType}
-              onChange={(e) => setSelectedScrapeType(e.target.value)}
-              className="bg-gray-50 dark:bg-gray-700 border-0 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">{language === 'fr' ? '🔧 Tous types' : '🔧 All Types'}</option>
-              {filterValues.scrapeTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
+              <option value="">{language === 'fr' ? '🎯 Toutes cibles' : '🎯 All Targets'}</option>
+              <option value="true">{language === 'fr' ? '🎯 Cibles uniquement' : '🎯 Targets only'}</option>
+              <option value="false">{language === 'fr' ? '📊 Non-cibles' : '📊 Non-targets'}</option>
             </select>
             
             <label className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
@@ -509,16 +384,12 @@ export default function TickersPage() {
               </span>
             </label>
             
-            {(searchTerm || selectedGuru || selectedSource || selectedStatus || selectedStep || selectedScrapeType || showActiveOnly) && (
+            {(searchTerm || showActiveOnly || targetFilter) && (
               <button
                 onClick={() => {
                   setSearchTerm('');
-                  setSelectedGuru('');
-                  setSelectedSource('');
-                  setSelectedStatus('');
-                  setSelectedStep('');
-                  setSelectedScrapeType('');
                   setShowActiveOnly(false);
+                  setTargetFilter('');
                 }}
                 className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl text-sm font-medium transition-colors"
               >
@@ -556,33 +427,21 @@ export default function TickersPage() {
                 <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
                   {language === 'fr' ? 'Ticker' : 'Ticker'}
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
-                  Guru
+                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
+                  {language === 'fr' ? 'Cible' : 'Target'}
                 </th>
                 <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
-                  Src
+                  {language === 'fr' ? 'Actif' : 'Active'}
                 </th>
                 <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
-                  Step
-                </th>
-                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
-                  Status
-                </th>
-                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
-                  Type
-                </th>
-                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
-                  Active
-                </th>
-                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
-                  Updated
+                  {language === 'fr' ? 'Mis à jour' : 'Updated'}
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
               {paginatedTickers.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 10 : 9} className="px-6 py-12 text-center">
+                  <td colSpan={isAdmin ? 6 : 5} className="px-6 py-12 text-center">
                     <div className="inline-flex items-center justify-center h-20 w-20 bg-blue-100 rounded-full mb-4">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
@@ -653,32 +512,13 @@ export default function TickersPage() {
                       {ticker.symbol}
                     </button>
                   </td>
-                  <td className="px-3 py-2 text-gray-900 dark:text-white text-xs">
-                    {ticker.guru_name || '-'}
-                  </td>
-                  <td className="px-3 py-2 text-center">
-                    <span className="px-2 py-1 bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-200 rounded text-xs">
-                      {ticker.list_type}
-                    </span>
-                  </td>
                   <td className="px-3 py-2 text-center">
                     <span className={clsx(
-                      'px-2 py-1 rounded text-xs font-medium',
-                      getStepColor(ticker.current_step)
+                      'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+                      ticker.target ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
                     )}>
-                      {ticker.current_step}
+                      {ticker.target ? '🎯' : '📊'}
                     </span>
-                  </td>
-                  <td className="px-3 py-2 text-center">
-                    <span className={clsx(
-                      'px-2 py-1 rounded text-xs font-medium',
-                      getStatusColor(ticker.scrape_status)
-                    )}>
-                      {ticker.scrape_status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-center text-gray-900 dark:text-white text-xs">
-                    {ticker.scrape_type}
                   </td>
                   <td className="px-3 py-2 text-center">
                     <span className={clsx(
@@ -807,70 +647,7 @@ export default function TickersPage() {
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Guru</label>
-                  <select
-                    value={editForm.guru_id}
-                    onChange={(e) => setEditForm({...editForm, guru_id: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">{language === 'fr' ? 'Aucun' : 'None'}</option>
-                    {guruObjects.map(guru => (
-                      <option key={guru.id} value={guru.id}>{guru.guru_name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'fr' ? 'Source' : 'Source'}</label>
-                  <select
-                    value={editForm.list_type}
-                    onChange={(e) => setEditForm({...editForm, list_type: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {sources.map(source => (
-                      <option key={source} value={source}>{source}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'fr' ? 'Type de Scraping' : 'Scrape Type'}</label>
-                  <select
-                    value={editForm.scrape_type}
-                    onChange={(e) => setEditForm({...editForm, scrape_type: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="daily">Daily</option>
-                    <option value="hourly">Hourly</option>
-                    <option value="monthly">Monthly</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'fr' ? 'Étape' : 'Step'}</label>
-                  <select
-                    value={editForm.current_step}
-                    onChange={(e) => setEditForm({...editForm, current_step: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {filterValues.steps.map(step => (
-                      <option key={step} value={step}>{step}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <select
-                    value={editForm.scrape_status}
-                    onChange={(e) => setEditForm({...editForm, scrape_status: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="not active">Not Active</option>
-                  </select>
-                </div>
+
                 
                 <div className="flex items-center">
                   <input
@@ -924,104 +701,89 @@ export default function TickersPage() {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'fr' ? 'Symbole' : 'Symbol'}</label>
-                  <input
-                    type="text"
-                    value={addForm.symbol}
-                    onChange={(e) => setAddForm({...addForm, symbol: e.target.value.toUpperCase()})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="AAPL"
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'fr' ? 'Tickers (séparés par des virgules)' : 'Tickers (comma separated)'}</label>
+                  <textarea
+                    value={addForm.tickers}
+                    onChange={(e) => setAddForm({...addForm, tickers: e.target.value.toUpperCase()})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[80px]"
+                    placeholder="AAPL, GOOGL, MSFT"
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Guru</label>
-                  <select
-                    value={addForm.guru_id}
-                    onChange={(e) => setAddForm({...addForm, guru_id: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    <option value="">{language === 'fr' ? 'Aucun' : 'None'}</option>
-                    {guruObjects.map(guru => (
-                      <option key={guru.id} value={guru.id}>{guru.guru_name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'fr' ? 'Source' : 'Source'}</label>
-                  <select
-                    value={addForm.list_type}
-                    onChange={(e) => setAddForm({...addForm, list_type: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    {sources.map(source => (
-                      <option key={source} value={source}>{source}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="addActive"
-                    checked={addForm.active}
-                    onChange={(e) => setAddForm({...addForm, active: e.target.checked})}
-                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                  />
-                  <label htmlFor="addActive" className="ml-2 text-sm text-gray-700">
-                    {language === 'fr' ? 'Actif' : 'Active'}
-                  </label>
-                </div>
+
               </div>
               
               <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
                 <button
                   onClick={async () => {
-                    if (!addForm.symbol.trim()) return;
+                    if (!addForm.tickers.trim()) return;
                     setAddSaving(true);
+                    setAddResult(null);
                     try {
                       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-                      const response = await fetch(`${API_URL}/tickers`, {
+                      const tickersArray = addForm.tickers.split(',').map(t => t.trim()).filter(t => t);
+                      const response = await fetch(`${API_URL}/scraper-tasks/add-multiple`, {
                         method: 'POST',
                         headers: {
                           'Authorization': `Bearer ${token}`,
                           'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(addForm)
+                        body: JSON.stringify({ tickers: tickersArray })
                       });
                       if (response.ok) {
-                        const newTicker = await response.json();
-                        setTickers(prev => [newTicker, ...prev]);
-                        setShowAddModal(false);
-                        setAddForm({
-                          symbol: '',
-                          list_type: 'manual',
-                          scrape_type: 'daily',
-                          current_step: 'pending',
-                          scrape_status: 'pending',
-                          guru_id: '',
-                          active: true
-                        });
+                        const result = await response.json();
+                        setAddResult({ added: result.added || [], updated: result.updated || [] });
+                        setAddForm({...addForm, tickers: ''});
+                        // Refresh tickers list
+                        const tickersRes = await fetch(`${API_URL}/tickers`);
+                        if (tickersRes.ok) {
+                          const tickersData = await tickersRes.json();
+                          setTickers(Array.isArray(tickersData) ? tickersData : []);
+                        }
                       }
                     } catch (error) {
-                      console.error('Error adding ticker:', error);
+                      console.error('Error adding tickers:', error);
                     } finally {
                       setAddSaving(false);
                     }
                   }}
-                  disabled={addSaving || !addForm.symbol.trim()}
+                  disabled={addSaving || !addForm.tickers.trim()}
                   className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl px-4 py-3 text-sm font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
                 >
                   {addSaving ? (language === 'fr' ? 'Ajout...' : 'Adding...') : (language === 'fr' ? 'Ajouter' : 'Add')}
                 </button>
                 <button
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setAddForm({
+                      tickers: '',
+                      active: true
+                    });
+                    setAddResult(null);
+                  }}
                   className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors duration-200"
                 >
                   {language === 'fr' ? 'Annuler' : 'Cancel'}
                 </button>
               </div>
+              
+              {/* Success Message */}
+              {addResult && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <div className="text-sm text-green-800">
+                    {addResult.added.length > 0 && (
+                      <div className="mb-2">
+                        <strong>{language === 'fr' ? 'Ajoutés:' : 'Added:'}</strong> {addResult.added.join(', ')}
+                      </div>
+                    )}
+                    {addResult.updated.length > 0 && (
+                      <div>
+                        <strong>{language === 'fr' ? 'Mis à jour:' : 'Updated:'}</strong> {addResult.updated.join(', ')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1045,31 +807,6 @@ export default function TickersPage() {
               </div>
               
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'fr' ? 'Type de Scraping' : 'Scrape Type'}</label>
-                  <select
-                    value={bulkEditForm.scrape_type}
-                    onChange={(e) => setBulkEditForm({...bulkEditForm, scrape_type: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="daily">Daily</option>
-                    <option value="hourly">Hourly</option>
-                    <option value="monthly">Monthly</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <select
-                    value={bulkEditForm.scrape_status}
-                    onChange={(e) => setBulkEditForm({...bulkEditForm, scrape_status: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="not active">Not Active</option>
-                  </select>
-                </div>
-                
                 <div className="flex items-center">
                   <input
                     type="checkbox"
