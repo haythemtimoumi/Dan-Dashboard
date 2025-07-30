@@ -635,6 +635,11 @@ export default function NewPortfolioPage() {
                               className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400"
                               style={{ backgroundColor: stockColor || 'transparent' }}
                             />
+                            {stock.target && (
+                              <span className="text-yellow-500 text-sm" title="Target Stock">
+                                ⭐
+                              </span>
+                            )}
                             {stock.ticker}
                             {(() => {
                               const guruInfo = formatGuruBadges(stock, 2);
