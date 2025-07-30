@@ -841,9 +841,9 @@ export default function TickersPage() {
                     onChange={(e) => setEditForm({...editForm, scrape_type: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {filterValues.scrapeTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
+                    <option value="daily">Daily</option>
+                    <option value="hourly">Hourly</option>
+                    <option value="monthly">Monthly</option>
                   </select>
                 </div>
                 
@@ -867,9 +867,8 @@ export default function TickersPage() {
                     onChange={(e) => setEditForm({...editForm, scrape_status: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {filterValues.statuses.map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
+                    <option value="pending">Pending</option>
+                    <option value="not active">Not Active</option>
                   </select>
                 </div>
                 
@@ -1053,9 +1052,9 @@ export default function TickersPage() {
                     onChange={(e) => setBulkEditForm({...bulkEditForm, scrape_type: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {filterValues.scrapeTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
+                    <option value="daily">Daily</option>
+                    <option value="hourly">Hourly</option>
+                    <option value="monthly">Monthly</option>
                   </select>
                 </div>
                 
@@ -1066,9 +1065,8 @@ export default function TickersPage() {
                     onChange={(e) => setBulkEditForm({...bulkEditForm, scrape_status: e.target.value})}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {filterValues.statuses.map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
+                    <option value="pending">Pending</option>
+                    <option value="not active">Not Active</option>
                   </select>
                 </div>
                 

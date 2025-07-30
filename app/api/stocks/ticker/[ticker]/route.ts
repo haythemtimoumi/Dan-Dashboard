@@ -1,30 +1,49 @@
-import { NextResponse } from 'next/server';
-import { stocks } from '@/app/lib/stock-data';
-
-// Add export config to mark this route as dynamic
-export const dynamic = 'force-dynamic';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { ticker: string } }
 ) {
   try {
-    const ticker = params.ticker.toUpperCase();
-    const matchingStocks = stocks.filter(s => s.ticker === ticker);
+    const { searchParams } = new URL(request.url);
+    const date = searchParams.get('date');
+    const isHourly = searchParams.get('hourly') === 'true';
     
-    if (matchingStocks.length === 0) {
-      console.warn(`No stocks found with ticker ${ticker}`);
-      return NextResponse.json(
-        { error: `No stocks found with ticker ${ticker}` },
-        { status: 404 }
-      );
+    let url = `https://www.mytickerlist.com/api/stocks/ticker/${params.ticker}`;
+    const urlParams = new URLSearchParams();
+    
+    if (date) {
+      if (isHourly) {
+        // For hourly tickers, get all data for the specified date
+        urlParams.append('startDate', date);
+        urlParams.append('endDate', date);
+      } else {
+        // For daily tickers, get data for the specific date
+        urlParams.append('date', date);
+      }
     }
     
-    return NextResponse.json(matchingStocks);
+    if (urlParams.toString()) {
+      url += `?${urlParams.toString()}`;
+    }
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`External API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching stock by ticker:', error);
+    console.error('Error fetching ticker data:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch stock by ticker' },
+      { error: 'Failed to fetch ticker data' },
       { status: 500 }
     );
   }

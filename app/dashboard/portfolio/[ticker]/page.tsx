@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Stock } from '@/app/lib/definitions';
 import { formatCurrency } from '@/app/lib/utils';
@@ -44,19 +44,55 @@ const formatBuyPrice = (value: any): string => {
 
 export default function StockAnalysisPage({ params }: { params: { ticker: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, language } = useSettings();
   const [allStocks, setAllStocks] = useState<Stock[]>([]);
   const [currentStock, setCurrentStock] = useState<Stock | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    searchParams.get('date') || new Date().toISOString().split('T')[0]
+  );
+
+  const fetchStocksForDate = async (date: string) => {
+    try {
+      setLoading(true);
+      
+      // Fetch stocks for specific date
+      const response = await fetch(`/api/stocks/grouped?startDate=${date}&endDate=${date}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch stocks: ${response.statusText}`);
+      }
+      
+      const stocksData = await response.json();
+      
+      // Find the specific ticker in the response
+      const tickerStock = stocksData.find((stock: Stock) => stock.ticker === params.ticker);
+      
+      if (tickerStock) {
+        setCurrentStock(tickerStock);
+        setError(null);
+      } else {
+        setCurrentStock(null);
+        setError(`No data found for ${params.ticker} on ${date}`);
+      }
+    } catch (err) {
+      console.error('Error fetching stock data:', err);
+      setError('Failed to load stock data. Please try again later.');
+      setCurrentStock(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchAllStocks = async () => {
       try {
         setLoading(true);
         
-        // Fetch all stocks from grouped endpoint
+        // Fetch all stocks from grouped endpoint for navigation
         const response = await fetch('/api/stocks/grouped');
         
         if (!response.ok) {
@@ -107,12 +143,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
         const tickerIndex = sortedStocks.findIndex((stock: Stock) => stock.ticker === params.ticker);
         if (tickerIndex !== -1) {
           setCurrentIndex(tickerIndex);
-          setCurrentStock(sortedStocks[tickerIndex]);
-        } else {
-          setError(`Ticker ${params.ticker} not found`);
         }
-        
-        setError(null);
       } catch (err) {
         console.error('Error fetching stocks:', err);
         setError('Failed to load stock analysis data. Please try again later.');
@@ -124,21 +155,42 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
     fetchAllStocks();
   }, [params.ticker]);
 
+  // Fetch stock data when date changes
+  useEffect(() => {
+    fetchStocksForDate(selectedDate);
+  }, [selectedDate, params.ticker]);
+
+  const handlePreviousDay = () => {
+    const prevDate = new Date(selectedDate);
+    prevDate.setDate(prevDate.getDate() - 1);
+    setSelectedDate(prevDate.toISOString().split('T')[0]);
+  };
+
+  const handleNextDay = () => {
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    const today = new Date().toISOString().split('T')[0];
+    const newDate = nextDate.toISOString().split('T')[0];
+    if (newDate <= today) {
+      setSelectedDate(newDate);
+    }
+  };
+
   const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
       const newIndex = currentIndex - 1;
       const newStock = allStocks[newIndex];
-      router.push(`/dashboard/portfolio/${newStock.ticker}`);
+      router.push(`/dashboard/portfolio/${newStock.ticker}?date=${selectedDate}`);
     }
-  }, [currentIndex, allStocks, router]);
+  }, [currentIndex, allStocks, router, selectedDate]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < allStocks.length - 1) {
       const newIndex = currentIndex + 1;
       const newStock = allStocks[newIndex];
-      router.push(`/dashboard/portfolio/${newStock.ticker}`);
+      router.push(`/dashboard/portfolio/${newStock.ticker}?date=${selectedDate}`);
     }
-  }, [currentIndex, allStocks, router]);
+  }, [currentIndex, allStocks, router, selectedDate]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -164,24 +216,75 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
 
   if (error || !currentStock) {
     return (
-      <div className="flex justify-center items-center min-h-[600px]">
-        <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-8 text-center">
-          <h2 className="font-bold mb-2 text-gray-900 dark:text-white">
-            {!currentStock ? 'No Analysis Found' : 'Error Loading Analysis'}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {!currentStock 
-              ? `No analysis data found for ${params.ticker}`
-              : error
-            }
-          </p>
-          <button 
-            onClick={() => router.push('/dashboard/portfolio')}
-            className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:bg-gray-800 dark:hover:bg-gray-200"
-          >
-            <ArrowLeftIcon className="w-4 h-4 inline mr-2" />
-            Back to Portfolio
-          </button>
+      <div className="space-y-3">
+        {/* Header with Date Navigation */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/dashboard/portfolio')}
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300"
+              >
+                <ArrowLeftIcon className="w-4 h-4" />
+              </button>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {params.ticker} {language === 'fr' ? 'Analyse' : 'Analysis'}
+                </h2>
+              </div>
+            </div>
+            
+            {/* Date Navigation */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePreviousDay}
+                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded transition-colors"
+                title={language === 'fr' ? 'Jour précédent' : 'Previous day'}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                {new Date(selectedDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
+              </span>
+              <button
+                onClick={handleNextDay}
+                disabled={selectedDate >= new Date().toISOString().split('T')[0]}
+                className={`p-1 rounded transition-colors ${
+                  selectedDate >= new Date().toISOString().split('T')[0]
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                    : 'hover:bg-blue-200 dark:hover:bg-blue-800'
+                }`}
+                title={language === 'fr' ? 'Jour suivant' : 'Next day'}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Error Message */}
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-8 text-center">
+            <h2 className="font-bold mb-2 text-gray-900 dark:text-white">
+              {language === 'fr' ? 'Aucune donnée disponible' : 'No data available for this date'}
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {language === 'fr' 
+                ? `Aucune donnée trouvée pour ${params.ticker} le ${new Date(selectedDate).toLocaleDateString('fr-FR')}`
+                : `No data found for ${params.ticker} on ${new Date(selectedDate).toLocaleDateString('en-US')}`
+              }
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {language === 'fr' 
+                ? 'Utilisez les boutons de navigation pour changer de date'
+                : 'Use the navigation buttons to change the date'
+              }
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -264,12 +367,34 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                     <span className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs font-medium">
                       {currentStock.source}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {(currentStock.date || currentStock.created_at) ? 
-                        new Date(currentStock.date || currentStock.created_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : 
-                        'No date'
-                      }
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handlePreviousDay}
+                        className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded transition-colors"
+                        title={language === 'fr' ? 'Jour précédent' : 'Previous day'}
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        {new Date(selectedDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
+                      </span>
+                      <button
+                        onClick={handleNextDay}
+                        disabled={selectedDate >= new Date().toISOString().split('T')[0]}
+                        className={`p-1 rounded transition-colors ${
+                          selectedDate >= new Date().toISOString().split('T')[0]
+                            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                            : 'hover:bg-blue-200 dark:hover:bg-blue-800'
+                        }`}
+                        title={language === 'fr' ? 'Jour suivant' : 'Next day'}
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
@@ -403,7 +528,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
             <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Actions' : 'Actions'}</h3>
             <div className="space-y-2">
               <button
-                onClick={() => router.push(`/dashboard/portfolio/${currentStock.ticker}/analysis`)}
+                onClick={() => router.push(`/dashboard/portfolio/${currentStock.ticker}/analysis?date=${selectedDate}`)}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -466,7 +591,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
               return (
                 <button
                   key={stock.id}
-                  onClick={() => router.push(`/dashboard/portfolio/${stock.ticker}`)}
+                  onClick={() => router.push(`/dashboard/portfolio/${stock.ticker}?date=${selectedDate}`)}
                   className={`p-1.5 rounded-lg text-xs font-medium transition-all border ${
                     index === currentIndex
                       ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'

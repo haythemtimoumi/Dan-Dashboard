@@ -528,7 +528,7 @@ export default function NewPortfolioPage() {
                         }`}
                         onMouseEnter={(e) => handleMouseEnter(e, stock)}
                         onMouseLeave={handleMouseLeave}
-                        onClick={() => router.push(`/dashboard/portfolio/${stock.ticker}`)}
+                        onClick={() => router.push(`/dashboard/portfolio/${stock.ticker}?date=${startDate}`)}
                       >
                         <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                           <div className="flex items-center gap-2">
