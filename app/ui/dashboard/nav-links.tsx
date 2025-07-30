@@ -28,10 +28,6 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
   const links = [
     { name: t('dashboard'), href: '/dashboard', icon: HomeIcon },
     { name: t('highlighted'), href: '/dashboard/highlighted', icon: StarIcon },
-    { name: t('update'), href: '/dashboard/stock-update', icon: ArrowPathIcon },
-    ...(isAdmin ? [{ name: t('addStock'), href: '/dashboard/stocks/create', icon: PlusCircleIcon }] : []),
-    ...(isAdmin ? [{ name: language === 'fr' ? 'Portfolio' : 'Portfolio', href: '/dashboard/tickers', icon: TagIcon }] : []),
-    ...(isAdmin ? [{ name: t('scraperManagement'), href: '/dashboard/scraper', icon: ServerIcon }] : []),
   ];
   
 
@@ -105,6 +101,27 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
             <>
               <span className="truncate">{language === 'fr' ? 'Ancien Portfolio' : 'Old Portfolio'}</span>
               {(pathname === '/dashboard/old-portfolio' || pathname.startsWith('/dashboard/old-portfolio')) && <div className="ml-auto w-1.5 h-1.5 bg-white dark:bg-black rounded-full" />}
+            </>
+          )}
+        </Link>
+        
+        {/* Portfolio Link */}
+        <Link
+          href="/dashboard/tickers"
+          className={clsx(
+            "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200",
+            pathname === '/dashboard/tickers' || pathname.startsWith('/dashboard/tickers')
+              ? "bg-black dark:bg-white text-white dark:text-black"
+              : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white",
+            isCollapsed && "justify-center px-2"
+          )}
+          title={isCollapsed ? (language === 'fr' ? 'Portfolio' : 'Portfolio') : undefined}
+        >
+          <TagIcon className="h-5 w-5 flex-shrink-0" />
+          {!isCollapsed && (
+            <>
+              <span className="truncate">{language === 'fr' ? 'Portfolio' : 'Portfolio'}</span>
+              {(pathname === '/dashboard/tickers' || pathname.startsWith('/dashboard/tickers')) && <div className="ml-auto w-1.5 h-1.5 bg-white dark:bg-black rounded-full" />}
             </>
           )}
         </Link>

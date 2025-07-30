@@ -71,10 +71,11 @@ export default function NewPortfolioPage() {
   const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [currentComment, setCurrentComment] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [tooltip, setTooltip] = useState<{ stock: Stock; position: { x: number; y: number } } | null>(null);
   const [stocksWithComments, setStocksWithComments] = useState<Set<string>>(new Set());
+  const [searchTicker, setSearchTicker] = useState<string>('');
 
 
   // Load data from localStorage on component mount
@@ -234,22 +235,19 @@ export default function NewPortfolioPage() {
     fetchSources();
   }, []);
 
-  // Load stocks with date filtering using new grouped endpoint
+  // Load stocks with date filtering using grouped endpoint
   useEffect(() => {
     const fetchStocks = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // Use grouped endpoint for main dashboard
+        // Use grouped endpoint
         let url = '/api/stocks/grouped';
-        if (startDate || endDate) {
-          url = 'https://www.mytickerlist.com/api/stocks/by-date-range';
-          const params = new URLSearchParams();
-          if (startDate) params.append('startDate', startDate);
-          if (endDate) params.append('endDate', endDate);
-          url += `?${params.toString()}`;
-        }
+        const params = new URLSearchParams();
+        params.append('startDate', startDate);
+        params.append('endDate', endDate);
+        url += `?${params.toString()}`;
         
         const response = await fetch(url);
         
@@ -279,29 +277,14 @@ export default function NewPortfolioPage() {
     }
   };
 
-  // Filter and deduplicate stocks by selected source and latest update
+  // Filter stocks by selected source and ticker search (no deduplication needed - grouped API handles this)
   const filteredStocks = stocks.filter(stock => {
-    return !selectedSource || stock.source === selectedSource;
+    const sourceMatch = !selectedSource || stock.source === selectedSource;
+    const tickerMatch = !searchTicker || stock.ticker.toLowerCase().includes(searchTicker.toLowerCase());
+    return sourceMatch && tickerMatch;
   });
-  
-  // Deduplicate by ticker, keeping only the latest updated record
-  const deduplicatedStocks = filteredStocks.reduce((acc, stock) => {
-    const existingStock = acc.find(s => s.ticker === stock.ticker);
-    if (!existingStock) {
-      acc.push(stock);
-    } else {
-      // Compare updated_at or created_at timestamps to keep the latest
-      const existingTime = new Date(existingStock.updated_at || existingStock.created_at).getTime();
-      const currentTime = new Date(stock.updated_at || stock.created_at).getTime();
-      if (currentTime > existingTime) {
-        const index = acc.findIndex(s => s.ticker === stock.ticker);
-        acc[index] = stock;
-      }
-    }
-    return acc;
-  }, [] as StockWithHighlight[]);
 
-  const sortedStocks = [...deduplicatedStocks].sort((a, b) => {
+  const sortedStocks = [...filteredStocks].sort((a, b) => {
     let valueA = a[sortBy as keyof Stock];
     let valueB = b[sortBy as keyof Stock];
     
@@ -383,6 +366,20 @@ export default function NewPortfolioPage() {
         <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg border border-gray-100 dark:border-gray-700">
           {/* Filters */}
           <div className="mb-6 flex flex-wrap gap-4 items-center">
+            {/* Ticker Search */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {language === 'fr' ? 'Rechercher:' : 'Search:'}
+              </label>
+              <input
+                type="text"
+                value={searchTicker}
+                onChange={(e) => setSearchTicker(e.target.value)}
+                placeholder={language === 'fr' ? 'Symbole...' : 'Ticker...'}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+
             {/* Source Filter */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -430,12 +427,14 @@ export default function NewPortfolioPage() {
             </div>
 
             {/* Clear Filters */}
-            {(selectedSource || startDate || endDate) && (
+            {(searchTicker || selectedSource || startDate !== new Date().toISOString().split('T')[0] || endDate !== new Date().toISOString().split('T')[0]) && (
               <button
                 onClick={() => {
+                  const today = new Date().toISOString().split('T')[0];
+                  setSearchTicker('');
                   setSelectedSource('');
-                  setStartDate('');
-                  setEndDate('');
+                  setStartDate(today);
+                  setEndDate(today);
                 }}
                 className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500"
               >
@@ -542,6 +541,15 @@ export default function NewPortfolioPage() {
                               style={{ backgroundColor: stockColor || 'transparent' }}
                             />
                             {stock.ticker}
+                            {(() => {
+                              const guruInfo = formatGuruBadges(stock, 2);
+                              return guruInfo.hasMore && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm animate-pulse">
+                                  +{guruInfo.remainingCount}
+                                </span>
+                              );
+                            })()
+                            }
                             {hasComment && (
                               <span className="text-blue-500 text-xs">💬</span>
                             )}
