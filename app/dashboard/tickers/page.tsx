@@ -12,7 +12,7 @@ interface Ticker {
   guru_name?: string;
   list_type: string;
   current_step: string;
-  active: boolean;
+  active: boolean | string | number;
   scrape_status: string;
   scrape_type: string;
   last_action?: string;
@@ -54,7 +54,9 @@ export default function TickersPage() {
   const [selectedTickers, setSelectedTickers] = useState<Set<string>>(new Set());
   const [showBulkEdit, setShowBulkEdit] = useState(false);
   const [bulkEditForm, setBulkEditForm] = useState({
-    active: true
+    active: true,
+    target: false,
+    scrape_status: 'pending'
   });
   const [bulkSaving, setBulkSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -104,17 +106,8 @@ export default function TickersPage() {
     fetchData();
   }, []);
 
-  // Filter tickers - only show data when filters are applied
+  // Filter tickers - show all tickers by default, apply filters when specified
   useEffect(() => {
-    // Check if any filter is applied
-    const hasFilters = searchTerm || showActiveOnly || targetFilter;
-    
-    if (!hasFilters) {
-      setFilteredTickers([]);
-      setCurrentPage(1);
-      return;
-    }
-
     let filtered = tickers;
 
     if (searchTerm) {
@@ -124,7 +117,10 @@ export default function TickersPage() {
     }
 
     if (showActiveOnly) {
-      filtered = filtered.filter(ticker => ticker.active);
+      filtered = filtered.filter(ticker => {
+        // Handle both boolean and string values from API
+        return ticker.active === true || ticker.active === 'true' || ticker.active === 1;
+      });
     }
 
     if (targetFilter) {
@@ -170,7 +166,7 @@ export default function TickersPage() {
     setEditingTicker(ticker);
     setEditForm({
       symbol: ticker.symbol,
-      active: ticker.active
+      active: Boolean(ticker.active === true || ticker.active === 'true' || ticker.active === 1)
     });
   };
 
@@ -246,7 +242,9 @@ export default function TickersPage() {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            active: bulkEditForm.active
+            active: bulkEditForm.active,
+            target: bulkEditForm.target,
+            scrape_status: bulkEditForm.scrape_status
           })
         })
       );
@@ -256,7 +254,7 @@ export default function TickersPage() {
       // Update local state
       setTickers(prev => prev.map(ticker => 
         selectedTickers.has(ticker.id) 
-          ? { ...ticker, active: bulkEditForm.active }
+          ? { ...ticker, active: bulkEditForm.active, target: bulkEditForm.target, scrape_status: bulkEditForm.scrape_status }
           : ticker
       ));
       
@@ -300,113 +298,102 @@ export default function TickersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Enhanced Header */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {language === 'fr' ? 'Gestion des Tickers' : 'Ticker Management'}
           </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {language === 'fr' ? 'Total:' : 'Total:'} {filteredTickers.length} {language === 'fr' ? 'tickers' : 'tickers'}
+          </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-sm text-gray-500">
-            {language === 'fr' ? 'Affichage:' : 'Showing:'} <span className="font-medium text-gray-900 dark:text-white">{filteredTickers.length}</span> {language === 'fr' ? 'résultats' : 'results'}
-          </div>
           {isAdmin && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-colors flex items-center gap-2 text-sm"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-sm"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              {language === 'fr' ? 'Ajouter Ticker' : 'Add Ticker'}
+              {language === 'fr' ? 'Ajouter' : 'Add'}
             </button>
           )}
           {selectedTickers.size > 0 && isAdmin && (
             <button
               onClick={() => setShowBulkEdit(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-sm animate-pulse"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              {language === 'fr' ? `Modifier ${selectedTickers.size}` : `Edit ${selectedTickers.size}`}
+              {language === 'fr' ? `Modifier (${selectedTickers.size})` : `Edit (${selectedTickers.size})`}
             </button>
           )}
         </div>
       </div>
 
-      {/* Enhanced Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
+          <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white">
+            <svg className="w-4 h-4 text-gray-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {language === 'fr' ? 'Filtres:' : 'Filters:'}
-            </span>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={language === 'fr' ? 'Rechercher...' : 'Search...'}
+              className="bg-transparent border-0 text-sm focus:ring-0 p-0 min-w-[120px] transition-all duration-200"
+            />
           </div>
           
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={language === 'fr' ? 'Rechercher...' : 'Search...'}
-                className="bg-transparent border-0 text-sm focus:ring-0 p-0 min-w-[120px]"
-              />
-            </div>
-            
-            <select
-              value={targetFilter}
-              onChange={(e) => setTargetFilter(e.target.value)}
-              className="bg-gray-50 dark:bg-gray-700 border-0 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+          <select
+            value={targetFilter}
+            onChange={(e) => setTargetFilter(e.target.value)}
+            className="bg-gray-50 dark:bg-gray-700 border-0 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200 hover:shadow-md hover:bg-white focus:bg-white"
+          >
+            <option value="">{language === 'fr' ? 'Toutes cibles' : 'All Targets'}</option>
+            <option value="true">{language === 'fr' ? 'Cibles uniquement' : 'Targets only'}</option>
+            <option value="false">{language === 'fr' ? 'Non-cibles' : 'Non-targets'}</option>
+          </select>
+          
+          <label className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 cursor-pointer transition-all duration-200 hover:shadow-md hover:bg-white">
+            <input
+              type="checkbox"
+              checked={showActiveOnly}
+              onChange={(e) => setShowActiveOnly(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all duration-200 hover:scale-110"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              {language === 'fr' ? 'Actifs seulement' : 'Active only'}
+            </span>
+          </label>
+          
+          {(searchTerm || showActiveOnly || targetFilter) && (
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setShowActiveOnly(false);
+                setTargetFilter('');
+              }}
+              className="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 hover:shadow-md"
             >
-              <option value="">{language === 'fr' ? '🎯 Toutes cibles' : '🎯 All Targets'}</option>
-              <option value="true">{language === 'fr' ? '🎯 Cibles uniquement' : '🎯 Targets only'}</option>
-              <option value="false">{language === 'fr' ? '📊 Non-cibles' : '📊 Non-targets'}</option>
-            </select>
-            
-            <label className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
-              <input
-                type="checkbox"
-                checked={showActiveOnly}
-                onChange={(e) => setShowActiveOnly(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                {language === 'fr' ? '✅ Actifs' : '✅ Active'}
-              </span>
-            </label>
-            
-            {(searchTerm || showActiveOnly || targetFilter) && (
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setShowActiveOnly(false);
-                  setTargetFilter('');
-                }}
-                className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl text-sm font-medium transition-colors"
-              >
-                {language === 'fr' ? '✕ Effacer' : '✕ Clear'}
-              </button>
-            )}
-          </div>
+              {language === 'fr' ? 'Effacer' : 'Clear'}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-xs">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr className="border-b border-gray-200 dark:border-gray-600">
-                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
+                <th className="px-4 py-3 text-center">
                   <input
                     type="checkbox"
                     checked={isAllSelected}
@@ -418,22 +405,20 @@ export default function TickersPage() {
                   />
                 </th>
                 {isAdmin && (
-                  <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
-                    <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                    </svg>
+                  <th className="px-4 py-3 text-center font-medium text-gray-600 dark:text-gray-300">
+                    {language === 'fr' ? 'Actions' : 'Actions'}
                   </th>
                 )}
-                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">
                   {language === 'fr' ? 'Ticker' : 'Ticker'}
                 </th>
-                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
+                <th className="px-4 py-3 text-center font-medium text-gray-600 dark:text-gray-300">
                   {language === 'fr' ? 'Cible' : 'Target'}
                 </th>
-                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
+                <th className="px-4 py-3 text-center font-medium text-gray-600 dark:text-gray-300">
                   {language === 'fr' ? 'Actif' : 'Active'}
                 </th>
-                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300">
+                <th className="px-4 py-3 text-center font-medium text-gray-600 dark:text-gray-300">
                   {language === 'fr' ? 'Mis à jour' : 'Updated'}
                 </th>
               </tr>
@@ -442,29 +427,29 @@ export default function TickersPage() {
               {paginatedTickers.length === 0 ? (
                 <tr>
                   <td colSpan={isAdmin ? 6 : 5} className="px-6 py-12 text-center">
-                    <div className="inline-flex items-center justify-center h-20 w-20 bg-blue-100 rounded-full mb-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
+                    <div className="text-gray-500 dark:text-gray-400">
+                      <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4m16 0l-2-2m2 2l-2 2M4 13l2-2m-2 2l2 2" />
                       </svg>
+                      <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {language === 'fr' ? 'Aucun ticker trouvé' : 'No tickers found'}
+                      </h3>
+                      <p className="text-sm">
+                        {language === 'fr' 
+                          ? 'Aucun ticker ne correspond aux critères actuels.'
+                          : 'No tickers match the current criteria.'
+                        }
+                      </p>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                      {language === 'fr' ? 'Utilisez les filtres pour voir les données' : 'Use filters to view data'}
-                    </h3>
-                    <p className="text-gray-500 max-w-md mx-auto">
-                      {language === 'fr' 
-                        ? 'Sélectionnez un filtre ou effectuez une recherche pour afficher les tickers.'
-                        : 'Select a filter or search to display tickers.'
-                      }
-                    </p>
                   </td>
                 </tr>
               ) : (
                 paginatedTickers.map((ticker, index) => (
                 <tr key={ticker.id} className={clsx(
-                  "cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700",
+                  "hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 hover:shadow-sm transform hover:scale-[1.01]",
                   index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50/50 dark:bg-gray-750"
-                )}>
-                  <td className="px-3 py-2 text-center">
+                )} style={{animationDelay: `${index * 50}ms`}}>
+                  <td className="px-4 py-3 text-center">
                     <input
                       type="checkbox"
                       checked={selectedTickers.has(ticker.id)}
@@ -473,30 +458,30 @@ export default function TickersPage() {
                     />
                   </td>
                   {isAdmin && (
-                    <td className="px-3 py-2 text-center">
+                    <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => openEditModal(ticker)}
-                          className="w-6 h-6 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 flex items-center justify-center transition-colors"
+                          className="w-7 h-7 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-600 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-md"
                           title={language === 'fr' ? 'Modifier' : 'Edit'}
                         >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </button>
                         <button
                           onClick={() => handleDeleteTicker(ticker.id)}
                           disabled={deletingTickers.has(ticker.id)}
-                          className="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 text-red-600 flex items-center justify-center transition-colors disabled:opacity-50"
+                          className="w-7 h-7 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 flex items-center justify-center transition-all duration-200 hover:scale-110 hover:shadow-md disabled:opacity-50 disabled:hover:scale-100"
                           title={language === 'fr' ? 'Supprimer' : 'Delete'}
                         >
                           {deletingTickers.has(ticker.id) ? (
-                            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                               <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                           ) : (
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           )}
@@ -504,32 +489,35 @@ export default function TickersPage() {
                       </div>
                     </td>
                   )}
-                  <td className="px-3 py-2">
+                  <td className="px-4 py-3">
                     <button
                       onClick={() => router.push(`/dashboard/tickers/${ticker.symbol}`)}
-                      className="font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors"
+                      className="font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-all duration-200 hover:translate-x-1"
                     >
                       {ticker.symbol}
                     </button>
                   </td>
-                  <td className="px-3 py-2 text-center">
+                  <td className="px-4 py-3 text-center">
                     <span className={clsx(
-                      'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
-                      ticker.target ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                      'inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all duration-200 hover:scale-110',
+                      ticker.target ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     )}>
                       {ticker.target ? '🎯' : '📊'}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-center">
+                  <td className="px-4 py-3 text-center">
                     <span className={clsx(
-                      'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
-                      ticker.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      'inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all duration-200 hover:scale-110',
+                      ticker.active ? 'bg-green-100 text-green-800 hover:bg-green-200 animate-pulse' : 'bg-red-100 text-red-800 hover:bg-red-200'
                     )}>
                       {ticker.active ? '✓' : '✗'}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-center text-gray-500 dark:text-gray-400">
-                    {new Date(ticker.last_updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  <td className="px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                    {ticker.last_updated_at && ticker.last_updated_at !== '0000-00-00 00:00:00' ? 
+                      new Date(ticker.last_updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 
+                      (language === 'fr' ? 'Nouveau' : 'New')
+                    }
                   </td>
                 </tr>
                 ))
@@ -818,6 +806,31 @@ export default function TickersPage() {
                   <label htmlFor="bulkActive" className="ml-2 text-sm text-gray-700">
                     {language === 'fr' ? 'Actif' : 'Active'}
                   </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="bulkTarget"
+                    checked={bulkEditForm.target}
+                    onChange={(e) => setBulkEditForm({...bulkEditForm, target: e.target.checked})}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="bulkTarget" className="ml-2 text-sm text-gray-700">
+                    {language === 'fr' ? 'Cible' : 'Target'}
+                  </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'fr' ? 'Statut de scraping' : 'Scrape Status'}
+                  </label>
+                  <select
+                    value={bulkEditForm.scrape_status}
+                    onChange={(e) => setBulkEditForm({...bulkEditForm, scrape_status: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="pending">{language === 'fr' ? 'En attente' : 'Pending'}</option>
+                    <option value="not active">{language === 'fr' ? 'Non actif' : 'Not Active'}</option>
+                  </select>
                 </div>
               </div>
               

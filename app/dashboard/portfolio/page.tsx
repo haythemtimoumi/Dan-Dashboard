@@ -52,6 +52,7 @@ const formatBuyPrice = (value: any): string => {
 
 interface StockWithHighlight extends Omit<Stock, 'highlight'> {
   highlight?: boolean;
+  target?: boolean;
 }
 
 export default function NewPortfolioPage() {
