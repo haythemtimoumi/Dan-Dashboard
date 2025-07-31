@@ -5,6 +5,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const target = searchParams.get('target');
     
     let url = 'https://www.mytickerlist.com/api/stocks/grouped';
     const params = new URLSearchParams();
@@ -23,7 +24,13 @@ export async function GET(request: NextRequest) {
       throw new Error(`External API error: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    let data = await response.json();
+    
+    // Filter for target stocks if requested
+    if (target === 'true') {
+      data = data.filter((stock: any) => stock.target === true);
+    }
+    
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching grouped stocks:', error);

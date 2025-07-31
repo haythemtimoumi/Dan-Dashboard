@@ -80,6 +80,21 @@ export default function StocksTable({
     let valueA = a[sortBy as keyof StocksTable];
     let valueB = b[sortBy as keyof StocksTable];
     
+    // Special handling for per_upside field - use custom calculation
+    if (sortBy === 'per_upside') {
+      const getUpside = (stock: StocksTable) => {
+        if (!stock.buy_price || !stock.last_price) return -Infinity;
+        const buy = typeof stock.buy_price === 'string' ? parseFloat(String(stock.buy_price).replace(/[$,]/g, '')) : Number(stock.buy_price);
+        const last = typeof stock.last_price === 'string' ? parseFloat(String(stock.last_price).replace(/[$,]/g, '')) : Number(stock.last_price);
+        if (isNaN(buy) || isNaN(last) || last <= 0) return -Infinity;
+        return ((buy * 2 - last) / last) * 100;
+      };
+      
+      const upsideA = getUpside(a);
+      const upsideB = getUpside(b);
+      return sortOrder === 'asc' ? upsideA - upsideB : upsideB - upsideA;
+    }
+    
     // Handle null/undefined/empty string values - always sort them to the end
     // Note: 0 and negative numbers are NOT considered empty
     const isAEmpty = valueA === null || valueA === undefined || valueA === '';
@@ -100,6 +115,16 @@ export default function StocksTable({
     // Handle numbers (including negative numbers)
     if (typeof valueA === 'number' && typeof valueB === 'number') {
       return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+    }
+    
+    // Handle percentage values (like per_upside)
+    if (typeof valueA === 'string' && typeof valueB === 'string' && 
+        valueA.includes('%') && valueB.includes('%')) {
+      const numA = parseFloat(valueA.replace('%', ''));
+      const numB = parseFloat(valueB.replace('%', ''));
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return sortOrder === 'asc' ? numA - numB : numB - numA;
+      }
     }
     
     // Handle strings
@@ -161,6 +186,18 @@ export default function StocksTable({
                       </p>
                       <p className="text-sm">
                         <span className="font-medium">Buy Price:</span> {formatCurrency(stock.buy_price)}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">% Upside:</span> {(() => {
+                          if (!stock.buy_price || !stock.last_price) return '-';
+                          const buy = typeof stock.buy_price === 'string' ? parseFloat(String(stock.buy_price).replace(/[$,]/g, '')) : Number(stock.buy_price);
+                          const last = typeof stock.last_price === 'string' ? parseFloat(String(stock.last_price).replace(/[$,]/g, '')) : Number(stock.last_price);
+                          if (isNaN(buy) || isNaN(last) || last === 0) return '-';
+                          const stickerPrice = buy * 2;
+                          const upside = ((stickerPrice - last) / last) * 100;
+                          return `${Math.round(upside)}%`;
+                        })()
+                        }
                       </p>
                       <p className="mt-2">
                         <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-xs", 
@@ -226,6 +263,12 @@ export default function StocksTable({
                 <SortableHeader 
                   label="PE" 
                   field="pe" 
+                  currentSortBy={sortBy} 
+                  currentSortOrder={sortOrder} 
+                />
+                <SortableHeader 
+                  label="% Upside" 
+                  field="per_upside" 
                   currentSortBy={sortBy} 
                   currentSortOrder={sortOrder} 
                 />
@@ -296,6 +339,18 @@ export default function StocksTable({
                       {formatLargeNumber(stock.pe)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">
+                      {(() => {
+                        if (!stock.buy_price || !stock.last_price) return '-';
+                        const buy = typeof stock.buy_price === 'string' ? parseFloat(String(stock.buy_price).replace(/[$,]/g, '')) : Number(stock.buy_price);
+                        const last = typeof stock.last_price === 'string' ? parseFloat(String(stock.last_price).replace(/[$,]/g, '')) : Number(stock.last_price);
+                        if (isNaN(buy) || isNaN(last) || last === 0) return '-';
+                        const stickerPrice = buy * 2;
+                        const upside = ((stickerPrice - last) / last) * 100;
+                        return `${Math.round(upside)}%`;
+                      })()
+                      }
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3">
                       {formatCurrency(stock.buy_price)}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">
@@ -318,7 +373,7 @@ export default function StocksTable({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-gray-500">
+                  <td colSpan={9} className="py-12 text-center text-gray-500">
                     No stocks found matching your criteria
                   </td>
                 </tr>

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/auth-context';
 import { useSettings } from '@/app/contexts/settings-context';
 import { useRouter } from 'next/navigation';
-import { PlayIcon, ClockIcon, CogIcon, ExclamationTriangleIcon, CheckCircleIcon, CalendarIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
+import { PlayIcon, ClockIcon, CogIcon, ExclamationTriangleIcon, CheckCircleIcon, CalendarIcon, PencilSquareIcon, TagIcon } from '@heroicons/react/24/outline';
 
 interface Service {
   name: string;
@@ -75,6 +76,21 @@ export default function ScraperManagement() {
   const [hour, setHour] = useState(9);
   const [minute, setMinute] = useState(0);
   const [currentScheduleDisplay, setCurrentScheduleDisplay] = useState('monthly');
+  
+  // Daily Scraper state
+  const [dailyStatus, setDailyStatus] = useState<{
+    service_status: string;
+    timer_status: string;
+    current_script: string;
+    last_run: string;
+  } | null>(null);
+  const [dailyLoading, setDailyLoading] = useState(false);
+  const [selectedScript, setSelectedScript] = useState('run_sequential_scraping');
+  const [dailySchedule, setDailySchedule] = useState('daily');
+  const [customSchedule, setCustomSchedule] = useState('*-*-* 06:00:00');
+  const [updatingConfig, setUpdatingConfig] = useState(false);
+  const [updatingDailySchedule, setUpdatingDailySchedule] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -82,6 +98,11 @@ export default function ScraperManagement() {
       return;
     }
     fetchServices();
+    fetchDailyStatus();
+    
+    // Auto-refresh daily status every 30 seconds
+    const interval = setInterval(fetchDailyStatus, 30000);
+    return () => clearInterval(interval);
   }, [isAdmin, router]);
 
   const fetchServices = async () => {
@@ -96,6 +117,69 @@ export default function ScraperManagement() {
       setError(t('failedToLoadServices'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDailyStatus = async () => {
+    try {
+      const response = await fetch('https://stock-ticker.dev/status');
+      if (response.ok) {
+        const data = await response.json();
+        setDailyStatus(data);
+        setSelectedScript(data.current_script || 'run_sequential_scraping');
+      }
+    } catch (error) {
+      console.error('Failed to fetch daily status:', error);
+    }
+  };
+
+  const updateDailyConfig = async () => {
+    setUpdatingConfig(true);
+    try {
+      const response = await fetch('https://stock-ticker.dev/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ script: selectedScript })
+      });
+      
+      if (response.ok) {
+        setSuccessMessage('Daily scraper configuration updated successfully');
+        fetchDailyStatus();
+      } else {
+        throw new Error('Failed to update configuration');
+      }
+    } catch (error) {
+      console.error('Failed to update daily config:', error);
+      setError('Failed to update daily scraper configuration');
+    } finally {
+      setUpdatingConfig(false);
+      setTimeout(() => { setSuccessMessage(null); setError(null); }, 3000);
+    }
+  };
+
+  const updateDailySchedule = async () => {
+    setUpdatingDailySchedule(true);
+    try {
+      const scheduleValue = dailySchedule === 'custom' ? customSchedule : dailySchedule;
+      const response = await fetch('https://stock-ticker.dev/update-timer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ schedule: scheduleValue })
+      });
+      
+      if (response.ok) {
+        setShowPopup(true);
+        setTimeout(() => setShowPopup(false), 2000);
+        fetchDailyStatus();
+      } else {
+        throw new Error('Failed to update schedule');
+      }
+    } catch (error) {
+      console.error('Failed to update daily schedule:', error);
+      setError('Failed to update daily scraper schedule');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setUpdatingDailySchedule(false);
     }
   };
 
@@ -204,12 +288,8 @@ export default function ScraperManagement() {
   };
 
   const renderServiceSection = (category: 'monthly' | 'daily' | 'hourly', title: string, icon: React.ReactNode) => {
-    const categoryServices = services.filter(service => {
-      const serviceInfo = serviceDescriptions[service];
-      return serviceInfo?.category === category;
-    });
-
     const isComingSoon = category === 'daily' || category === 'hourly';
+    const isRunning = runningServices.has('main-scraper.service');
 
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
@@ -230,65 +310,50 @@ export default function ScraperManagement() {
               {t('apiInDevelopment')}
             </p>
           </div>
-        ) : categoryServices.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categoryServices.map((service) => {
-              const serviceInfo = serviceDescriptions[service] || {
-                name: service.replace('.service', ''),
-                description: service,
-                useCase: 'Service execution',
-                category: 'monthly' as const
-              };
-              const isRunning = runningServices.has(service);
-
-              return (
-                <div
-                  key={service}
-                  className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-5 hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-600"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">
-                        {serviceInfo.name}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        {serviceInfo.description}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-600 px-2 py-1 rounded-full inline-block">
-                        {serviceInfo.useCase}
-                      </p>
-                    </div>
-                    <div className="ml-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                        <CogIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => runService(service)}
-                    disabled={isRunning}
-                    className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
-                      isRunning
-                        ? 'bg-gray-200 dark:bg-gray-600 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
-                    }`}
-                  >
-                    {isRunning ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                        {t('running')}
-                      </>
-                    ) : (
-                      <>
-                        <PlayIcon className="h-4 w-4" />
-                        {t('run')}
-                      </>
-                    )}
-                  </button>
+        ) : category === 'monthly' ? (
+          <div className="max-w-md mx-auto">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-5 hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-600">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">
+                    Main Scraper
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Runs all scrapers
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-600 px-2 py-1 rounded-full inline-block">
+                    Complete data collection
+                  </p>
                 </div>
-              );
-            })}
+                <div className="ml-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                    <CogIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => runService('main-scraper.service')}
+                disabled={isRunning}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+                  isRunning
+                    ? 'bg-gray-200 dark:bg-gray-600 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
+                }`}
+              >
+                {isRunning ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                    {t('running')}
+                  </>
+                ) : (
+                  <>
+                    <PlayIcon className="h-4 w-4" />
+                    {t('run')}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         ) : (
           <div className="text-center py-8">
@@ -314,13 +379,22 @@ export default function ScraperManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {t('scraperManagement')}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          {t('manageScrapingServices')}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t('scraperManagement')}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {t('manageScrapingServices')}
+          </p>
+        </div>
+        <Link
+          href="/dashboard/tickers"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <TagIcon className="h-4 w-4" />
+          {language === 'fr' ? 'Voir Portfolio' : 'View Portfolio'}
+        </Link>
       </div>
 
       {/* Status Messages */}
@@ -468,6 +542,196 @@ export default function ScraperManagement() {
         )}
       </div>
 
+      {/* Daily Scraper Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <ClockIcon className="h-5 w-5 text-green-600" />
+              {language === 'fr' ? 'Scraper Quotidien' : 'Daily Scraper'}
+            </h2>
+            <button
+              onClick={fetchDailyStatus}
+              disabled={dailyLoading}
+              className="px-4 py-2 text-sm bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 border border-gray-200 dark:border-gray-600 transition-colors"
+            >
+              {dailyLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+              ) : (
+                language === 'fr' ? 'Actualiser' : 'Refresh Status'
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-8">
+          {/* Service Information Block */}
+          <div>
+            <h3 className="text-md font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              {language === 'fr' ? 'Informations du Service' : 'Service Information'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {language === 'fr' ? 'Statut Service' : 'Service Status'}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${
+                    dailyStatus?.service_status === 'active' ? 'bg-green-500' : 'bg-red-500'
+                  }`}></div>
+                  <span className="text-sm font-semibold capitalize">
+                    {dailyStatus?.service_status || 'Unknown'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {language === 'fr' ? 'Statut Timer' : 'Timer Status'}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${
+                    dailyStatus?.timer_status === 'active' ? 'bg-green-500' : 'bg-red-500'
+                  }`}></div>
+                  <span className="text-sm font-semibold capitalize">
+                    {dailyStatus?.timer_status || 'Unknown'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {language === 'fr' ? 'Script Actuel' : 'Current Script'}
+                </div>
+                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                  {dailyStatus?.current_script || 'None'}
+                </span>
+              </div>
+              
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {language === 'fr' ? 'Dernière Exécution' : 'Last Run'}
+                </div>
+                <span className="text-sm font-semibold">
+                  {dailyStatus?.last_run || 'Never'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Script Configuration Block */}
+          <div>
+            <h3 className="text-md font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              {language === 'fr' ? 'Configuration du Script' : 'Script Configuration'}
+            </h3>
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
+              <div className="space-y-4 mb-6">
+                <label className="flex items-start p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer">
+                  <input
+                    type="radio"
+                    name="script"
+                    value="run_sequential_scraping"
+                    checked={selectedScript === 'run_sequential_scraping'}
+                    onChange={(e) => setSelectedScript(e.target.value)}
+                    className="mt-1 mr-4 text-blue-600"
+                  />
+                  <div>
+                    <div className="font-semibold text-gray-900 dark:text-white mb-1">run_sequential_scraping</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {language === 'fr' ? 'Scraping complet avec Rule1 + StockScores + Prix' : 'Full scraping with Rule1 + StockScores + Prices'}
+                    </div>
+                  </div>
+                </label>
+                <label className="flex items-start p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer">
+                  <input
+                    type="radio"
+                    name="script"
+                    value="daily_process"
+                    checked={selectedScript === 'daily_process'}
+                    onChange={(e) => setSelectedScript(e.target.value)}
+                    className="mt-1 mr-4 text-blue-600"
+                  />
+                  <div>
+                    <div className="font-semibold text-gray-900 dark:text-white mb-1">daily_process</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {language === 'fr' ? 'Réutilise Rule1, StockScores + Prix frais' : 'Reuses Rule1 data, fresh StockScores + Prices'}
+                    </div>
+                  </div>
+                </label>
+              </div>
+              <button
+                onClick={updateDailyConfig}
+                disabled={updatingConfig}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 font-medium"
+              >
+                {updatingConfig && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                {language === 'fr' ? 'Mettre à jour la Configuration' : 'Update Configuration'}
+              </button>
+            </div>
+          </div>
+
+          {/* Schedule Configuration Block */}
+          <div>
+            <h3 className="text-md font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              {language === 'fr' ? 'Configuration de l\'Horaire' : 'Schedule Configuration'}
+            </h3>
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {language === 'fr' ? 'Choisir l\'horaire' : 'Choose Schedule'}
+                  </label>
+                  <select
+                    value={dailySchedule}
+                    onChange={(e) => setDailySchedule(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                  >
+                    <optgroup label={language === 'fr' ? 'Options prédéfinies' : 'Preset Options'}>
+                      <option value="daily">{language === 'fr' ? 'Tous les jours (défaut)' : 'Every day (default)'}</option>
+                      <option value="*-*-* 06:00:00">{language === 'fr' ? 'Tous les jours à 6h00' : 'Every day at 6:00 AM'}</option>
+                      <option value="*-*-* 18:00:00">{language === 'fr' ? 'Tous les jours à 18h00' : 'Every day at 6:00 PM'}</option>
+                    </optgroup>
+                    <optgroup label={language === 'fr' ? 'Options avancées' : 'Advanced Options'}>
+                      <option value="custom">{language === 'fr' ? 'Horaire personnalisé...' : 'Custom schedule...'}</option>
+                    </optgroup>
+                  </select>
+                </div>
+                
+                {dailySchedule === 'custom' && (
+                  <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {language === 'fr' ? 'Format personnalisé' : 'Custom Format'}
+                    </label>
+                    <input
+                      type="text"
+                      value={customSchedule}
+                      onChange={(e) => setCustomSchedule(e.target.value)}
+                      placeholder="*-*-* HH:MM:SS"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors font-mono"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      {language === 'fr' ? 'Exemple: *-*-* 09:30:00 pour tous les jours à 9h30' : 'Example: *-*-* 09:30:00 for every day at 9:30 AM'}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={updateDailySchedule}
+                disabled={updatingDailySchedule}
+                className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 font-medium"
+              >
+                {updatingDailySchedule && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                {language === 'fr' ? 'Mettre à jour l\'Horaire' : 'Update Schedule'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Scraper Sections */}
       <div className="space-y-6">
         {renderServiceSection('monthly', t('monthlyScrapers'), <CalendarIcon className="h-5 w-5 text-blue-600" />)}
@@ -490,6 +754,12 @@ export default function ScraperManagement() {
           >
             {t('retry')}
           </button>
+        </div>
+      )}
+      {/* Popup Notification */}
+      {showPopup && (
+        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
+          {language === 'fr' ? 'Terminé - Le timer a été modifié' : 'Done - Timer was changed'}
         </div>
       )}
     </div>

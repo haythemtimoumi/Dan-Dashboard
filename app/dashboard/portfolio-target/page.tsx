@@ -69,7 +69,7 @@ interface StockWithHighlight extends Omit<Stock, 'highlight'> {
   target?: boolean;
 }
 
-export default function NewPortfolioPage() {
+export default function TargetPortfolioPage() {
   const router = useRouter();
   const { t, language } = useSettings();
   const { isAdmin, user } = useAuth();
@@ -91,7 +91,13 @@ export default function NewPortfolioPage() {
   const [tooltip, setTooltip] = useState<{ stock: Stock; position: { x: number; y: number } } | null>(null);
   const [stocksWithComments, setStocksWithComments] = useState<Set<string>>(new Set());
   const [searchTicker, setSearchTicker] = useState<string>('');
-
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({
+    tickers: '',
+    active: true
+  });
+  const [addSaving, setAddSaving] = useState(false);
+  const [addResult, setAddResult] = useState<{success: boolean, message: string} | null>(null);
 
   // Load data from localStorage and fetch last date on component mount
   useEffect(() => {
@@ -276,7 +282,7 @@ export default function NewPortfolioPage() {
     fetchSources();
   }, []);
 
-  // Load stocks with date filtering using grouped endpoint
+  // Load stocks with date filtering using grouped endpoint - FILTER FOR TARGET ONLY
   useEffect(() => {
     // Only fetch stocks if dates are set
     if (!startDate || !endDate) return;
@@ -286,11 +292,12 @@ export default function NewPortfolioPage() {
         setLoading(true);
         setError(null);
         
-        // Use grouped endpoint
+        // Use grouped endpoint with target filter
         let url = '/api/stocks/grouped';
         const params = new URLSearchParams();
         params.append('startDate', startDate);
         params.append('endDate', endDate);
+        params.append('target', 'true'); // Filter for target stocks only
         url += `?${params.toString()}`;
         
         const response = await fetch(url);
@@ -300,10 +307,12 @@ export default function NewPortfolioPage() {
         }
         
         const stocksData = await response.json();
-        setStocks(stocksData);
+        // Additional client-side filter as backup
+        const targetStocks = stocksData.filter((stock: StockWithHighlight) => stock.target === true);
+        setStocks(targetStocks);
       } catch (err) {
         console.error('Error fetching stocks:', err);
-        setError('Failed to load portfolio stocks. Please try again later.');
+        setError('Failed to load target portfolio stocks. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -340,7 +349,7 @@ export default function NewPortfolioPage() {
     );
   };
 
-  // Filter stocks by selected source and ticker search (no deduplication needed - grouped API handles this)
+  // Filter stocks by selected source and ticker search
   const filteredStocks = stocks.filter(stock => {
     const sourceMatch = !selectedSource || stock.source === selectedSource;
     const tickerMatch = !searchTicker || stock.ticker.toLowerCase().includes(searchTicker.toLowerCase());
@@ -475,6 +484,29 @@ export default function NewPortfolioPage() {
     <div className="mt-6 flow-root">
       <div className="inline-block min-w-full align-middle">
         <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+          {/* Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                {language === 'fr' ? 'Portfolio Cible' : 'Target Portfolio'}
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                {language === 'fr' ? 'Actions marquées comme cibles' : 'Stocks marked as targets'}
+              </p>
+            </div>
+            {isAdmin && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {language === 'fr' ? 'Ajouter Tickers' : 'Add Tickers'}
+              </button>
+            )}
+          </div>
+
           {/* Filters */}
           <div className="mb-6 flex flex-wrap gap-4 items-center">
             {/* Ticker Search */}
@@ -566,8 +598,8 @@ export default function NewPortfolioPage() {
           {/* Results Count */}
           <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
             {language === 'fr' 
-              ? `${sortedStocks.length} résultat${sortedStocks.length !== 1 ? 's' : ''}`
-              : `${sortedStocks.length} result${sortedStocks.length !== 1 ? 's' : ''}`
+              ? `${sortedStocks.length} résultat${sortedStocks.length !== 1 ? 's' : ''} cible${sortedStocks.length !== 1 ? 's' : ''}`
+              : `${sortedStocks.length} target result${sortedStocks.length !== 1 ? 's' : ''}`
             }
           </div>
 
@@ -702,11 +734,9 @@ export default function NewPortfolioPage() {
                               className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400"
                               style={{ backgroundColor: stockColor || 'transparent' }}
                             />
-                            {stock.target && (
-                              <span className="text-yellow-500 text-sm" title="Target Stock">
-                                ⭐
-                              </span>
-                            )}
+                            <span className="text-yellow-500 text-sm" title="Target Stock">
+                              ⭐
+                            </span>
                             {stock.ticker}
                             {(() => {
                               const guruInfo = formatGuruBadges(stock, 2);
@@ -896,6 +926,136 @@ export default function NewPortfolioPage() {
           currentComment={currentComment}
           setCurrentComment={setCurrentComment}
         />
+      )}
+
+      {/* Add Ticker Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-10 w-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{language === 'fr' ? 'Ajouter des Tickers' : 'Add Tickers'}</h3>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{language === 'fr' ? 'Tickers (séparés par des virgules)' : 'Tickers (comma separated)'}</label>
+                  <textarea
+                    value={addForm.tickers}
+                    onChange={(e) => setAddForm({...addForm, tickers: e.target.value.toUpperCase()})}
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[80px] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    placeholder="AAPL, GOOGL, MSFT"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-600">
+                <button
+                  onClick={async () => {
+                    if (!addForm.tickers.trim()) return;
+                    setAddSaving(true);
+                    setAddResult(null);
+                    try {
+                      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+                      const tickersArray = addForm.tickers.split(',').map(t => t.trim()).filter(t => t);
+                      const response = await fetch('https://www.mytickerlist.com/api/scraper-tasks/add-multiple', {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ tickers: tickersArray })
+                      });
+                      if (response.ok) {
+                        setAddResult({ 
+                          success: true, 
+                          message: language === 'fr' ? 'Tickers ajoutés avec succès' : 'Tickers added successfully'
+                        });
+                        setAddForm({...addForm, tickers: ''});
+                        // Refresh stocks list
+                        const fetchStocks = async () => {
+                          try {
+                            setLoading(true);
+                            let url = '/api/stocks/grouped';
+                            const params = new URLSearchParams();
+                            params.append('startDate', startDate);
+                            params.append('endDate', endDate);
+                            params.append('target', 'true');
+                            url += `?${params.toString()}`;
+                            
+                            const response = await fetch(url);
+                            if (response.ok) {
+                              const stocksData = await response.json();
+                              const targetStocks = stocksData.filter((stock: StockWithHighlight) => stock.target === true);
+                              setStocks(targetStocks);
+                            }
+                          } catch (err) {
+                            console.error('Error refreshing stocks:', err);
+                          } finally {
+                            setLoading(false);
+                          }
+                        };
+                        fetchStocks();
+                      } else {
+                        setAddResult({ 
+                          success: false, 
+                          message: language === 'fr' ? 'Échec de l\'ajout des tickers' : 'Failed to add tickers'
+                        });
+                      }
+                    } catch (error) {
+                      console.error('Error adding tickers:', error);
+                      setAddResult({ 
+                        success: false, 
+                        message: language === 'fr' ? 'Erreur lors de l\'ajout' : 'Error adding tickers'
+                      });
+                    } finally {
+                      setAddSaving(false);
+                    }
+                  }}
+                  disabled={addSaving || !addForm.tickers.trim()}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl px-4 py-3 text-sm font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
+                >
+                  {addSaving ? (language === 'fr' ? 'Ajout...' : 'Adding...') : (language === 'fr' ? 'Ajouter' : 'Add')}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setAddForm({
+                      tickers: '',
+                      active: true
+                    });
+                    setAddResult(null);
+                  }}
+                  className="px-6 py-3 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors duration-200"
+                >
+                  {language === 'fr' ? 'Annuler' : 'Cancel'}
+                </button>
+              </div>
+              
+              {/* Result Message */}
+              {addResult && (
+                <div className={`mt-4 p-4 rounded-xl ${
+                  addResult.success 
+                    ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+                    : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                }`}>
+                  <div className={`text-sm font-medium ${
+                    addResult.success ? 'text-green-800 dark:text-green-400' : 'text-red-800 dark:text-red-400'
+                  }`}>
+                    {addResult.message}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
