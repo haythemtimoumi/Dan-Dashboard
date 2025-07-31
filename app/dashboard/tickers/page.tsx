@@ -38,10 +38,8 @@ export default function TickersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Filters
+  // Search filter
   const [searchTerm, setSearchTerm] = useState('');
-  const [showActiveOnly, setShowActiveOnly] = useState(false);
-  const [targetFilter, setTargetFilter] = useState<string>(''); // '' = all, 'true' = target only, 'false' = non-target only
   
   // Delete/Edit states
   const [deletingTickers, setDeletingTickers] = useState<Set<string>>(new Set());
@@ -65,7 +63,7 @@ export default function TickersPage() {
     active: true
   });
   const [addSaving, setAddSaving] = useState(false);
-  const [addResult, setAddResult] = useState<{added: string[], updated: string[]} | null>(null);
+  const [addResult, setAddResult] = useState<{success: boolean, message: string} | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -106,7 +104,7 @@ export default function TickersPage() {
     fetchData();
   }, []);
 
-  // Filter tickers - show all tickers by default, apply filters when specified
+  // Filter tickers - apply search filter
   useEffect(() => {
     let filtered = tickers;
 
@@ -116,21 +114,9 @@ export default function TickersPage() {
       );
     }
 
-    if (showActiveOnly) {
-      filtered = filtered.filter(ticker => {
-        // Handle both boolean and string values from API
-        return ticker.active === true || ticker.active === 'true' || ticker.active === 1;
-      });
-    }
-
-    if (targetFilter) {
-      const isTarget = targetFilter === 'true';
-      filtered = filtered.filter(ticker => ticker.target === isTarget);
-    }
-
     setFilteredTickers(filtered);
     setCurrentPage(1);
-  }, [tickers, searchTerm, showActiveOnly, targetFilter]);
+  }, [tickers, searchTerm]);
 
   // Delete handler
   const handleDeleteTicker = async (tickerId: string) => {
@@ -334,54 +320,27 @@ export default function TickersPage() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Search */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white">
-            <svg className="w-4 h-4 text-gray-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={language === 'fr' ? 'Rechercher...' : 'Search...'}
-              className="bg-transparent border-0 text-sm focus:ring-0 p-0 min-w-[120px] transition-all duration-200"
-            />
-          </div>
-          
-          <select
-            value={targetFilter}
-            onChange={(e) => setTargetFilter(e.target.value)}
-            className="bg-gray-50 dark:bg-gray-700 border-0 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 transition-all duration-200 hover:shadow-md hover:bg-white focus:bg-white"
-          >
-            <option value="">{language === 'fr' ? 'Toutes cibles' : 'All Targets'}</option>
-            <option value="true">{language === 'fr' ? 'Cibles uniquement' : 'Targets only'}</option>
-            <option value="false">{language === 'fr' ? 'Non-cibles' : 'Non-targets'}</option>
-          </select>
-          
-          <label className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 cursor-pointer transition-all duration-200 hover:shadow-md hover:bg-white">
-            <input
-              type="checkbox"
-              checked={showActiveOnly}
-              onChange={(e) => setShowActiveOnly(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all duration-200 hover:scale-110"
-            />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              {language === 'fr' ? 'Actifs seulement' : 'Active only'}
-            </span>
-          </label>
-          
-          {(searchTerm || showActiveOnly || targetFilter) && (
+        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white max-w-md">
+          <svg className="w-4 h-4 text-gray-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder={language === 'fr' ? 'Rechercher un ticker...' : 'Search ticker...'}
+            className="bg-transparent border-0 text-sm focus:ring-0 p-0 flex-1 transition-all duration-200"
+          />
+          {searchTerm && (
             <button
-              onClick={() => {
-                setSearchTerm('');
-                setShowActiveOnly(false);
-                setTargetFilter('');
-              }}
-              className="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 hover:shadow-md"
+              onClick={() => setSearchTerm('')}
+              className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
             >
-              {language === 'fr' ? 'Effacer' : 'Clear'}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           )}
         </div>
@@ -413,12 +372,6 @@ export default function TickersPage() {
                   {language === 'fr' ? 'Ticker' : 'Ticker'}
                 </th>
                 <th className="px-4 py-3 text-center font-medium text-gray-600 dark:text-gray-300">
-                  {language === 'fr' ? 'Cible' : 'Target'}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-gray-600 dark:text-gray-300">
-                  {language === 'fr' ? 'Actif' : 'Active'}
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-gray-600 dark:text-gray-300">
                   {language === 'fr' ? 'Mis à jour' : 'Updated'}
                 </th>
               </tr>
@@ -426,7 +379,7 @@ export default function TickersPage() {
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
               {paginatedTickers.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 6 : 5} className="px-6 py-12 text-center">
+                  <td colSpan={isAdmin ? 4 : 3} className="px-6 py-12 text-center">
                     <div className="text-gray-500 dark:text-gray-400">
                       <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4m16 0l-2-2m2 2l-2 2M4 13l2-2m-2 2l2 2" />
@@ -492,26 +445,13 @@ export default function TickersPage() {
                   <td className="px-4 py-3">
                     <button
                       onClick={() => router.push(`/dashboard/tickers/${ticker.symbol}`)}
-                      className="font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-all duration-200 hover:translate-x-1"
+                      className="font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-all duration-200 hover:translate-x-1 flex items-center gap-1"
                     >
+                      {ticker.target && (
+                        <span className="text-yellow-500">⭐</span>
+                      )}
                       {ticker.symbol}
                     </button>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={clsx(
-                      'inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all duration-200 hover:scale-110',
-                      ticker.target ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                    )}>
-                      {ticker.target ? '🎯' : '📊'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={clsx(
-                      'inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all duration-200 hover:scale-110',
-                      ticker.active ? 'bg-green-100 text-green-800 hover:bg-green-200 animate-pulse' : 'bg-red-100 text-red-800 hover:bg-red-200'
-                    )}>
-                      {ticker.active ? '✓' : '✗'}
-                    </span>
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
                     {ticker.last_updated_at && ticker.last_updated_at !== '0000-00-00 00:00:00' ? 
@@ -720,7 +660,11 @@ export default function TickersPage() {
                       });
                       if (response.ok) {
                         const result = await response.json();
-                        setAddResult({ added: result.added || [], updated: result.updated || [] });
+                        const totalProcessed = (result.added?.length || 0) + (result.updated?.length || 0);
+                        setAddResult({ 
+                          success: true, 
+                          message: language === 'fr' ? 'Succès' : 'Success'
+                        });
                         setAddForm({...addForm, tickers: ''});
                         // Refresh tickers list
                         const tickersRes = await fetch(`${API_URL}/tickers`);
@@ -728,9 +672,18 @@ export default function TickersPage() {
                           const tickersData = await tickersRes.json();
                           setTickers(Array.isArray(tickersData) ? tickersData : []);
                         }
+                      } else {
+                        setAddResult({ 
+                          success: false, 
+                          message: language === 'fr' ? 'Échec' : 'Failed'
+                        });
                       }
                     } catch (error) {
                       console.error('Error adding tickers:', error);
+                      setAddResult({ 
+                        success: false, 
+                        message: language === 'fr' ? 'Échec' : 'Failed'
+                      });
                     } finally {
                       setAddSaving(false);
                     }
@@ -755,20 +708,17 @@ export default function TickersPage() {
                 </button>
               </div>
               
-              {/* Success Message */}
+              {/* Result Message */}
               {addResult && (
-                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-xl">
-                  <div className="text-sm text-green-800">
-                    {addResult.added.length > 0 && (
-                      <div className="mb-2">
-                        <strong>{language === 'fr' ? 'Ajoutés:' : 'Added:'}</strong> {addResult.added.join(', ')}
-                      </div>
-                    )}
-                    {addResult.updated.length > 0 && (
-                      <div>
-                        <strong>{language === 'fr' ? 'Mis à jour:' : 'Updated:'}</strong> {addResult.updated.join(', ')}
-                      </div>
-                    )}
+                <div className={`mt-4 p-4 rounded-xl ${
+                  addResult.success 
+                    ? 'bg-green-50 border border-green-200' 
+                    : 'bg-red-50 border border-red-200'
+                }`}>
+                  <div className={`text-sm font-medium ${
+                    addResult.success ? 'text-green-800' : 'text-red-800'
+                  }`}>
+                    {addResult.message}
                   </div>
                 </div>
               )}
