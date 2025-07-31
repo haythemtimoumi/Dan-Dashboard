@@ -12,6 +12,7 @@ import { useAuth } from '@/app/contexts/auth-context';
 import { HighlightedStocksExternalSkeleton } from '@/app/ui/stocks/highlighted-stocks-external';
 import { StockTooltip } from '@/app/ui/stocks/stock-tooltip';
 import { EnhancedCommentModal } from '@/app/ui/stocks/enhanced-comment-modal';
+import MissingAnalysisDropdown from '@/app/ui/dashboard/missing-analysis-dropdown';
 
 // Utility function to format numbers
 const formatNumber = (value: any): string => {
@@ -494,17 +495,20 @@ export default function TargetPortfolioPage() {
                 {language === 'fr' ? 'Actions marquées comme cibles' : 'Stocks marked as targets'}
               </p>
             </div>
-            {isAdmin && (
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-sm"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                {language === 'fr' ? 'Ajouter Tickers' : 'Add Tickers'}
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              <MissingAnalysisDropdown />
+              {isAdmin && (
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  {language === 'fr' ? 'Ajouter Tickers' : 'Add Tickers'}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Filters */}
