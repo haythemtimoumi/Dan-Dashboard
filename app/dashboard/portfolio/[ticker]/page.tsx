@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Stock } from '@/app/lib/definitions';
 import { formatCurrency } from '@/app/lib/utils';
 import { useSettings } from '@/app/contexts/settings-context';
+import { useAuth } from '@/app/contexts/auth-context';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -46,6 +47,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, language } = useSettings();
+  const { user } = useAuth();
   const [allStocks, setAllStocks] = useState<Stock[]>([]);
   const [currentStock, setCurrentStock] = useState<Stock | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -54,6 +56,11 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   const [selectedDate, setSelectedDate] = useState<string>(
     searchParams.get('date') || new Date().toISOString().split('T')[0]
   );
+  const [showComments, setShowComments] = useState<boolean>(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState<string>('');
+  const [loadingComments, setLoadingComments] = useState<boolean>(false);
+  const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
 
   const fetchStocksForDate = async (date: string) => {
     try {
@@ -201,6 +208,94 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [handleNext, handlePrevious]);
+
+  // Fetch comments
+  const fetchComments = async () => {
+    if (!currentStock) return;
+    try {
+      setLoadingComments(true);
+      const response = await fetch(`https://www.mytickerlist.com/api/comments/ticker/${currentStock.ticker}`);
+      if (response.ok) {
+        const commentsData = await response.json();
+        setComments(commentsData);
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  // Save comment
+  const handleSaveComment = async () => {
+    if (!newComment.trim() || !user || !currentStock) return;
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`https://www.mytickerlist.com/api/comments/ticker/${currentStock.ticker}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          comment_text: newComment,
+          user_id: user.id || 1
+        }),
+      });
+      
+      if (response.ok) {
+        setNewComment('');
+        fetchComments();
+      }
+    } catch (error) {
+      console.error('Error saving comment:', error);
+    }
+  };
+
+  // Delete comment
+  const handleDeleteComment = async (commentId: number) => {
+    if (!confirm(language === 'fr' ? 'Êtes-vous sûr de vouloir supprimer ce commentaire?' : 'Are you sure you want to delete this comment?')) return;
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`https://www.mytickerlist.com/api/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        fetchComments();
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
+  // Toggle comment expansion
+  const toggleCommentExpansion = (commentId: number) => {
+    const newExpanded = new Set(expandedComments);
+    if (newExpanded.has(commentId)) {
+      newExpanded.delete(commentId);
+    } else {
+      newExpanded.add(commentId);
+    }
+    setExpandedComments(newExpanded);
+  };
+
+  // Load comments when showing comments panel
+  useEffect(() => {
+    if (showComments && currentStock) {
+      fetchComments();
+    }
+  }, [showComments, currentStock]);
+
+  // Check for comments on page load
+  useEffect(() => {
+    if (currentStock) {
+      fetchComments();
+    }
+  }, [currentStock]);
 
   if (loading) {
     return (
@@ -537,28 +632,123 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                 {language === 'fr' ? 'Détails' : 'Details'}
               </button>
               
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-1">
                 <button
                   onClick={() => window.open(`https://finance.yahoo.com/quote/${currentStock.ticker}`, '_blank')}
-                  className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                  className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-1 rounded-lg text-xs font-medium transition-colors flex items-center justify-center"
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
                   Yahoo
                 </button>
                 <button
                   onClick={() => window.open(`https://www.google.com/finance/quote/${currentStock.ticker}:NASDAQ`, '_blank')}
-                  className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                  className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-1 rounded-lg text-xs font-medium transition-colors flex items-center justify-center"
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
                   Google
+                </button>
+                <button
+                  onClick={() => setShowComments(!showComments)}
+                  className={`py-2 px-1 rounded-lg text-xs font-medium transition-colors flex items-center justify-center relative ${
+                    showComments 
+                      ? 'bg-blue-600 text-white' 
+                      : comments.length > 0
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  💬
+                  {comments.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 rounded-full h-2 w-2"></span>
+                  )}
                 </button>
               </div>
             </div>
           </div>
+
+          {/* Comments Section */}
+          {showComments && (
+            <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
+              <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{t('commentsFor')} {currentStock.ticker}</h3>
+              
+              {/* Comments List */}
+              <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
+                {loadingComments ? (
+                  <div className="text-center py-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
+                  </div>
+                ) : comments.length > 0 ? (
+                  comments.map((comment) => {
+                    const isExpanded = expandedComments.has(comment.id);
+                    const isLong = comment.comment_text.length > 80;
+                    const displayText = isLong && !isExpanded 
+                      ? comment.comment_text.substring(0, 80) + '...' 
+                      : comment.comment_text;
+                    
+                    return (
+                      <div key={comment.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {comment.username || `${language === 'fr' ? 'Utilisateur' : 'User'} ${comment.user_id}`}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                              {new Date(comment.created_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
+                            </span>
+                            {user && comment.user_id === user.id && (
+                              <button
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
+                                title={language === 'fr' ? 'Supprimer' : 'Delete'}
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-900 dark:text-white">
+                          {displayText}
+                          {isLong && (
+                            <button
+                              onClick={() => toggleCommentExpansion(comment.id)}
+                              className="ml-1 text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              {isExpanded 
+                                ? (language === 'fr' ? 'Voir moins' : 'Read less')
+                                : (language === 'fr' ? 'Lire plus' : 'Read more')
+                              }
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-2 text-xs text-gray-500 dark:text-gray-400">
+                    {t('noCommentsFound')}
+                  </div>
+                )}
+              </div>
+              
+              {/* Add Comment */}
+              <div className="space-y-2">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder={t('enterYourComment')}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 resize-none text-xs"
+                  rows={2}
+                />
+                <button
+                  onClick={handleSaveComment}
+                  disabled={!newComment.trim() || !user}
+                  className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {!user ? t('loginRequired') : t('saveComment')}
+                </button>
+              </div>
+            </div>
+          )}
           
           {/* Analysis Summary */}
           {currentStock.last_action && (
