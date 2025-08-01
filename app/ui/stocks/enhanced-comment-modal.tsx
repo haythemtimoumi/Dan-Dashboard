@@ -61,7 +61,7 @@ export function EnhancedCommentModal({
 
   const handleSave = async () => {
     if (!user) {
-      alert(language === 'fr' ? 'Vous devez être connecté pour commenter' : 'You must be logged in to comment');
+      alert(t('loginRequired'));
       return;
     }
     
@@ -159,135 +159,123 @@ export function EnhancedCommentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('commentsFor')} {ticker}
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md max-h-[70vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="font-semibold text-gray-900 dark:text-white">
+            {ticker} {t('commentsFor').toLowerCase()}
           </h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {/* Existing Comments Section */}
-        <div className="mb-6 flex-1 overflow-hidden">
-          <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">
-            {t('existingComments')}
-          </h4>
-          
-          <div className="max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
-            {loading ? (
-              <div className="p-4 text-center text-gray-500">
-                {t('loading')}
-              </div>
-            ) : allComments.length > 0 ? (
-              <div className="space-y-3 p-4">
-                {allComments.map((comment) => (
-                  <div key={comment.id} className="border-b border-gray-100 dark:border-gray-700 pb-3 last:border-b-0">
-                    {editingComment === comment.id ? (
-                      <div className="space-y-2">
-                        <textarea
-                          value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded text-sm resize-none"
-                          rows={3}
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleSaveEdit(comment.id)}
-                            className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
-                          >
-                            {language === 'fr' ? 'Sauvegarder' : 'Save'}
-                          </button>
-                          <button
-                            onClick={() => setEditingComment(null)}
-                            className="px-3 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600"
-                          >
-                            {language === 'fr' ? 'Annuler' : 'Cancel'}
-                          </button>
-                        </div>
+        {/* Comments Section */}
+        <div className="flex-1 overflow-hidden p-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-6">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">{t('loading')}</span>
+            </div>
+          ) : allComments.length > 0 ? (
+            <div className="space-y-3 max-h-48 overflow-y-auto">
+              {allComments.map((comment) => (
+                <div key={comment.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                  {editingComment === comment.id ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm resize-none focus:ring-1 focus:ring-blue-500"
+                        rows={2}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleSaveEdit(comment.id)}
+                          className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+                        >
+                          {language === 'fr' ? 'Sauvegarder' : 'Save'}
+                        </button>
+                        <button
+                          onClick={() => setEditingComment(null)}
+                          className="px-3 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600"
+                        >
+                          {language === 'fr' ? 'Annuler' : 'Cancel'}
+                        </button>
                       </div>
-                    ) : (
-                      <div>
-                        <div className="text-sm text-gray-900 dark:text-white mb-1">
-                          {comment.comment_text}
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-sm text-gray-900 dark:text-white mb-2">
+                        {comment.comment_text}
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {comment.username || `${language === 'fr' ? 'Utilisateur' : 'User'} ${comment.user_id || 'Anonyme'}`} • {formatDate(comment.created_at)}
                         </div>
-                        <div className="flex justify-between items-center">
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {comment.username || `${language === 'fr' ? 'Utilisateur' : 'User'} ${comment.user_id || 'Anonyme'}`} • {formatDate(comment.created_at)}
+                        {user && comment.user_id === user.id && (
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleEdit(comment)}
+                              className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 rounded"
+                              title={language === 'fr' ? 'Modifier' : 'Edit'}
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleDelete(comment.id)}
+                              className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900 rounded"
+                              title={language === 'fr' ? 'Supprimer' : 'Delete'}
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
                           </div>
-                          {user && comment.user_id === user.id && (
-                            <div className="flex gap-1">
-                              <button
-                                onClick={() => handleEdit(comment)}
-                                className="p-1 text-blue-600 hover:bg-blue-100 rounded"
-                                title={language === 'fr' ? 'Modifier' : 'Edit'}
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                              </button>
-                              <button
-                                onClick={() => handleDelete(comment.id)}
-                                className="p-1 text-red-600 hover:bg-red-100 rounded"
-                                title={language === 'fr' ? 'Supprimer' : 'Delete'}
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-4 text-center text-gray-500">
-                {t('noCommentsFound')}
-              </div>
-            )}
-          </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-gray-500 dark:text-gray-400 text-sm">{t('noCommentsFound')}</p>
+            </div>
+          )}
         </div>
 
-        {/* Add New Comment Section */}
-        <div>
-          <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">
-            {t('addComment')}:
-          </h4>
-          
+        {/* Add Comment Section */}
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
           <textarea
             value={currentComment}
             onChange={(e) => setCurrentComment(e.target.value)}
             placeholder={t('enterYourComment')}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-            rows={4}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 resize-none text-sm"
+            rows={3}
           />
-          
-          <div className="flex justify-end space-x-3 mt-4">
+          <div className="flex justify-end gap-2 mt-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              className="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-sm"
             >
               {t('cancel')}
             </button>
             <button
               onClick={handleSave}
               disabled={!currentComment.trim() || !user}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {!user 
-                ? t('loginRequired')
-                : t('saveComment')
-              }
+              {!user ? t('loginRequired') : t('saveComment')}
             </button>
           </div>
         </div>

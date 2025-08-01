@@ -91,6 +91,8 @@ export default function TargetPortfolioPage() {
   const [endDate, setEndDate] = useState<string>('');
   const [tooltip, setTooltip] = useState<{ stock: Stock; position: { x: number; y: number } } | null>(null);
   const [stocksWithComments, setStocksWithComments] = useState<Set<string>>(new Set());
+  const [lastComments, setLastComments] = useState<{[key: string]: string}>({});
+  const [commentTooltip, setCommentTooltip] = useState<{ ticker: string; comment: string; position: { x: number; y: number } } | null>(null);
   const [searchTicker, setSearchTicker] = useState<string>('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -184,12 +186,22 @@ export default function TargetPortfolioPage() {
         if (response.ok) {
           const comments = await response.json();
           const newStocksWithComments = new Set(stocksWithComments);
+          const newLastComments = { ...lastComments };
+          
           if (comments.length > 0) {
             newStocksWithComments.add(stock.ticker);
+            // Get the most recent comment
+            const sortedComments = comments.sort((a: any, b: any) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            newLastComments[stock.ticker] = sortedComments[0].comment_text;
           } else {
             newStocksWithComments.delete(stock.ticker);
+            delete newLastComments[stock.ticker];
           }
+          
           setStocksWithComments(newStocksWithComments);
+          setLastComments(newLastComments);
         }
       } catch (error) {
         console.error('Error checking comments:', error);
@@ -264,6 +276,21 @@ export default function TargetPortfolioPage() {
     setTooltip(null);
   };
 
+  const handleCommentIconEnter = (event: React.MouseEvent, ticker: string) => {
+    const lastComment = lastComments[ticker];
+    if (lastComment) {
+      setCommentTooltip({
+        ticker,
+        comment: lastComment,
+        position: { x: event.clientX, y: event.clientY }
+      });
+    }
+  };
+
+  const handleCommentIconLeave = () => {
+    setCommentTooltip(null);
+  };
+
   // Load sources from API
   useEffect(() => {
     const fetchSources = async () => {
@@ -310,6 +337,9 @@ export default function TargetPortfolioPage() {
         const stocksData = await response.json();
         // Additional client-side filter as backup
         const targetStocks = stocksData.filter((stock: StockWithHighlight) => stock.target === true);
+        
+        // Check comments for all stocks before setting stocks
+        await checkCommentsForStocks(targetStocks);
         setStocks(targetStocks);
       } catch (err) {
         console.error('Error fetching stocks:', err);
@@ -321,6 +351,37 @@ export default function TargetPortfolioPage() {
 
     fetchStocks();
   }, [startDate, endDate]);
+
+  // Function to check comments for all stocks
+  const checkCommentsForStocks = async (stocksList: StockWithHighlight[]) => {
+    const newStocksWithComments = new Set<string>();
+    const newLastComments: {[key: string]: string} = {};
+    
+    // Check comments for each stock
+    await Promise.all(
+      stocksList.map(async (stock) => {
+        try {
+          const response = await fetch(`https://www.mytickerlist.com/api/comments/ticker/${stock.ticker}`);
+          if (response.ok) {
+            const comments = await response.json();
+            if (comments.length > 0) {
+              newStocksWithComments.add(stock.ticker);
+              // Get the most recent comment
+              const sortedComments = comments.sort((a: any, b: any) => 
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              );
+              newLastComments[stock.ticker] = sortedComments[0].comment_text;
+            }
+          }
+        } catch (error) {
+          console.error(`Error checking comments for ${stock.ticker}:`, error);
+        }
+      })
+    );
+    
+    setStocksWithComments(newStocksWithComments);
+    setLastComments(newLastComments);
+  };
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -751,9 +812,7 @@ export default function TargetPortfolioPage() {
                               );
                             })()
                             }
-                            {hasComment && (
-                              <span className="text-blue-500 text-xs">💬</span>
-                            )}
+
                           </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -845,14 +904,19 @@ export default function TargetPortfolioPage() {
                                 e.stopPropagation();
                                 openCommentModal(stock.id);
                               }}
-                              className={`p-1 rounded transition-colors ${
+                              onMouseEnter={(e) => handleCommentIconEnter(e, stock.ticker)}
+                              onMouseLeave={handleCommentIconLeave}
+                              className={`p-1 rounded transition-all duration-200 ${
                                 hasComment 
-                                  ? 'text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900' 
+                                  ? 'text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 transform hover:scale-110' 
                                   : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                               }`}
-                              title={language === 'fr' ? 'Ajouter un commentaire' : 'Add comment'}
+                              title={hasComment ? t('viewComments') : t('addComment')}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className={`${hasComment ? 'w-5 h-5' : 'w-4 h-4'} transition-all duration-200`} 
+                                   fill={hasComment ? 'currentColor' : 'none'} 
+                                   stroke="currentColor" 
+                                   viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                               </svg>
                             </button>
@@ -929,6 +993,29 @@ export default function TargetPortfolioPage() {
             );
           })()
           }
+        </div>
+      )}
+
+      {/* Comment Tooltip */}
+      {commentTooltip && (
+        <div
+          className="fixed z-50 bg-blue-900 text-white p-3 rounded-lg shadow-xl text-sm max-w-xs border-2 border-blue-600"
+          style={{
+            left: Math.min(commentTooltip.position.x + 10, window.innerWidth - 320),
+            top: commentTooltip.position.y - 60,
+          }}
+        >
+          <div className="font-bold text-blue-200 mb-2 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            {t('lastComment')}
+          </div>
+          <div className="text-blue-100 italic">
+            &quot;{commentTooltip.comment.length > 100 
+              ? commentTooltip.comment.substring(0, 100) + '...' 
+              : commentTooltip.comment}&quot;
+          </div>
         </div>
       )}
 

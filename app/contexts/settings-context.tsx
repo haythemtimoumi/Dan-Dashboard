@@ -234,6 +234,16 @@ const translations = {
     // Multi-guru functionality
     analyzedBy: 'Analyzed by',
     gurus: 'gurus',
+    
+    // Comment functionality
+    commentsFor: 'Comments for',
+    existingComments: 'Existing Comments',
+    noCommentsFound: 'No comments found',
+    enterYourComment: 'Enter your comment...',
+    loginRequired: 'Login Required',
+    lastComment: 'Last comment:',
+    thisTickerHasComments: 'This ticker has comments',
+    viewComments: 'View comments',
   },
   fr: {
     // Navigation
@@ -453,6 +463,16 @@ const translations = {
     // Multi-guru functionality
     analyzedBy: 'Analysé par',
     gurus: 'gurus',
+    
+    // Comment functionality
+    commentsFor: 'Commentaires pour',
+    existingComments: 'Commentaires Existants',
+    noCommentsFound: 'Aucun commentaire trouvé',
+    enterYourComment: 'Entrez votre commentaire...',
+    loginRequired: 'Connexion Requise',
+    lastComment: 'Dernier commentaire:',
+    thisTickerHasComments: 'Ce ticker a des commentaires',
+    viewComments: 'Voir les commentaires',
   },
 };
 
