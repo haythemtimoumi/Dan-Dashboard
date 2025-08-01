@@ -578,9 +578,9 @@ export default function NewPortfolioPage() {
               ))}
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                   <tr>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('ticker')}>
                       <div className="flex items-center">
@@ -752,13 +752,25 @@ export default function NewPortfolioPage() {
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {formatNumber(stock.sentiment_score)}
                         </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td className={`px-3 py-4 whitespace-nowrap text-sm ${
+                          parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                            ? 'text-green-600 dark:text-green-400 font-bold'
+                            : 'text-gray-500 dark:text-gray-400'
+                        }`}>
                           {formatNumber(stock.rule1_score)}
                         </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td className={`px-3 py-4 whitespace-nowrap text-sm ${
+                          parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                            ? 'text-green-600 dark:text-green-400 font-bold'
+                            : 'text-gray-500 dark:text-gray-400'
+                        }`}>
                           {formatNumber(stock.moat_score)}
                         </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td className={`px-3 py-4 whitespace-nowrap text-sm ${
+                          parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                            ? 'text-green-600 dark:text-green-400 font-bold'
+                            : 'text-gray-500 dark:text-gray-400'
+                        }`}>
                           {formatNumber(stock.management_score)}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
