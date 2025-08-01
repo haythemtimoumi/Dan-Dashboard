@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Client } from 'pg';
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,6 +26,34 @@ export async function GET(request: NextRequest) {
     }
 
     let data = await response.json();
+    
+    // Get colors from local database
+    let colorMap = new Map();
+    try {
+      const client = new Client({
+        host: 'localhost',
+        port: 5432,
+        database: 'stocklist',
+        user: 'haystockuser',
+        password: 'zro=+)1*-D9X',
+      });
+      
+      await client.connect();
+      const colorResult = await client.query('SELECT id, color FROM scraper_tasks');
+      await client.end();
+      
+      colorResult.rows.forEach(row => {
+        colorMap.set(row.id, row.color);
+      });
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+    }
+    
+    // Override colors with local database values
+    data = data.map((stock: any) => ({
+      ...stock,
+      color: stock.ticker_id === 2288 ? 'red' : (colorMap.get(stock.ticker_id) || stock.color || 'neutral')
+    }));
     
     // Filter for target stocks if requested
     if (target === 'true') {

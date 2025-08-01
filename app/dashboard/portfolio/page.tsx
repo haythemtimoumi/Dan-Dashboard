@@ -67,6 +67,8 @@ const calculateUpside = (buyPrice: any, lastPrice: any): string => {
 interface StockWithHighlight extends Omit<Stock, 'highlight'> {
   highlight?: boolean;
   target?: boolean;
+  color?: string;
+  ticker_id?: number;
 }
 
 export default function NewPortfolioPage() {
@@ -82,7 +84,7 @@ export default function NewPortfolioPage() {
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('sentiment_score');
   const [sortOrder, setSortOrder] = useState<string>('desc');
-  const [stockColors, setStockColors] = useState<{[key: string]: string}>({});
+
   const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
   const [currentComment, setCurrentComment] = useState<string>('');
@@ -97,9 +99,7 @@ export default function NewPortfolioPage() {
 
   // Load data from localStorage and fetch last date on component mount
   useEffect(() => {
-    const savedColors = localStorage.getItem('stockColors');
     const savedComments = localStorage.getItem('stockComments');
-    if (savedColors) setStockColors(JSON.parse(savedColors));
     if (savedComments) setStockComments(JSON.parse(savedComments));
     
     // Fetch last date from API
@@ -129,23 +129,46 @@ export default function NewPortfolioPage() {
     fetchLastDate();
   }, []);
 
-  // Color and comment management functions
-  const handleColorChange = (stockId: string, color: string) => {
+  // Color management using API
+  const cycleColor = async (stockId: string) => {
     const stock = stocks.find(s => s.id === stockId);
-    const key = stock?.ticker || stockId;
-    const newColors = { ...stockColors, [key]: color };
-    setStockColors(newColors);
-    localStorage.setItem('stockColors', JSON.stringify(newColors));
-  };
-
-  const cycleColor = (stockId: string) => {
-    const stock = stocks.find(s => s.id === stockId);
-    const key = stock?.ticker || stockId;
-    const currentColor = stockColors[key] || '';
-    const colors = ['', 'red', 'green', 'yellow'];
-    const currentIndex = colors.indexOf(currentColor);
+    if (!stock) return;
+    
+    const colors = ['neutral', 'red', 'green', 'yellow'];
+    const currentIndex = colors.indexOf(stock.color || 'neutral');
     const nextColor = colors[(currentIndex + 1) % colors.length];
-    handleColorChange(stockId, nextColor);
+    
+    // Update local state immediately for instant feedback
+    setStocks(stocks.map(s => 
+      s.id === stockId ? { ...s, color: nextColor } : s
+    ));
+    
+    // Update via API
+    try {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+      const response = await fetch(`/api/scraper-tasks/${stock.ticker_id}/color`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ color: nextColor })
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to update color:', response.statusText);
+        // Revert local state on API failure
+        setStocks(stocks.map(s => 
+          s.id === stockId ? { ...s, color: stock.color } : s
+        ));
+      }
+    } catch (error) {
+      console.error('Error updating color:', error);
+      // Revert local state on error
+      setStocks(stocks.map(s => 
+        s.id === stockId ? { ...s, color: stock.color } : s
+      ));
+    }
   };
 
   const handleCommentSave = (stockId: string, comment: string) => {
@@ -228,13 +251,9 @@ export default function NewPortfolioPage() {
           
           // Remove from local storage
           const stockKey = stock.ticker;
-          const newColors = { ...stockColors };
           const newComments = { ...stockComments };
-          delete newColors[stockKey];
           delete newComments[stockKey];
-          setStockColors(newColors);
           setStockComments(newComments);
-          localStorage.setItem('stockColors', JSON.stringify(newColors));
           localStorage.setItem('stockComments', JSON.stringify(newComments));
           
           // Update stocks with comments set
@@ -737,8 +756,7 @@ export default function NewPortfolioPage() {
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {sortedStocks.map((stock) => {
-                    const stockKey = stock.ticker || stock.id;
-                    const stockColor = stockColors[stockKey] || '';
+                    const stockColor = stock.color || '';
                     const hasComment = stocksWithComments.has(stock.ticker);
                     
                     return (
@@ -756,12 +774,12 @@ export default function NewPortfolioPage() {
                         <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                cycleColor(stock.id);
+                                await cycleColor(stock.id);
                               }}
                               className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400"
-                              style={{ backgroundColor: stockColor || 'transparent' }}
+                              style={{ backgroundColor: stockColor === 'neutral' ? 'transparent' : stockColor || 'transparent' }}
                             />
                             {stock.target && (
                               <span className="text-yellow-500 text-sm" title="Target Stock">
