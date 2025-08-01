@@ -10,6 +10,17 @@ import { useAuth } from '@/app/contexts/auth-context';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
+interface Comment {
+  id: number;
+  ticker: string;
+  user_id?: number;
+  comment_text: string;
+  created_at: string;
+  updated_at: string;
+  username?: string;
+  color?: string;
+}
+
 const formatNumber = (value: any): string => {
   if (value === null || value === undefined || value === '') return '-';
   
@@ -61,6 +72,43 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   const [newComment, setNewComment] = useState<string>('');
   const [loadingComments, setLoadingComments] = useState<boolean>(false);
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
+
+  // Color management using API
+  const cycleColor = async () => {
+    if (!currentStock) return;
+    
+    const colors = ['neutral', 'red', 'green', 'yellow'];
+    const currentIndex = colors.indexOf(currentStock.color || 'neutral');
+    const nextColor = colors[(currentIndex + 1) % colors.length];
+    
+    // Update local state immediately for instant feedback
+    setCurrentStock({ ...currentStock, color: nextColor });
+    
+    // Update via API if ticker_id is available
+    if (currentStock.ticker_id) {
+      try {
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        const response = await fetch(`/api/scraper-tasks/${currentStock.ticker_id}/color`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ color: nextColor })
+        });
+        
+        if (!response.ok) {
+          console.error('Failed to update color:', response.statusText);
+          // Revert local state on API failure
+          setCurrentStock({ ...currentStock, color: currentStock.color });
+        }
+      } catch (error) {
+        console.error('Error updating color:', error);
+        // Revert local state on error
+        setCurrentStock({ ...currentStock, color: currentStock.color });
+      }
+    }
+  };
 
   const fetchStocksForDate = async (date: string) => {
     try {
@@ -239,7 +287,8 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
         },
         body: JSON.stringify({
           comment_text: newComment,
-          user_id: user.id || 1
+          user_id: user.id || 1,
+          color: currentStock.color || 'neutral'
         }),
       });
       
@@ -454,6 +503,12 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-b border-blue-200 dark:border-blue-800 p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                  <button
+                    onClick={cycleColor}
+                    className="w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 transition-colors flex-shrink-0"
+                    style={{ backgroundColor: (currentStock.color === 'neutral' || !currentStock.color) ? 'transparent' : currentStock.color }}
+                    title={language === 'fr' ? 'Changer la couleur' : 'Change color'}
+                  />
                   <div>
                     <h1 className="text-xl font-bold text-gray-900 dark:text-white">{currentStock.ticker}</h1>
                     <p className="text-xs text-gray-600 dark:text-gray-400">{currentStock.full_name || currentStock.guru || currentStock.source}</p>
@@ -684,7 +739,12 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                       : comment.comment_text;
                     
                     return (
-                      <div key={comment.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2">
+                      <div key={comment.id} className={`rounded-lg p-2 border-l-4 ${
+                        comment.color === 'red' ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
+                        comment.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-500' :
+                        comment.color === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500' :
+                        'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600'
+                      }`}>
                         <div className="flex justify-between items-start mb-1">
                           <div className="text-xs text-gray-500 dark:text-gray-400">
                             {comment.username || `${language === 'fr' ? 'Utilisateur' : 'User'} ${comment.user_id}`}

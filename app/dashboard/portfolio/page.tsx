@@ -1012,6 +1012,7 @@ export default function NewPortfolioPage() {
           onSave={(comment) => handleCommentSave(showCommentModal, comment)}
           currentComment={currentComment}
           setCurrentComment={setCurrentComment}
+          tickerColor={stocks.find(s => s.id === showCommentModal)?.color || 'neutral'}
         />
       )}
     </div>

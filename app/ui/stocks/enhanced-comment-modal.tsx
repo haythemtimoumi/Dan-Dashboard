@@ -12,6 +12,7 @@ interface Comment {
   created_at: string;
   updated_at: string;
   username?: string;
+  color?: string;
 }
 
 interface EnhancedCommentModalProps {
@@ -21,6 +22,7 @@ interface EnhancedCommentModalProps {
   onSave: (comment: string) => void;
   currentComment: string;
   setCurrentComment: (comment: string) => void;
+  tickerColor?: string;
 }
 
 export function EnhancedCommentModal({
@@ -29,7 +31,8 @@ export function EnhancedCommentModal({
   ticker,
   onSave,
   currentComment,
-  setCurrentComment
+  setCurrentComment,
+  tickerColor = 'neutral'
 }: EnhancedCommentModalProps) {
   const { language, t } = useSettings();
   const { user } = useAuth();
@@ -77,7 +80,8 @@ export function EnhancedCommentModal({
           },
           body: JSON.stringify({
             comment_text: currentComment,
-            user_id: user.id || 1
+            user_id: user.id || 1,
+            color: tickerColor
           }),
         });
         
@@ -186,7 +190,12 @@ export function EnhancedCommentModal({
           ) : allComments.length > 0 ? (
             <div className="space-y-3 max-h-48 overflow-y-auto">
               {allComments.map((comment) => (
-                <div key={comment.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                <div key={comment.id} className={`rounded-lg p-3 border-l-4 ${
+                  comment.color === 'red' ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
+                  comment.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-500' :
+                  comment.color === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500' :
+                  'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600'
+                }`}>
                   {editingComment === comment.id ? (
                     <div className="space-y-2">
                       <textarea

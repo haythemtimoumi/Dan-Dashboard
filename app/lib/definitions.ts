@@ -31,6 +31,8 @@ export type Stock = {
   last_action?: string; // Last action taken on the stock
   per_portfolio?: number; // Percentage of portfolio
   full_name?: string; // Full company name
+  color?: string; // Ticker color for visual categorization
+  ticker_id?: number; // Ticker ID for API operations
 };
 
 export type StocksTable = {
