@@ -18,6 +18,10 @@ interface Ticker {
   last_action?: string;
   target: boolean;
   last_updated_at: string;
+  gurus?: Array<{
+    id: string;
+    name: string;
+  }>;
 }
 
 interface TickerStats {
@@ -69,13 +73,15 @@ export default function TickersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
 
+
+
   // Load data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const [tickersRes, statsRes] = await Promise.all([
-          fetch(`${API_URL}/tickers`),
+          fetch(`${API_URL}/tickers/unique-with-gurus`),
           fetch(`${API_URL}/tickers/stats`)
         ]);
 
@@ -88,10 +94,27 @@ export default function TickersPage() {
           statsRes.json()
         ]);
 
-        // Ensure all data is properly formatted
+        // Ensure all data is properly formatted and deduplicated
         const cleanedTickers = Array.isArray(tickersData) ? tickersData : [];
         
-        setTickers(cleanedTickers);
+        // Deduplicate by symbol
+        const uniqueTickers = cleanedTickers.reduce((acc: Ticker[], ticker) => {
+          const existing = acc.find((t: Ticker) => t.symbol === ticker.symbol);
+          if (!existing) {
+            acc.push(ticker);
+          } else if (ticker.gurus && Array.isArray(ticker.gurus)) {
+            // Merge gurus if not already present
+            if (!existing.gurus) existing.gurus = [];
+            ticker.gurus.forEach((guru: any) => {
+              if (!existing.gurus!.find((g: any) => g.id === guru.id)) {
+                existing.gurus!.push(guru);
+              }
+            });
+          }
+          return acc;
+        }, []);
+        
+        setTickers(uniqueTickers);
         setStats(statsData);
       } catch (err) {
         setError('Failed to load tickers data');
@@ -443,15 +466,29 @@ export default function TickersPage() {
                     </td>
                   )}
                   <td className="px-4 py-3">
-                    <button
-                      onClick={() => router.push(`/dashboard/tickers/${ticker.symbol}`)}
-                      className="font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-all duration-200 hover:translate-x-1 flex items-center gap-1"
-                    >
-                      {ticker.target && (
-                        <span className="text-yellow-500">⭐</span>
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => router.push(`/dashboard/tickers/${ticker.symbol}`)}
+                        className="font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-all duration-200 hover:translate-x-1 flex items-center gap-1"
+                      >
+                        {ticker.target && (
+                          <span className="text-yellow-500">⭐</span>
+                        )}
+                        {ticker.symbol}
+                      </button>
+                      {ticker.gurus && Array.isArray(ticker.gurus) && ticker.gurus.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {ticker.gurus.map((guru, index) => (
+                            <span
+                              key={guru.id}
+                              className="inline-block px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full"
+                            >
+                              {guru.name}
+                            </span>
+                          ))}
+                        </div>
                       )}
-                      {ticker.symbol}
-                    </button>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
                     {ticker.last_updated_at && ticker.last_updated_at !== '0000-00-00 00:00:00' ? 
@@ -639,6 +676,8 @@ export default function TickersPage() {
                 </div>
                 
 
+                
+
               </div>
               
               <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
@@ -650,39 +689,61 @@ export default function TickersPage() {
                     try {
                       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
                       const tickersArray = addForm.tickers.split(',').map(t => t.trim()).filter(t => t);
+                      
                       const response = await fetch(`${API_URL}/scraper-tasks/add-multiple`, {
                         method: 'POST',
                         headers: {
                           'Authorization': `Bearer ${token}`,
                           'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ tickers: tickersArray })
+                        body: JSON.stringify({ 
+                          tickers: tickersArray,
+                          guru_name: 'dan'
+                        })
                       });
+                      
+                      const result = await response.json();
+                      const successCount = result.added?.length || 0;
+                      
+                      setAddResult({ 
+                        success: response.ok, 
+                        message: response.ok 
+                          ? `${successCount} ${t('tickersAdded')}`
+                          : t('errorAddingTickers')
+                      });
+                      
                       if (response.ok) {
-                        const result = await response.json();
-                        const totalProcessed = (result.added?.length || 0) + (result.updated?.length || 0);
-                        setAddResult({ 
-                          success: true, 
-                          message: language === 'fr' ? 'Succès' : 'Success'
-                        });
-                        setAddForm({...addForm, tickers: ''});
+                        setAddForm({tickers: '', active: true});
+                        
                         // Refresh tickers list
-                        const tickersRes = await fetch(`${API_URL}/tickers`);
+                        const tickersRes = await fetch(`${API_URL}/tickers/unique-with-gurus`);
                         if (tickersRes.ok) {
                           const tickersData = await tickersRes.json();
-                          setTickers(Array.isArray(tickersData) ? tickersData : []);
+                          const cleanedTickers = Array.isArray(tickersData) ? tickersData : [];
+                          
+                          const uniqueTickers = cleanedTickers.reduce((acc: Ticker[], ticker) => {
+                            const existing = acc.find((t: Ticker) => t.symbol === ticker.symbol);
+                            if (!existing) {
+                              acc.push(ticker);
+                            } else if (ticker.gurus && Array.isArray(ticker.gurus)) {
+                              if (!existing.gurus) existing.gurus = [];
+                              ticker.gurus.forEach((guru: any) => {
+                                if (!existing.gurus!.find((g: any) => g.id === guru.id)) {
+                                  existing.gurus!.push(guru);
+                                }
+                              });
+                            }
+                            return acc;
+                          }, []);
+                          
+                          setTickers(uniqueTickers);
                         }
-                      } else {
-                        setAddResult({ 
-                          success: false, 
-                          message: language === 'fr' ? 'Échec' : 'Failed'
-                        });
                       }
                     } catch (error) {
                       console.error('Error adding tickers:', error);
                       setAddResult({ 
                         success: false, 
-                        message: language === 'fr' ? 'Échec' : 'Failed'
+                        message: t('errorAddingTickers')
                       });
                     } finally {
                       setAddSaving(false);

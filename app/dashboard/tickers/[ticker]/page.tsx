@@ -36,6 +36,7 @@ interface StockAnalysis {
   pbt?: string;
   created_at?: string;
   highlight?: boolean;
+  gurus?: string[];
 }
 
 export default function TickerDetailPage() {
@@ -93,9 +94,33 @@ export default function TickerDetailPage() {
     }
   };
 
+  // Group data by unique analysis, combining gurus
+  const groupedData = stockData.reduce((acc: StockAnalysis[], stock) => {
+    const existing = acc.find(item => 
+      item.date === stock.date && 
+      item.pe === stock.pe && 
+      item.sentiment_score === stock.sentiment_score &&
+      item.signal_score === stock.signal_score &&
+      item.rule1_score === stock.rule1_score
+    );
+    
+    if (existing) {
+      if (stock.guru && !existing.gurus?.includes(stock.guru)) {
+        existing.gurus = existing.gurus || [];
+        existing.gurus.push(stock.guru);
+      }
+    } else {
+      acc.push({
+        ...stock,
+        gurus: stock.guru ? [stock.guru] : []
+      });
+    }
+    return acc;
+  }, []);
+
   const filteredData = selectedGuru 
-    ? stockData.filter(stock => stock.guru === selectedGuru)
-    : stockData;
+    ? groupedData.filter(stock => stock.gurus?.includes(selectedGuru))
+    : groupedData;
 
   const sortedData = [...filteredData].sort((a, b) => {
     let valueA = a[sortBy as keyof StockAnalysis];
@@ -292,8 +317,18 @@ export default function TickerDetailPage() {
                 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Guru:</span>
-                    <span className="font-medium">{currentStock.guru || '—'}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Gurus:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {currentStock.gurus && currentStock.gurus.length > 0 ? (
+                        currentStock.gurus.map((guru, index) => (
+                          <span key={index} className="text-xs bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded">
+                            {guru}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="font-medium">—</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">Date:</span>
@@ -360,7 +395,7 @@ export default function TickerDetailPage() {
                     {sortBy === 'date' && <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left">Guru</th>
+                <th className="px-4 py-3 text-left">Gurus</th>
                 <th className="px-4 py-3 text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('sentiment_score')}>
                   <div className="flex items-center justify-center gap-1">
                     <span>Sentiment</span>
@@ -405,9 +440,17 @@ export default function TickerDetailPage() {
                     {stock.date ? new Date(stock.date).toLocaleDateString() : '—'}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={clsx("px-2 py-1 rounded text-xs font-medium", getSourceBadgeColor(stock.guru || ''))}>
-                      {stock.guru || '—'}
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {stock.gurus && stock.gurus.length > 0 ? (
+                        stock.gurus.map((guru, index) => (
+                          <span key={index} className={clsx("px-2 py-1 rounded text-xs font-medium", getSourceBadgeColor(guru))}>
+                            {guru}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-500">—</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={clsx("font-bold", getSentimentColor(stock.sentiment_score || 0))}>

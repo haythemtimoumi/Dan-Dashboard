@@ -244,6 +244,19 @@ const translations = {
     lastComment: 'Last comment:',
     thisTickerHasComments: 'This ticker has comments',
     viewComments: 'View comments',
+    
+    // Guru functionality
+    guru: 'Guru',
+    selectGuru: 'Select a guru',
+    newGuru: 'New guru?',
+    newGuruName: 'New guru name',
+    tickerManagementTitle: 'Ticker Management',
+    addTickers: 'Add Tickers',
+    tickersCommaSepatated: 'Tickers (comma separated)',
+    addTickersToPortfolio: 'Add Tickers',
+    tickersAddedToPortfolio: 'tickers added to portfolio',
+    errorAddingTickers: 'Error adding tickers',
+    tickersAdded: 'tickers added',
   },
   fr: {
     // Navigation
@@ -473,6 +486,19 @@ const translations = {
     lastComment: 'Dernier commentaire:',
     thisTickerHasComments: 'Ce ticker a des commentaires',
     viewComments: 'Voir les commentaires',
+    
+    // Guru functionality
+    guru: 'Guru',
+    selectGuru: 'Sélectionner un guru',
+    newGuru: 'Nouveau guru ?',
+    newGuruName: 'Nom du nouveau guru',
+    tickerManagementTitle: 'Gestion des Tickers',
+    addTickers: 'Ajouter Tickers',
+    tickersCommaSepatated: 'Tickers (séparés par des virgules)',
+    addTickersToPortfolio: 'Ajouter Tickers',
+    tickersAddedToPortfolio: 'tickers ajoutés au portfolio',
+    errorAddingTickers: 'Erreur lors de l\'ajout',
+    tickersAdded: 'tickers ajoutés',
   },
 };
 

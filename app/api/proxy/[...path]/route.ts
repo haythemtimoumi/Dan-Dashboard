@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 async function proxyRequest(request: NextRequest, method: string, params: { path: string[] }) {
   const path = params.path.join('/');
+  
+  // Exclude tickers route from proxy to allow local API to handle it
+  if (path === 'tickers') {
+    return NextResponse.json({ error: 'Route handled locally' }, { status: 404 });
+  }
+  
   const url = new URL(request.url);
   const queryString = url.search;
   

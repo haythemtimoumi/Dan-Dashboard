@@ -1,4 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  host: 'localhost',
+  port: 5432,
+  database: 'stocklist',
+  user: 'haystockuser',
+  password: 'zro=+)1*-D9X',
+  ssl: false,
+});
 
 export async function PUT(
   request: NextRequest,
@@ -8,27 +18,19 @@ export async function PUT(
     const { color } = await request.json();
     const { id } = params;
     
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Authorization required' }, { status: 401 });
+    const result = await pool.query(
+      'UPDATE scraper_tasks SET color = $1 WHERE id = $2 RETURNING *',
+      [color, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: 'Ticker not found' }, { status: 404 });
     }
-
-    const response = await fetch(`https://www.mytickerlist.com/api/scraper-tasks/${id}/color`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ color }),
+    
+    return NextResponse.json({ 
+      message: 'Color updated successfully',
+      ticker: result.rows[0]
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-      return NextResponse.json(errorData, { status: response.status });
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
   } catch (error) {
     console.error('Error updating color:', error);
     return NextResponse.json({ error: 'Failed to update color' }, { status: 500 });

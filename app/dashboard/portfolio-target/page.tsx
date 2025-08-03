@@ -51,19 +51,7 @@ const formatBuyPrice = (value: any): string => {
   return formatCurrency(num);
 };
 
-// Calculate upside percentage: (sticker_price - price) / price * 100
-const calculateUpside = (buyPrice: any, lastPrice: any): string => {
-  if (!buyPrice || !lastPrice) return '-';
-  
-  const buy = typeof buyPrice === 'string' ? parseFloat(buyPrice.replace(/[$,]/g, '')) : Number(buyPrice);
-  const last = typeof lastPrice === 'string' ? parseFloat(lastPrice.replace(/[$,]/g, '')) : Number(lastPrice);
-  
-  if (isNaN(buy) || isNaN(last) || last === 0) return '-';
-  
-  const stickerPrice = buy * 2; // Sticker price is buy_price * 2
-  const upside = ((stickerPrice - last) / last) * 100;
-  return `${Math.round(upside)}%`;
-};
+
 
 interface StockWithHighlight extends Omit<Stock, 'highlight'> {
   highlight?: boolean;
@@ -83,7 +71,7 @@ export default function TargetPortfolioPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingSources, setLoadingSources] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<string>('sentiment_score');
+  const [sortBy, setSortBy] = useState<string>('per_upside');
   const [sortOrder, setSortOrder] = useState<string>('desc');
 
   const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
@@ -103,11 +91,30 @@ export default function TargetPortfolioPage() {
   });
   const [addSaving, setAddSaving] = useState(false);
   const [addResult, setAddResult] = useState<{success: boolean, message: string} | null>(null);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [filters, setFilters] = useState({
+    sentiment: 60,
+    moat: 85,
+    rule1: 85,
+    management: 85
+  });
+  const [isFiltered, setIsFiltered] = useState<boolean>(false);
 
   // Load data from localStorage and fetch last date on component mount
   useEffect(() => {
     const savedComments = localStorage.getItem('stockComments');
     if (savedComments) setStockComments(JSON.parse(savedComments));
+    
+    // Load persisted comment status
+    const savedStocksWithComments = localStorage.getItem('stocksWithComments');
+    if (savedStocksWithComments) {
+      setStocksWithComments(new Set(JSON.parse(savedStocksWithComments)));
+    }
+    
+    const savedLastComments = localStorage.getItem('lastComments');
+    if (savedLastComments) {
+      setLastComments(JSON.parse(savedLastComments));
+    }
     
     // Fetch last date from API
     const fetchLastDate = async () => {
@@ -188,12 +195,22 @@ export default function TargetPortfolioPage() {
     // Update stocks with comments set
     if (stock) {
       const newStocksWithComments = new Set(stocksWithComments);
+      const newLastComments = { ...lastComments };
+      
       if (comment.trim()) {
         newStocksWithComments.add(stock.ticker);
+        newLastComments[stock.ticker] = comment;
       } else {
         newStocksWithComments.delete(stock.ticker);
+        delete newLastComments[stock.ticker];
       }
+      
       setStocksWithComments(newStocksWithComments);
+      setLastComments(newLastComments);
+      
+      // Persist comment status to localStorage to survive page reloads
+      localStorage.setItem('stocksWithComments', JSON.stringify(Array.from(newStocksWithComments)));
+      localStorage.setItem('lastComments', JSON.stringify(newLastComments));
     }
     
     setCurrentComment('');
@@ -203,9 +220,9 @@ export default function TargetPortfolioPage() {
   const openCommentModal = async (stockId: string) => {
     const stock = stocks.find(s => s.id === stockId);
     if (stock) {
-      // Check if this stock has comments
+      // Check if this stock has comments using the proxy API
       try {
-        const response = await fetch(`https://www.mytickerlist.com/api/comments/ticker/${stock.ticker}`);
+        const response = await fetch(`/api/proxy/comments/ticker/${stock.ticker}`);
         if (response.ok) {
           const comments = await response.json();
           const newStocksWithComments = new Set(stocksWithComments);
@@ -225,6 +242,10 @@ export default function TargetPortfolioPage() {
           
           setStocksWithComments(newStocksWithComments);
           setLastComments(newLastComments);
+          
+          // Persist the updated comment status
+          localStorage.setItem('stocksWithComments', JSON.stringify(Array.from(newStocksWithComments)));
+          localStorage.setItem('lastComments', JSON.stringify(newLastComments));
         }
       } catch (error) {
         console.error('Error checking comments:', error);
@@ -245,7 +266,7 @@ export default function TargetPortfolioPage() {
     if (confirm(confirmMessage)) {
       try {
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        const response = await fetch(`https://www.mytickerlist.com/api/stocks/${stockId}`, {
+        const response = await fetch(`/api/scraper-tasks/${stock.ticker_id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -265,8 +286,15 @@ export default function TargetPortfolioPage() {
           
           // Update stocks with comments set
           const newStocksWithComments = new Set(stocksWithComments);
+          const newLastComments = { ...lastComments };
           newStocksWithComments.delete(stock.ticker);
+          delete newLastComments[stock.ticker];
           setStocksWithComments(newStocksWithComments);
+          setLastComments(newLastComments);
+          
+          // Persist the updated comment status
+          localStorage.setItem('stocksWithComments', JSON.stringify(Array.from(newStocksWithComments)));
+          localStorage.setItem('lastComments', JSON.stringify(newLastComments));
         } else {
           const errorMessage = language === 'fr' 
             ? 'Erreur lors de la suppression. Veuillez réessayer.'
@@ -339,12 +367,15 @@ export default function TargetPortfolioPage() {
         setLoading(true);
         setError(null);
         
-        // Use grouped endpoint with target filter
-        let url = '/api/stocks/grouped';
-        const params = new URLSearchParams();
+        let url, params;
+        
+        // Always use the grouped endpoint
+        url = '/api/stocks/grouped';
+        params = new URLSearchParams();
         params.append('startDate', startDate);
         params.append('endDate', endDate);
         params.append('target', 'true'); // Filter for target stocks only
+        
         url += `?${params.toString()}`;
         
         const response = await fetch(url);
@@ -355,7 +386,28 @@ export default function TargetPortfolioPage() {
         
         const stocksData = await response.json();
         // Additional client-side filter as backup
-        const targetStocks = stocksData.filter((stock: StockWithHighlight) => stock.target === true);
+        let targetStocks = stocksData.filter((stock: StockWithHighlight) => stock.target === true);
+        
+        // Apply advanced filters if enabled
+        if (isFiltered) {
+          targetStocks = targetStocks.filter((stock: StockWithHighlight) => {
+            const sentimentScore = parseNumericValue(stock.sentiment_score);
+            const moatScore = parseNumericValue(stock.moat_score);
+            const rule1Score = parseNumericValue(stock.rule1_score);
+            const managementScore = parseNumericValue(stock.management_score);
+            
+            // Check if all three scores are green (>85)
+            const allScoresGreen = rule1Score > 85 && moatScore > 85 && managementScore > 85;
+            
+            // If scores are green, sentiment must be >60, otherwise use filter value
+            const minSentiment = allScoresGreen ? 60 : filters.sentiment;
+            
+            return sentimentScore >= minSentiment &&
+                   moatScore >= filters.moat &&
+                   rule1Score >= filters.rule1 &&
+                   managementScore >= filters.management;
+          });
+        }
         
         // Check comments for all stocks before setting stocks
         await checkCommentsForStocks(targetStocks);
@@ -369,37 +421,72 @@ export default function TargetPortfolioPage() {
     };
 
     fetchStocks();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, isFiltered, filters]);
 
-  // Function to check comments for all stocks
+  // Function to refresh comment status for all stocks
+  const refreshCommentStatus = async () => {
+    if (stocks.length > 0) {
+      await checkCommentsForStocks(stocks);
+    }
+  };
+
+  // Function to check comments for all stocks using batch API
   const checkCommentsForStocks = async (stocksList: StockWithHighlight[]) => {
-    const newStocksWithComments = new Set<string>();
-    const newLastComments: {[key: string]: string} = {};
+    const tickers = stocksList.map(stock => stock.ticker);
     
-    // Check comments for each stock
-    await Promise.all(
-      stocksList.map(async (stock) => {
-        try {
-          const response = await fetch(`https://www.mytickerlist.com/api/comments/ticker/${stock.ticker}`);
-          if (response.ok) {
-            const comments = await response.json();
-            if (comments.length > 0) {
-              newStocksWithComments.add(stock.ticker);
-              // Get the most recent comment
-              const sortedComments = comments.sort((a: any, b: any) => 
-                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-              );
-              newLastComments[stock.ticker] = sortedComments[0].comment_text;
+    // Get persisted comment status from localStorage
+    const savedStocksWithComments = localStorage.getItem('stocksWithComments');
+    const savedLastComments = localStorage.getItem('lastComments');
+    
+    let persistedStocksWithComments = new Set<string>();
+    let persistedLastComments: {[key: string]: string} = {};
+    
+    if (savedStocksWithComments) {
+      persistedStocksWithComments = new Set(JSON.parse(savedStocksWithComments));
+    }
+    
+    if (savedLastComments) {
+      persistedLastComments = JSON.parse(savedLastComments);
+    }
+    
+    try {
+      const response = await fetch('/api/comments/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tickers })
+      });
+      
+      if (response.ok) {
+        const commentsData = await response.json();
+        const newStocksWithComments = new Set<string>(persistedStocksWithComments);
+        const newLastComments: {[key: string]: string} = { ...persistedLastComments };
+        
+        Object.entries(commentsData).forEach(([ticker, data]: [string, any]) => {
+          if (data.hasComments) {
+            newStocksWithComments.add(ticker);
+            if (data.lastComment) {
+              newLastComments[ticker] = data.lastComment;
             }
           }
-        } catch (error) {
-          console.error(`Error checking comments for ${stock.ticker}:`, error);
-        }
-      })
-    );
-    
-    setStocksWithComments(newStocksWithComments);
-    setLastComments(newLastComments);
+        });
+        
+        setStocksWithComments(newStocksWithComments);
+        setLastComments(newLastComments);
+        
+        // Update localStorage with merged data
+        localStorage.setItem('stocksWithComments', JSON.stringify(Array.from(newStocksWithComments)));
+        localStorage.setItem('lastComments', JSON.stringify(newLastComments));
+      } else {
+        // If API fails, use persisted data
+        setStocksWithComments(persistedStocksWithComments);
+        setLastComments(persistedLastComments);
+      }
+    } catch (error) {
+      console.error('Error checking comments:', error);
+      // If API fails, use persisted data
+      setStocksWithComments(persistedStocksWithComments);
+      setLastComments(persistedLastComments);
+    }
   };
 
   const handleSort = (field: string) => {
@@ -469,6 +556,20 @@ export default function TargetPortfolioPage() {
   };
 
   const sortedStocks = [...filteredStocks].sort((a, b) => {
+    // Special handling for upside calculation first (before general empty value handling)
+    if (sortBy === 'upside' || sortBy === 'per_upside') {
+      const hasUpsideA = a.per_upside !== null && a.per_upside !== undefined;
+      const hasUpsideB = b.per_upside !== null && b.per_upside !== undefined;
+      
+      // Handle null values - always put them at the bottom regardless of sort order
+      if (!hasUpsideA && !hasUpsideB) return 0;
+      if (!hasUpsideA) return 1; // A goes to bottom
+      if (!hasUpsideB) return -1; // B goes to bottom
+      
+      const comparison = a.per_upside! - b.per_upside!;
+      return sortOrder === 'asc' ? comparison : -comparison;
+    }
+    
     let valueA = a[sortBy as keyof Stock];
     let valueB = b[sortBy as keyof Stock];
     
@@ -488,20 +589,6 @@ export default function TargetPortfolioPage() {
       const dateA = parseDateValue(valueA);
       const dateB = parseDateValue(valueB);
       comparison = dateA - dateB;
-    }
-    // Special handling for upside calculation (both 'upside' and 'per_upside' use same logic)
-    else if (sortBy === 'upside' || sortBy === 'per_upside') {
-      const getUpside = (stock: any) => {
-        if (!stock.buy_price || !stock.last_price) return -Infinity;
-        const buy = parseFloat(String(stock.buy_price).replace(/[$,]/g, ''));
-        const last = parseFloat(String(stock.last_price).replace(/[$,]/g, ''));
-        if (isNaN(buy) || isNaN(last) || last <= 0) return -Infinity;
-        return ((buy * 2 - last) / last) * 100;
-      };
-      
-      const upsideA = getUpside(a);
-      const upsideB = getUpside(b);
-      comparison = upsideA - upsideB;
     }
     // Numeric fields (scores, prices, percentages)
     else if (['signal_score', 'sentiment_score', 'rule1_score', 'moat_score', 'management_score', 
@@ -577,6 +664,15 @@ export default function TargetPortfolioPage() {
             </div>
             <div className="flex items-center gap-3">
               <MissingAnalysisDropdown />
+              <button
+                onClick={refreshCommentStatus}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all duration-200 flex items-center gap-2 text-sm"
+                title={language === 'fr' ? 'Actualiser les commentaires' : 'Refresh comments'}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
               {isAdmin && (
                 <button
                   onClick={() => setShowAddModal(true)}
@@ -588,6 +684,129 @@ export default function TargetPortfolioPage() {
                   {language === 'fr' ? 'Ajouter Tickers' : 'Add Tickers'}
                 </button>
               )}
+              <button
+                onClick={() => {
+                  const newShowFilters = !showFilters;
+                  setShowFilters(newShowFilters);
+                  // Auto-apply filters when opening for the first time
+                  if (newShowFilters && !isFiltered) {
+                    setIsFiltered(true);
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  isFiltered 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                </svg>
+                {language === 'fr' ? 'Filtre Avancé' : 'Advanced Filter'}
+                {isFiltered && (
+                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                    {language === 'fr' ? 'Actif' : 'Active'}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Collapsible Filter Box */}
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out mb-6 ${
+            showFilters ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {language === 'fr' ? 'Sentiment >' : 'Sentiment >'}
+                  </label>
+                  <input
+                    type="number"
+                    value={filters.sentiment}
+                    onChange={(e) => {
+                      const newFilters = {...filters, sentiment: parseInt(e.target.value) || 0};
+                      setFilters(newFilters);
+                      setIsFiltered(true);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {language === 'fr' ? 'Fossé >' : 'Moat >'}
+                  </label>
+                  <input
+                    type="number"
+                    value={filters.moat}
+                    onChange={(e) => {
+                      const newFilters = {...filters, moat: parseInt(e.target.value) || 0};
+                      setFilters(newFilters);
+                      setIsFiltered(true);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {language === 'fr' ? 'Règle #1 >' : 'Rule #1 >'}
+                  </label>
+                  <input
+                    type="number"
+                    value={filters.rule1}
+                    onChange={(e) => {
+                      const newFilters = {...filters, rule1: parseInt(e.target.value) || 0};
+                      setFilters(newFilters);
+                      setIsFiltered(true);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {language === 'fr' ? 'Gestion >' : 'Management >'}
+                  </label>
+                  <input
+                    type="number"
+                    value={filters.management}
+                    onChange={(e) => {
+                      const newFilters = {...filters, management: parseInt(e.target.value) || 0};
+                      setFilters(newFilters);
+                      setIsFiltered(true);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setIsFiltered(true);
+                    setShowFilters(false);
+                  }}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  {language === 'fr' ? 'Appliquer' : 'Apply'}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsFiltered(false);
+                    setShowFilters(false);
+                  }}
+                  className="bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors text-sm font-medium"
+                >
+                  {language === 'fr' ? 'Effacer' : 'Clear'}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -860,25 +1079,29 @@ export default function TargetPortfolioPage() {
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {formatNumber(stock.signal_score)}
                         </td>
-                        <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td className={`px-3 py-4 whitespace-nowrap text-sm ${
+                          parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                            ? 'text-green-600 dark:text-green-400 font-bold'
+                            : 'text-gray-500 dark:text-gray-400'
+                        }`}>
                           {formatNumber(stock.sentiment_score)}
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                          parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                          parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
                           {formatNumber(stock.rule1_score)}
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                          parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                          parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
                           {formatNumber(stock.moat_score)}
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                          parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                          parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
@@ -898,7 +1121,7 @@ export default function TargetPortfolioPage() {
                           }
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {calculateUpside(stock.buy_price, stock.last_price)}
+                          {stock.per_upside !== null && stock.per_upside !== undefined ? `${Math.round(stock.per_upside)}%` : '-'}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {stock.last_price ? `$${formatNumber(stock.last_price)}` : '-'}
@@ -1087,49 +1310,38 @@ export default function TargetPortfolioPage() {
                     try {
                       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
                       const tickersArray = addForm.tickers.split(',').map(t => t.trim()).filter(t => t);
-                      const response = await fetch('https://www.mytickerlist.com/api/scraper-tasks/add-multiple', {
-                        method: 'POST',
-                        headers: {
-                          'Authorization': `Bearer ${token}`,
-                          'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ tickers: tickersArray })
-                      });
-                      if (response.ok) {
-                        setAddResult({ 
-                          success: true, 
-                          message: language === 'fr' ? 'Tickers ajoutés avec succès' : 'Tickers added successfully'
+                      
+                      let successCount = 0;
+                      
+                      for (const ticker of tickersArray) {
+                        const response = await fetch('/api/tickers', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({ 
+                            symbol: ticker, 
+                            target: true, 
+                            language: language 
+                          })
                         });
+                        
+                        if (response.ok) {
+                          successCount++;
+                        }
+                      }
+                      
+                      setAddResult({ 
+                        success: successCount > 0, 
+                        message: successCount > 0 
+                          ? `${successCount} ${t('tickersAddedToPortfolio')}`
+                          : t('errorAddingTickers')
+                      });
+                      
+                      if (successCount > 0) {
                         setAddForm({...addForm, tickers: ''});
                         // Refresh stocks list
-                        const fetchStocks = async () => {
-                          try {
-                            setLoading(true);
-                            let url = '/api/stocks/grouped';
-                            const params = new URLSearchParams();
-                            params.append('startDate', startDate);
-                            params.append('endDate', endDate);
-                            params.append('target', 'true');
-                            url += `?${params.toString()}`;
-                            
-                            const response = await fetch(url);
-                            if (response.ok) {
-                              const stocksData = await response.json();
-                              const targetStocks = stocksData.filter((stock: StockWithHighlight) => stock.target === true);
-                              setStocks(targetStocks);
-                            }
-                          } catch (err) {
-                            console.error('Error refreshing stocks:', err);
-                          } finally {
-                            setLoading(false);
-                          }
-                        };
-                        fetchStocks();
-                      } else {
-                        setAddResult({ 
-                          success: false, 
-                          message: language === 'fr' ? 'Échec de l\'ajout des tickers' : 'Failed to add tickers'
-                        });
+                        window.location.reload();
                       }
                     } catch (error) {
                       console.error('Error adding tickers:', error);

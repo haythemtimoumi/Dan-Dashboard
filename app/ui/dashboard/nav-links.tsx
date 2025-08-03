@@ -46,7 +46,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
               {(pathname === '/dashboard/portfolio' || (pathname.startsWith('/dashboard/portfolio') && !pathname.startsWith('/dashboard/portfolio-target'))) && <div className="ml-auto w-1.5 h-1.5 bg-white dark:bg-black rounded-full" />}
             </>
           )}
-        </Link>     
+        </Link>
         {/* Target Portfolio Link */}
         <Link
           href="/dashboard/portfolio-target"

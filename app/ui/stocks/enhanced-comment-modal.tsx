@@ -50,7 +50,7 @@ export function EnhancedCommentModal({
   const fetchComments = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`https://www.mytickerlist.com/api/comments/ticker/${ticker}`);
+      const response = await fetch(`/api/proxy/comments/ticker/${ticker}`);
       if (response.ok) {
         const comments = await response.json();
         setAllComments(comments);
@@ -72,7 +72,7 @@ export function EnhancedCommentModal({
       try {
         // Save to backend API
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        const response = await fetch(`https://www.mytickerlist.com/api/comments/ticker/${ticker}`, {
+        const response = await fetch(`/api/proxy/comments/ticker/${ticker}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ export function EnhancedCommentModal({
   const handleSaveEdit = async (commentId: number) => {
     try {
       const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      const response = await fetch(`https://www.mytickerlist.com/api/comments/${commentId}`, {
+      const response = await fetch(`/api/proxy/comments/${commentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -124,6 +124,7 @@ export function EnhancedCommentModal({
         setEditingComment(null);
         setEditText('');
         fetchComments();
+        onSave(editText);
       }
     } catch (error) {
       console.error('Error updating comment:', error);
@@ -134,7 +135,7 @@ export function EnhancedCommentModal({
     if (confirm(language === 'fr' ? 'Êtes-vous sûr de vouloir supprimer ce commentaire?' : 'Are you sure you want to delete this comment?')) {
       try {
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        const response = await fetch(`https://www.mytickerlist.com/api/comments/${commentId}`, {
+        const response = await fetch(`/api/proxy/comments/${commentId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -142,7 +143,11 @@ export function EnhancedCommentModal({
         });
         
         if (response.ok) {
+          const remainingComments = allComments.filter(c => c.id !== commentId);
           fetchComments();
+          if (remainingComments.length === 0) {
+            onSave('');
+          }
         }
       } catch (error) {
         console.error('Error deleting comment:', error);
