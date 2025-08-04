@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
       ? 'http://localhost:3000/api/stocks'
       : 'http://localhost:3000/api/stocks';
     
-    const response = await fetch(`${apiUrl}/grouped?${searchParams.toString()}`, {
+    const response = await fetch(`${apiUrl}/filtered?${searchParams.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Failed to fetch grouped stocks' },
+        { error: 'Failed to fetch filtered stocks' },
         { status: response.status }
       );
     }
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching grouped stocks:', error);
+    console.error('Error fetching filtered stocks:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

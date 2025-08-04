@@ -21,11 +21,29 @@ export const isGroupedStock = (stock: any): stock is GroupedStock => {
 };
 
 export const getGuruDisplay = (stock: any) => {
+  // Handle new API structure with gurus array
+  if (stock.gurus && Array.isArray(stock.gurus)) {
+    return {
+      type: 'grouped' as const,
+      gurus: stock.gurus,
+      count: stock.gurus.length
+    };
+  }
+  // Handle legacy grouped structure
   if (isGroupedStock(stock) && stock.gurus) {
     return {
       type: 'grouped' as const,
       gurus: stock.gurus.split(', '),
       count: parseInt(stock.guru_count || '0')
+    };
+  }
+  // Handle comma-separated guru string
+  if (stock.guru && stock.guru.includes(', ')) {
+    const gurus = stock.guru.split(', ');
+    return {
+      type: 'grouped' as const,
+      gurus: gurus,
+      count: gurus.length
     };
   }
   return {

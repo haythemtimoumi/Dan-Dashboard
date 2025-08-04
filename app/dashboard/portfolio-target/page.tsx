@@ -143,7 +143,7 @@ export default function TargetPortfolioPage() {
     fetchLastDate();
   }, []);
 
-  // Color management using API
+  // Color management using new dan-api backend
   const cycleColor = async (stockId: string) => {
     const stock = stocks.find(s => s.id === stockId);
     if (!stock) return;
@@ -157,13 +157,11 @@ export default function TargetPortfolioPage() {
       s.id === stockId ? { ...s, color: nextColor } : s
     ));
     
-    // Update via API
+    // Update via proxy API
     try {
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      const response = await fetch(`/api/scraper-tasks/${stock.ticker_id}/color`, {
+      const response = await fetch(`/api/proxy/stocks/${stock.ticker}/color`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ color: nextColor })
@@ -343,7 +341,7 @@ export default function TargetPortfolioPage() {
     const fetchSources = async () => {
       try {
         setLoadingSources(true);
-        const response = await fetch('https://www.mytickerlist.com/api/scraper-tasks/list-types');
+        const response = await fetch('/api/proxy/sources/types');
         if (response.ok) {
           const sourcesData = await response.json();
           setSources(sourcesData);

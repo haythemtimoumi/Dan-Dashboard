@@ -92,6 +92,30 @@ export default function NewPortfolioPage() {
   });
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
 
+  const parseNumericValue = (value: any): number => {
+    if (value === null || value === undefined || value === '') return -Infinity;
+    if (typeof value === 'number') return value;
+    
+    // Handle percentage values
+    if (typeof value === 'string' && value.includes('%')) {
+      const num = parseFloat(value.replace('%', ''));
+      return isNaN(num) ? -Infinity : num;
+    }
+    
+    // Handle currency values
+    if (typeof value === 'string' && value.includes('$')) {
+      const num = parseFloat(value.replace(/[$,]/g, ''));
+      return isNaN(num) ? -Infinity : num;
+    }
+    
+    // Handle regular numeric strings
+    if (typeof value === 'string') {
+      const num = parseFloat(value.replace(/,/g, ''));
+      return isNaN(num) ? -Infinity : num;
+    }
+    
+    return -Infinity;
+  };
 
   // Load data from localStorage and fetch last date on component mount
   useEffect(() => {
@@ -136,7 +160,7 @@ export default function NewPortfolioPage() {
     fetchLastDate();
   }, []);
 
-  // Color management using API
+  // Color management using new dan-api backend
   const cycleColor = async (stockId: string) => {
     const stock = stocks.find(s => s.id === stockId);
     if (!stock) return;
@@ -150,14 +174,11 @@ export default function NewPortfolioPage() {
       s.id === stockId ? { ...s, color: nextColor } : s
     ));
     
-    // Update via API
+    // Update via proxy API
     try {
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      
-      const response = await fetch(`/api/scraper-tasks/${stock.ticker_id}/color`, {
+      const response = await fetch(`/api/proxy/stocks/${stock.ticker}/color`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ color: nextColor })
@@ -296,7 +317,7 @@ export default function NewPortfolioPage() {
     const fetchSources = async () => {
       try {
         setLoadingSources(true);
-        const response = await fetch('https://www.mytickerlist.com/api/scraper-tasks/list-types');
+        const response = await fetch('/api/proxy/sources/types');
         if (response.ok) {
           const sourcesData = await response.json();
           setSources(sourcesData);
@@ -320,25 +341,12 @@ export default function NewPortfolioPage() {
         setLoading(true);
         setError(null);
         
-        let url, params;
+        // Always use grouped endpoint
+        const params = new URLSearchParams();
+        params.append('startDate', startDate);
+        params.append('endDate', endDate);
         
-        if (isFiltered) {
-          // Use filtered endpoint
-          url = '/api/stocks/filtered';
-          params = new URLSearchParams();
-          params.append('sentiment', filters.sentiment.toString());
-          params.append('moat', filters.moat.toString());
-          params.append('rule1', filters.rule1.toString());
-          params.append('management', filters.management.toString());
-        } else {
-          // Use grouped endpoint
-          url = '/api/stocks/grouped';
-          params = new URLSearchParams();
-          params.append('startDate', startDate);
-          params.append('endDate', endDate);
-        }
-        
-        url += `?${params.toString()}`;
+        const url = `/api/stocks/grouped?${params.toString()}`;
         
         const response = await fetch(url);
         
@@ -347,6 +355,7 @@ export default function NewPortfolioPage() {
         }
         
         const stocksData = await response.json();
+        
         // Filter out target stocks for regular portfolio
         const nonTargetStocks = stocksData.filter((stock: StockWithHighlight) => !stock.target);
         setStocks(nonTargetStocks);
@@ -359,7 +368,7 @@ export default function NewPortfolioPage() {
     };
 
     fetchStocks();
-  }, [startDate, endDate, isFiltered, filters]);
+  }, [startDate, endDate]);
 
   // Function to check comments for all stocks using batch API
   const checkCommentsForStocks = async (stocksList: StockWithHighlight[]) => {
@@ -421,14 +430,35 @@ export default function NewPortfolioPage() {
     );
   };
 
-  // Filter stocks by selected source and ticker search (no deduplication needed - grouped API handles this)
-  const filteredStocks = stocks.filter(stock => {
+  // Filter stocks by selected source, ticker search, and advanced filters
+  let filteredStocks = stocks.filter(stock => {
     const sourceMatch = !selectedSource || stock.source === selectedSource;
     const tickerMatch = !searchTicker || stock.ticker.toLowerCase().includes(searchTicker.toLowerCase());
     return sourceMatch && tickerMatch;
   });
+  
+  // Apply advanced filters if enabled
+  if (isFiltered) {
+    filteredStocks = filteredStocks.filter((stock: StockWithHighlight) => {
+      const sentimentScore = parseNumericValue(stock.sentiment_score);
+      const moatScore = parseNumericValue(stock.moat_score);
+      const rule1Score = parseNumericValue(stock.rule1_score);
+      const managementScore = parseNumericValue(stock.management_score);
+      
+      // Check if all three scores are green (>85)
+      const allScoresGreen = rule1Score > 85 && moatScore > 85 && managementScore > 85;
+      
+      // If scores are green, sentiment must be >60, otherwise use filter value
+      const minSentiment = allScoresGreen ? 60 : filters.sentiment;
+      
+      return sentimentScore >= minSentiment &&
+             moatScore >= filters.moat &&
+             rule1Score >= filters.rule1 &&
+             managementScore >= filters.management;
+    });
+  }
 
-  const parseNumericValue = (value: any): number => {
+  const parseNumericValueDuplicate = (value: any): number => {
     if (value === null || value === undefined || value === '') return -Infinity;
     if (typeof value === 'number') return value;
     
@@ -709,7 +739,6 @@ export default function NewPortfolioPage() {
                       onChange={(e) => {
                         const newFilters = {...filters, sentiment: parseInt(e.target.value) || 0};
                         setFilters(newFilters);
-                        setIsFiltered(true);
                       }}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       min="0"
@@ -726,7 +755,6 @@ export default function NewPortfolioPage() {
                       onChange={(e) => {
                         const newFilters = {...filters, moat: parseInt(e.target.value) || 0};
                         setFilters(newFilters);
-                        setIsFiltered(true);
                       }}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       min="0"
@@ -743,7 +771,6 @@ export default function NewPortfolioPage() {
                       onChange={(e) => {
                         const newFilters = {...filters, rule1: parseInt(e.target.value) || 0};
                         setFilters(newFilters);
-                        setIsFiltered(true);
                       }}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       min="0"
@@ -760,7 +787,6 @@ export default function NewPortfolioPage() {
                       onChange={(e) => {
                         const newFilters = {...filters, management: parseInt(e.target.value) || 0};
                         setFilters(newFilters);
-                        setIsFiltered(true);
                       }}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       min="0"
@@ -772,7 +798,6 @@ export default function NewPortfolioPage() {
                   <button
                     onClick={() => {
                       setIsFiltered(true);
-                      setShowFilters(false);
                     }}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                   >
@@ -781,7 +806,12 @@ export default function NewPortfolioPage() {
                   <button
                     onClick={() => {
                       setIsFiltered(false);
-                      setShowFilters(false);
+                      setFilters({
+                        sentiment: 60,
+                        moat: 85,
+                        rule1: 85,
+                        management: 85
+                      });
                     }}
                     className="bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors text-sm font-medium"
                   >

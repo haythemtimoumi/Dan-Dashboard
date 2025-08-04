@@ -233,7 +233,6 @@ const translations = {
     
     // Multi-guru functionality
     analyzedBy: 'Analyzed by',
-    gurus: 'gurus',
     
     // Comment functionality
     commentsFor: 'Comments for',
@@ -247,6 +246,7 @@ const translations = {
     
     // Guru functionality
     guru: 'Guru',
+    gurus: 'Gurus',
     selectGuru: 'Select a guru',
     newGuru: 'New guru?',
     newGuruName: 'New guru name',
@@ -257,6 +257,8 @@ const translations = {
     tickersAddedToPortfolio: 'tickers added to portfolio',
     errorAddingTickers: 'Error adding tickers',
     tickersAdded: 'tickers added',
+    noGurusFound: 'No gurus found',
+    tickers: 'tickers',
   },
   fr: {
     // Navigation
@@ -475,7 +477,6 @@ const translations = {
     
     // Multi-guru functionality
     analyzedBy: 'Analysé par',
-    gurus: 'gurus',
     
     // Comment functionality
     commentsFor: 'Commentaires pour',
@@ -489,6 +490,7 @@ const translations = {
     
     // Guru functionality
     guru: 'Guru',
+    gurus: 'Gurus',
     selectGuru: 'Sélectionner un guru',
     newGuru: 'Nouveau guru ?',
     newGuruName: 'Nom du nouveau guru',
@@ -499,6 +501,8 @@ const translations = {
     tickersAddedToPortfolio: 'tickers ajoutés au portfolio',
     errorAddingTickers: 'Erreur lors de l\'ajout',
     tickersAdded: 'tickers ajoutés',
+    noGurusFound: 'Aucun guru trouvé',
+    tickers: 'tickers',
   },
 };
 
