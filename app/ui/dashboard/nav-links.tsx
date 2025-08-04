@@ -73,7 +73,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
           href="/dashboard/gurus"
           className={clsx(
             "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200",
-            pathname === '/dashboard/gurus' || pathname.startsWith('/dashboard/gurus')
+            pathname === '/dashboard/gurus'
               ? "bg-black dark:bg-white text-white dark:text-black"
               : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white",
             isCollapsed && "justify-center px-2"
@@ -84,7 +84,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
           {!isCollapsed && (
             <>
               <span className="truncate">{language === 'fr' ? 'Gurus' : 'Gurus'}</span>
-              {(pathname === '/dashboard/gurus' || pathname.startsWith('/dashboard/gurus')) && <div className="ml-auto w-1.5 h-1.5 bg-white dark:bg-black rounded-full" />}
+              {pathname === '/dashboard/gurus' && <div className="ml-auto w-1.5 h-1.5 bg-white dark:bg-black rounded-full" />}
             </>
           )}
         </Link>

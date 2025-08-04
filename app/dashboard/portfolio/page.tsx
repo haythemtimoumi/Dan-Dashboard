@@ -122,17 +122,6 @@ export default function NewPortfolioPage() {
     const savedComments = localStorage.getItem('stockComments');
     if (savedComments) setStockComments(JSON.parse(savedComments));
     
-    // Load persisted comment status
-    const savedStocksWithComments = localStorage.getItem('stocksWithComments');
-    if (savedStocksWithComments) {
-      setStocksWithComments(new Set(JSON.parse(savedStocksWithComments)));
-    }
-    
-    const savedLastComments = localStorage.getItem('lastComments');
-    if (savedLastComments) {
-      setLastComments(JSON.parse(savedLastComments));
-    }
-    
     // Fetch last date from API
     const fetchLastDate = async () => {
       try {
@@ -222,10 +211,6 @@ export default function NewPortfolioPage() {
       
       setStocksWithComments(newStocksWithComments);
       setLastComments(newLastComments);
-      
-      // Persist comment status to localStorage to survive page reloads
-      localStorage.setItem('stocksWithComments', JSON.stringify(Array.from(newStocksWithComments)));
-      localStorage.setItem('lastComments', JSON.stringify(newLastComments));
     }
     
     setCurrentComment('');
@@ -359,6 +344,9 @@ export default function NewPortfolioPage() {
         // Filter out target stocks for regular portfolio
         const nonTargetStocks = stocksData.filter((stock: StockWithHighlight) => !stock.target);
         setStocks(nonTargetStocks);
+        
+        // Auto-load comments for all stocks
+        await checkCommentsForStocks(nonTargetStocks);
       } catch (err) {
         console.error('Error fetching stocks:', err);
         setError('Failed to load portfolio stocks. Please try again later.');
@@ -395,7 +383,8 @@ export default function NewPortfolioPage() {
           }
         });
         
-
+        setStocksWithComments(newStocksWithComments);
+        setLastComments(newLastComments);
       }
     } catch (error) {
       console.error('Error checking comments:', error);
@@ -586,22 +575,32 @@ export default function NewPortfolioPage() {
     <div className="mt-6 flow-root">
       <div className="inline-block min-w-full align-middle">
         <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-          {/* Header with Refresh Button */}
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                {language === 'fr' ? 'Portfolio' : 'Portfolio'}
-              </h1>
-            </div>
+          {/* Header */}
+          <div className="mb-6 flex items-center">
             <button
-              onClick={() => checkCommentsForStocks(stocks)}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all duration-200 flex items-center gap-2 text-sm"
-              title={language === 'fr' ? 'Charger les commentaires' : 'Load comments'}
+              onClick={() => {
+                const newShowFilters = !showFilters;
+                setShowFilters(newShowFilters);
+                // Auto-apply filters when opening for the first time
+                if (newShowFilters && !isFiltered) {
+                  setIsFiltered(true);
+                }
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                isFiltered 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
               </svg>
-              {language === 'fr' ? 'Charger Commentaires' : 'Load Comments'}
+              {language === 'fr' ? 'Filtre Avancé' : 'Advanced Filter'}
+              {isFiltered && (
+                <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                  {language === 'fr' ? 'Actif' : 'Active'}
+                </span>
+              )}
             </button>
           </div>
 
@@ -695,32 +694,6 @@ export default function NewPortfolioPage() {
             )}
               </div>
               
-              {/* Advanced Filter Button */}
-              <button
-                onClick={() => {
-                  const newShowFilters = !showFilters;
-                  setShowFilters(newShowFilters);
-                  // Auto-apply filters when opening for the first time
-                  if (newShowFilters && !isFiltered) {
-                    setIsFiltered(true);
-                  }
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                  isFiltered 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                </svg>
-                {language === 'fr' ? 'Filtre Avancé' : 'Advanced Filter'}
-                {isFiltered && (
-                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
-                    {language === 'fr' ? 'Actif' : 'Active'}
-                  </span>
-                )}
-              </button>
             </div>
             
             {/* Collapsible Filter Box */}
@@ -1087,6 +1060,7 @@ export default function NewPortfolioPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                               </svg>
                             </button>
+
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

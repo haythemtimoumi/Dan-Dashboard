@@ -651,63 +651,54 @@ export default function TargetPortfolioPage() {
       <div className="inline-block min-w-full align-middle">
         <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg border border-gray-100 dark:border-gray-700">
           {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                {language === 'fr' ? 'Portfolio Cible' : 'Target Portfolio'}
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                {language === 'fr' ? 'Actions marquées comme cibles' : 'Stocks marked as targets'}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <MissingAnalysisDropdown />
+          <div className="mb-6 flex items-center gap-3">
+            <MissingAnalysisDropdown />
+            <button
+              onClick={refreshCommentStatus}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all duration-200 flex items-center gap-2 text-sm"
+              title={language === 'fr' ? 'Actualiser les commentaires' : 'Refresh comments'}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {language === 'fr' ? 'Actualiser' : 'Refresh'}
+            </button>
+            {isAdmin && (
               <button
-                onClick={refreshCommentStatus}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all duration-200 flex items-center gap-2 text-sm"
-                title={language === 'fr' ? 'Actualiser les commentaires' : 'Refresh comments'}
+                onClick={() => setShowAddModal(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-sm"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
+                {language === 'fr' ? 'Ajouter Tickers' : 'Add Tickers'}
               </button>
-              {isAdmin && (
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 hover:shadow-lg flex items-center gap-2 text-sm"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  {language === 'fr' ? 'Ajouter Tickers' : 'Add Tickers'}
-                </button>
+            )}
+            <button
+              onClick={() => {
+                const newShowFilters = !showFilters;
+                setShowFilters(newShowFilters);
+                // Auto-apply filters when opening for the first time
+                if (newShowFilters && !isFiltered) {
+                  setIsFiltered(true);
+                }
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                isFiltered 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+              </svg>
+              {language === 'fr' ? 'Filtre Avancé' : 'Advanced Filter'}
+              {isFiltered && (
+                <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                  {language === 'fr' ? 'Actif' : 'Active'}
+                </span>
               )}
-              <button
-                onClick={() => {
-                  const newShowFilters = !showFilters;
-                  setShowFilters(newShowFilters);
-                  // Auto-apply filters when opening for the first time
-                  if (newShowFilters && !isFiltered) {
-                    setIsFiltered(true);
-                  }
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                  isFiltered 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                </svg>
-                {language === 'fr' ? 'Filtre Avancé' : 'Advanced Filter'}
-                {isFiltered && (
-                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
-                    {language === 'fr' ? 'Actif' : 'Active'}
-                  </span>
-                )}
-              </button>
-            </div>
+            </button>
           </div>
 
           {/* Collapsible Filter Box */}
@@ -1159,6 +1150,48 @@ export default function TargetPortfolioPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                               </svg>
                             </button>
+                            {hasComment && (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  const confirmMessage = language === 'fr' 
+                                    ? `Supprimer tous les commentaires pour ${stock.ticker}?`
+                                    : `Delete all comments for ${stock.ticker}?`;
+                                  if (confirm(confirmMessage)) {
+                                    try {
+                                      const response = await fetch(`/api/proxy/comments/ticker/${stock.ticker}`);
+                                      if (response.ok) {
+                                        const comments = await response.json();
+                                        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+                                        for (const comment of comments) {
+                                          await fetch(`/api/proxy/comments/${comment.id}`, {
+                                            method: 'DELETE',
+                                            headers: { 'Authorization': `Bearer ${token}` }
+                                          });
+                                        }
+                                        const newStocksWithComments = new Set(stocksWithComments);
+                                        const newLastComments = { ...lastComments };
+                                        newStocksWithComments.delete(stock.ticker);
+                                        delete newLastComments[stock.ticker];
+                                        setStocksWithComments(newStocksWithComments);
+                                        setLastComments(newLastComments);
+                                        localStorage.setItem('stocksWithComments', JSON.stringify(Array.from(newStocksWithComments)));
+                                        localStorage.setItem('lastComments', JSON.stringify(newLastComments));
+                                      }
+                                    } catch (error) {
+                                      console.error('Error deleting comments:', error);
+                                    }
+                                  }
+                                }}
+                                className="p-1 text-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900 rounded transition-colors"
+                                title={language === 'fr' ? 'Supprimer commentaires' : 'Delete comments'}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6" />
+                                </svg>
+                              </button>
+                            )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

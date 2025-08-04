@@ -10,11 +10,17 @@ import { AuthProvider } from "@/app/contexts/auth-context";
 
 export const metadata:Metadata={
 title:{
-  template:"%s | Dan's Dashboard",
-  default:"Dan's Dashboard"
+  template:"%s | Stock Screener",
+  default:"Stock Screener"
 },
-description:"Dan's Dashboard",
-metadataBase:new URL("https://dashboard-v1-ashy.vercel.app/")
+description:"Stock Screener",
+metadataBase:new URL("https://www.mytickerlist.com/"),
+icons: {
+  icon: {
+    url: '/favicon.ico',
+    sizes: '32x32',
+  },
+}
 };
 
 export default function RootLayout({

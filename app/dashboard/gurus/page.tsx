@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/app/contexts/settings-context';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { Stock } from '@/app/lib/definitions';
+import { formatCurrency } from '@/app/lib/utils';
 
 interface Ticker {
   symbol: string;
@@ -18,17 +20,110 @@ interface Guru {
   tickers: Ticker[];
 }
 
+interface StockWithHighlight {
+  id: string;
+  ticker: string;
+  guru?: string;
+  signal_score?: any;
+  sentiment_score?: any;
+  rule1_score?: any;
+  moat_score?: any;
+  management_score?: any;
+  buy_price?: any;
+  per_upside?: number;
+  last_price?: any;
+  date?: string;
+  created_at?: string;
+  highlight?: boolean;
+  target?: boolean;
+  color?: string;
+  ticker_id?: number;
+  per_port?: number | null;
+  last_action?: string | null;
+}
+
+const formatNumber = (value: any): string => {
+  if (value === null || value === undefined || value === '') return '-';
+  let num: number;
+  if (typeof value === 'string') {
+    num = parseFloat(value.replace(/[$,]/g, ''));
+  } else {
+    num = Number(value);
+  }
+  if (isNaN(num)) return '-';
+  return Math.round(num).toString();
+};
+
+const formatBuyPrice = (value: any): string => {
+  if (value === null || value === undefined || value === '') return '-';
+  if (typeof value === 'string') {
+    const cleanValue = value.replace(/[$,]/g, '');
+    const num = parseFloat(cleanValue);
+    if (isNaN(num)) return '-';
+    if (num === 0) return '$0';
+    return formatCurrency(num);
+  }
+  const num = Number(value);
+  if (isNaN(num)) return '-';
+  if (num === 0) return '$0';
+  return formatCurrency(num);
+};
+
+const parseNumericValue = (value: any): number => {
+  if (value === null || value === undefined || value === '') return -Infinity;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string' && value.includes('%')) {
+    const num = parseFloat(value.replace('%', ''));
+    return isNaN(num) ? -Infinity : num;
+  }
+  if (typeof value === 'string' && value.includes('$')) {
+    const num = parseFloat(value.replace(/[$,]/g, ''));
+    return isNaN(num) ? -Infinity : num;
+  }
+  if (typeof value === 'string') {
+    const num = parseFloat(value.replace(/,/g, ''));
+    return isNaN(num) ? -Infinity : num;
+  }
+  return -Infinity;
+};
+
 export default function GurusPage() {
   const [gurus, setGurus] = useState<Guru[]>([]);
   const [expandedGuru, setExpandedGuru] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [guruStocks, setGuruStocks] = useState<{[key: number]: StockWithHighlight[]}>({});
+  const [loadingStocks, setLoadingStocks] = useState<{[key: number]: boolean}>({});
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const { t, language } = useSettings();
   const router = useRouter();
 
   useEffect(() => {
     fetchGurus();
+    // Fetch last date from API
+    const fetchLastDate = async () => {
+      try {
+        const response = await fetch('/api/stocks/last-date');
+        if (response.ok) {
+          const data = await response.json();
+          const lastDate = new Date(data.last_date).toISOString().split('T')[0];
+          setStartDate(lastDate);
+          setEndDate(lastDate);
+        } else {
+          const today = new Date().toISOString().split('T')[0];
+          setStartDate(today);
+          setEndDate(today);
+        }
+      } catch (error) {
+        console.error('Error fetching last date:', error);
+        const today = new Date().toISOString().split('T')[0];
+        setStartDate(today);
+        setEndDate(today);
+      }
+    };
+    fetchLastDate();
   }, []);
 
   const fetchGurus = async () => {
@@ -46,8 +141,75 @@ export default function GurusPage() {
     }
   };
 
-  const handleGuruClick = (guruId: number) => {
-    setExpandedGuru(expandedGuru === guruId ? null : guruId);
+  const handleGuruClick = async (guruId: number) => {
+    if (expandedGuru === guruId) {
+      setExpandedGuru(null);
+      return;
+    }
+    
+    setExpandedGuru(guruId);
+    
+    // Fetch stocks for this guru if not already loaded
+    if (!guruStocks[guruId] && startDate && endDate) {
+      const guru = gurus.find(g => g.guru_id === guruId);
+      if (guru) {
+        await fetchGuruStocks(guruId, guru.guru_name);
+      }
+    }
+  };
+  
+  const fetchGuruStocks = async (guruId: number, guruName: string) => {
+    setLoadingStocks(prev => ({ ...prev, [guruId]: true }));
+    
+    try {
+      const params = new URLSearchParams();
+      params.append('startDate', startDate);
+      params.append('endDate', endDate);
+      
+      const response = await fetch(`/api/stocks/grouped?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch stocks');
+      
+      const stocksData = await response.json();
+      console.log('Fetched stocks data:', stocksData.length, 'stocks');
+      console.log('Looking for guru:', guruName);
+      console.log('Sample stock guru fields:', stocksData.slice(0, 10).map((s: any) => ({ ticker: s.ticker, guru: s.guru, gurus: s.gurus })));
+      
+      // Find stocks that might match this guru
+      const potentialMatches = stocksData.filter((s: any) => 
+        s.guru && (s.guru.toLowerCase().includes(guruName.toLowerCase()) || 
+        (s.gurus && s.gurus.toLowerCase && s.gurus.toLowerCase().includes(guruName.toLowerCase())))
+      );
+      console.log('Potential matches:', potentialMatches.length, potentialMatches.slice(0, 3).map((s: any) => ({ ticker: s.ticker, guru: s.guru, gurus: s.gurus })));
+      
+      const guruSpecificStocks = stocksData.filter((stock: any) => {
+        // Check if stock has guru data
+        const stockGuru = stock.guru || stock.gurus;
+        if (!stockGuru) return false;
+        
+        const guruLower = guruName.toLowerCase();
+        const stockGuruLower = stockGuru.toLowerCase();
+        
+        // Handle exact match (case insensitive)
+        if (stockGuruLower === guruLower) return true;
+        
+        // Handle comma-separated guru lists
+        if (stockGuruLower.includes(',')) {
+          const gurus = stockGuruLower.split(',').map((g: string) => g.trim());
+          return gurus.some((g: string) => g === guruLower || g.includes(guruLower));
+        }
+        
+        // Handle partial matches
+        return stockGuruLower.includes(guruLower);
+      });
+      
+      console.log('Filtered stocks for guru:', guruSpecificStocks.length);
+      
+      setGuruStocks(prev => ({ ...prev, [guruId]: guruSpecificStocks }));
+    } catch (error) {
+      console.error('Error fetching guru stocks:', error);
+    } finally {
+      setLoadingStocks(prev => ({ ...prev, [guruId]: false }));
+    }
   };
 
   const handleTickerClick = (ticker: string) => {
@@ -134,33 +296,136 @@ export default function GurusPage() {
 
             {expandedGuru === guru.guru_id && (
               <div className="border-t border-gray-200 dark:border-gray-700">
-                <div className="px-6 py-4">
-                  <div className="grid gap-2">
-                    {guru.tickers.map((ticker) => (
-                      <button
-                        key={ticker.symbol}
-                        onClick={() => handleTickerClick(ticker.symbol)}
-                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-left"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {ticker.symbol}
-                          </span>
-                          <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
-                            {ticker.scrape_type}
-                          </span>
-                        </div>
-                        <div className="flex flex-col items-end text-sm text-gray-500 dark:text-gray-400">
-                          {ticker.per_port !== null && (
-                            <span className="font-medium">{ticker.per_port}%</span>
-                          )}
-                          {ticker.last_act && (
-                            <span className="text-xs">{new Date(ticker.last_act).toLocaleDateString()}</span>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                <div className="p-6">
+                  {loadingStocks[guru.guru_id] ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : guruStocks[guru.guru_id] && guruStocks[guru.guru_id].length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                          <tr>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Symbole' : 'Ticker'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Signal' : 'Signal'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Sentiment' : 'Sentiment'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Règle #1' : 'Rule #1'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Fossé' : 'Moat'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Gestion' : 'Management'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Prix Achat' : 'Buy Price'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              % {t('upside')}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Prix' : 'Price'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Dernière Action' : 'Last Action'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? '% Portfolio' : '% Portfolio'}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {guruStocks[guru.guru_id].map((stock) => {
+                            const stockColor = stock.color || '';
+                            return (
+                              <tr
+                                key={stock.id}
+                                className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
+                                  stockColor === 'red' ? 'bg-red-50 dark:bg-red-900/20' :
+                                  stockColor === 'green' ? 'bg-green-50 dark:bg-green-900/20' :
+                                  stockColor === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''
+                                }`}
+                                onClick={() => router.push(`/dashboard/portfolio/${stock.ticker}?date=${startDate}`)}
+                              >
+                                <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  <div className="flex items-center gap-2">
+                                    {stock.target && (
+                                      <span className="text-yellow-500 text-sm" title="Target Stock">
+                                        ⭐
+                                      </span>
+                                    )}
+                                    {stock.ticker}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {formatNumber(stock.signal_score)}
+                                </td>
+                                <td className={`px-3 py-4 whitespace-nowrap text-sm ${
+                                  parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                                    ? 'text-green-600 dark:text-green-400 font-bold'
+                                    : 'text-gray-500 dark:text-gray-400'
+                                }`}>
+                                  {formatNumber(stock.sentiment_score)}
+                                </td>
+                                <td className={`px-3 py-4 whitespace-nowrap text-sm ${
+                                  parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                                    ? 'text-green-600 dark:text-green-400 font-bold'
+                                    : 'text-gray-500 dark:text-gray-400'
+                                }`}>
+                                  {formatNumber(stock.rule1_score)}
+                                </td>
+                                <td className={`px-3 py-4 whitespace-nowrap text-sm ${
+                                  parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                                    ? 'text-green-600 dark:text-green-400 font-bold'
+                                    : 'text-gray-500 dark:text-gray-400'
+                                }`}>
+                                  {formatNumber(stock.moat_score)}
+                                </td>
+                                <td className={`px-3 py-4 whitespace-nowrap text-sm ${
+                                  parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                                    ? 'text-green-600 dark:text-green-400 font-bold'
+                                    : 'text-gray-500 dark:text-gray-400'
+                                }`}>
+                                  {formatNumber(stock.management_score)}
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {formatBuyPrice(stock.buy_price)}
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {stock.per_upside !== null && stock.per_upside !== undefined ? `${Math.round(stock.per_upside)}%` : '-'}
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {stock.last_price ? `$${formatNumber(stock.last_price)}` : '-'}
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {(() => {
+                                    if (!stock.last_action || stock.last_action === '' || stock.last_action === null) return '-';
+                                    const date = new Date(stock.last_action);
+                                    return isNaN(date.getTime()) ? '-' : date.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US');
+                                  })()
+                                  }
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {stock.per_port !== null && stock.per_port !== undefined ? `${stock.per_port}%` : '-'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      {language === 'fr' ? 'Aucun ticker trouvé pour ce guru' : 'No tickers found for this guru'}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
