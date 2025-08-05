@@ -27,21 +27,27 @@ export async function GET(request: NextRequest) {
         st.id as ticker_id,
         g.guru_name as guru,
         st.list_type as source,
-        st.last_updated_at as created_at,
-        0 as sentiment_score,
-        0 as signal_score,
-        0 as rule1_score,
-        0 as moat_score,
-        0 as management_score,
-        0 as buy_price,
-        0 as last_price,
-        0 as per_upside,
-        0 as long_gr,
-        0 as last_gr,
-        0 as pbt,
-        '' as full_name
+        COALESCE(sa.date, st.last_updated_at) as created_at,
+        COALESCE(sa.sentiment_score, 0) as sentiment_score,
+        COALESCE(sa.signal_score, 0) as signal_score,
+        COALESCE(sa.rule1_score, 0) as rule1_score,
+        COALESCE(sa.moat_score, 0) as moat_score,
+        COALESCE(sa.management_score, 0) as management_score,
+        COALESCE(sa.buy_price, '0') as buy_price,
+        COALESCE(sa.last_price, '0') as last_price,
+        COALESCE(sa.per_upside, '0') as per_upside,
+        COALESCE(sa.long_gr, '0') as long_gr,
+        COALESCE(sa.last_gr, '0') as last_gr,
+        COALESCE(sa.pbt, '0') as pbt,
+        COALESCE(sa.full_name, '') as full_name
       FROM scraper_tasks st
       LEFT JOIN guru g ON st.guru_id = g.id
+      LEFT JOIN LATERAL (
+        SELECT * FROM stock_analysis 
+        WHERE ticker_id = st.id 
+        ORDER BY date DESC NULLS LAST 
+        LIMIT 1
+      ) sa ON true
       WHERE st.active = true AND st.target = true
     `;
     
@@ -60,7 +66,7 @@ export async function GET(request: NextRequest) {
       paramIndex++;
     }
     
-    query += ` ORDER BY st.symbol, st.last_updated_at DESC`;
+    query += ` ORDER BY st.symbol, COALESCE(sa.date, st.last_updated_at) DESC`;
     
     const result = await client.query(query, params);
     

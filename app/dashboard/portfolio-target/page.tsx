@@ -91,6 +91,35 @@ export default function TargetPortfolioPage() {
   });
   const [addSaving, setAddSaving] = useState(false);
   const [addResult, setAddResult] = useState<{success: boolean, message: string} | null>(null);
+  const [inProgressTickers, setInProgressTickers] = useState<string[]>([]);
+  const [backendInProgress, setBackendInProgress] = useState<string[]>([]);
+
+  // Load in-progress tickers from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('inProgressTickers');
+    if (saved) {
+      setInProgressTickers(JSON.parse(saved));
+    }
+  }, []);
+
+  // Fetch missing analysis tickers from backend
+  const fetchMissingAnalysis = async () => {
+    try {
+      const response = await fetch('/api/tickers/missing-analysis');
+      if (response.ok) {
+        const data = await response.json();
+        const symbols = data.map((item: any) => item.symbol);
+        setBackendInProgress(symbols);
+      }
+    } catch (error) {
+      console.error('Error fetching missing analysis:', error);
+    }
+  };
+
+  // Fetch missing analysis on component mount and when stocks change
+  useEffect(() => {
+    fetchMissingAnalysis();
+  }, [stocks]);
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [filters, setFilters] = useState({
     sentiment: 60,
@@ -367,12 +396,12 @@ export default function TargetPortfolioPage() {
         setLoading(true);
         setError(null);
         
-        // Use local target endpoint to get data from local database
+        // Use Dan-API grouped endpoint to get data with proper analysis
         const params = new URLSearchParams();
         params.append('startDate', startDate);
         params.append('endDate', endDate);
         
-        const url = `/api/stocks/target?${params.toString()}`;
+        const url = `/api/proxy/stocks/grouped?${params.toString()}`;
         
         const response = await fetch(url);
         
@@ -652,14 +681,52 @@ export default function TargetPortfolioPage() {
           <div className="mb-6 flex items-center gap-3">
             <MissingAnalysisDropdown />
             <button
-              onClick={refreshCommentStatus}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all duration-200 flex items-center gap-2 text-sm"
-              title={language === 'fr' ? 'Actualiser les commentaires' : 'Refresh comments'}
+              onClick={async () => {
+                const allInProgress = Array.from(new Set([...inProgressTickers, ...backendInProgress]));
+                
+                if (allInProgress.length > 0) {
+                  // Re-activate in-progress tickers
+                  try {
+                    const response = await fetch('/api/proxy/stocks/activate-for-dan', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ tickers: allInProgress })
+                    });
+                    
+                    if (response.ok) {
+                      const result = await response.json();
+                      if (result.activated.length > 0) {
+                        const filteredInProgress = inProgressTickers.filter(ticker => !result.activated.includes(ticker));
+                        setInProgressTickers(filteredInProgress);
+                        localStorage.setItem('inProgressTickers', JSON.stringify(filteredInProgress));
+                        await fetchMissingAnalysis();
+                        window.location.reload();
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Error refreshing tickers:', error);
+                  }
+                } else {
+                  refreshCommentStatus();
+                }
+              }}
+              className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm ${
+                (inProgressTickers.length > 0 || backendInProgress.length > 0)
+                  ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                  : 'bg-purple-600 text-white hover:bg-purple-700'
+              }`}
+              title={(inProgressTickers.length > 0 || backendInProgress.length > 0)
+                ? (language === 'fr' ? 'Actualiser les tickers en cours' : 'Refresh in-progress tickers')
+                : (language === 'fr' ? 'Actualiser les commentaires' : 'Refresh comments')
+              }
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              {language === 'fr' ? 'Actualiser' : 'Refresh'}
+              {(inProgressTickers.length > 0 || backendInProgress.length > 0)
+                ? `${language === 'fr' ? 'Actualiser' : 'Refresh'} (${Array.from(new Set([...inProgressTickers, ...backendInProgress])).length})`
+                : (language === 'fr' ? 'Actualiser' : 'Refresh')
+              }
             </button>
             {isAdmin && (
               <button
@@ -891,6 +958,11 @@ export default function TargetPortfolioPage() {
               ? `${sortedStocks.length} résultat${sortedStocks.length !== 1 ? 's' : ''} cible${sortedStocks.length !== 1 ? 's' : ''}`
               : `${sortedStocks.length} target result${sortedStocks.length !== 1 ? 's' : ''}`
             }
+            {(inProgressTickers.length > 0 || backendInProgress.length > 0) && (
+              <span className="ml-4 px-2 py-1 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 rounded text-xs">
+                🔄 {language === 'fr' ? 'En cours' : 'In Progress'}: {Array.from(new Set([...inProgressTickers, ...backendInProgress])).join(', ')}
+              </span>
+            )}
           </div>
 
           {loading ? (
@@ -1353,28 +1425,37 @@ export default function TargetPortfolioPage() {
                         const result = await response.json();
                         const totalProcessed = result.activated.length + result.added_to_dan.length;
                         
-                        let message = '';
-                        if (result.activated.length > 0) {
-                          message += language === 'fr' 
-                            ? `${result.activated.length} ticker(s) activé(s): ${result.activated.join(', ')}`
-                            : `${result.activated.length} ticker(s) activated: ${result.activated.join(', ')}`;
-                        }
+                        // Update in-progress tickers
                         if (result.added_to_dan.length > 0) {
-                          if (message) message += '. ';
-                          message += language === 'fr'
-                            ? `${result.added_to_dan.length} ticker(s) ajouté(s): ${result.added_to_dan.join(', ')}`
-                            : `${result.added_to_dan.length} ticker(s) added: ${result.added_to_dan.join(', ')}`;
+                          const newInProgress = [...inProgressTickers, ...result.added_to_dan];
+                          setInProgressTickers(newInProgress);
+                          localStorage.setItem('inProgressTickers', JSON.stringify(newInProgress));
                         }
+                        
+                        // Remove activated tickers from in-progress
+                        if (result.activated.length > 0) {
+                          const filteredInProgress = inProgressTickers.filter(ticker => !result.activated.includes(ticker));
+                          setInProgressTickers(filteredInProgress);
+                          localStorage.setItem('inProgressTickers', JSON.stringify(filteredInProgress));
+                        }
+                        
+                        let message = '';
+                        if (result.added_to_dan.length > 0) {
+                          message = language === 'fr'
+                            ? `🔄 En cours d'analyse: ${result.added_to_dan.join(', ')}`
+                            : `🔄 In Progress: ${result.added_to_dan.join(', ')}`;
+                        }
+                        
                         if (result.not_found.length > 0) {
-                          if (message) message += '. ';
+                          if (message) message += '\n';
                           message += language === 'fr'
-                            ? `${result.not_found.length} ticker(s) non trouvé(s): ${result.not_found.join(', ')}`
-                            : `${result.not_found.length} ticker(s) not found: ${result.not_found.join(', ')}`;
+                            ? `❌ Non trouvés: ${result.not_found.join(', ')}`
+                            : `❌ Not found: ${result.not_found.join(', ')}`;
                         }
                         
                         setAddResult({ 
                           success: totalProcessed > 0, 
-                          message: message || (language === 'fr' ? 'Aucun ticker traité' : 'No tickers processed')
+                          message: message || (language === 'fr' ? 'Tickers activés avec succès' : 'Tickers activated successfully')
                         });
                         
                         if (totalProcessed > 0) {
@@ -1429,7 +1510,9 @@ export default function TargetPortfolioPage() {
                   <div className={`text-sm font-medium ${
                     addResult.success ? 'text-green-800 dark:text-green-400' : 'text-red-800 dark:text-red-400'
                   }`}>
-                    {addResult.message}
+                    {addResult.message.split('\n').map((line, index) => (
+                      <div key={index} className="mb-1">{line}</div>
+                    ))}
                   </div>
                 </div>
               )}
