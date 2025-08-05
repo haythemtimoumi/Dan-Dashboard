@@ -357,7 +357,7 @@ export default function TargetPortfolioPage() {
     fetchSources();
   }, []);
 
-  // Load stocks with date filtering using grouped endpoint - FILTER FOR TARGET ONLY
+  // Load stocks with date filtering using external API - FILTER FOR TARGET ONLY
   useEffect(() => {
     // Only fetch stocks if dates are set
     if (!startDate || !endDate) return;
@@ -367,16 +367,12 @@ export default function TargetPortfolioPage() {
         setLoading(true);
         setError(null);
         
-        let url, params;
-        
-        // Always use the grouped endpoint
-        url = '/api/stocks/grouped';
-        params = new URLSearchParams();
+        // Use local target endpoint to get data from local database
+        const params = new URLSearchParams();
         params.append('startDate', startDate);
         params.append('endDate', endDate);
-        params.append('target', 'true'); // Filter for target stocks only
         
-        url += `?${params.toString()}`;
+        const url = `/api/stocks/target?${params.toString()}`;
         
         const response = await fetch(url);
         
@@ -1329,7 +1325,7 @@ export default function TargetPortfolioPage() {
                     value={addForm.tickers}
                     onChange={(e) => setAddForm({...addForm, tickers: e.target.value.toUpperCase()})}
                     className="w-full border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[80px] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    placeholder="AAPL, GOOGL, MSFT"
+                    placeholder="AAPL, GOOGL, MSFT, TSLA, NVDA"
                   />
                 </div>
               </div>
@@ -1341,40 +1337,57 @@ export default function TargetPortfolioPage() {
                     setAddSaving(true);
                     setAddResult(null);
                     try {
-                      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-                      const tickersArray = addForm.tickers.split(',').map(t => t.trim()).filter(t => t);
+                      const tickersArray = addForm.tickers.split(',').map(t => t.trim().toUpperCase()).filter(t => t);
                       
-                      let successCount = 0;
-                      
-                      for (const ticker of tickersArray) {
-                        const response = await fetch('/api/tickers', {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json'
-                          },
-                          body: JSON.stringify({ 
-                            symbol: ticker, 
-                            target: true, 
-                            language: language 
-                          })
-                        });
-                        
-                        if (response.ok) {
-                          successCount++;
-                        }
-                      }
-                      
-                      setAddResult({ 
-                        success: successCount > 0, 
-                        message: successCount > 0 
-                          ? `${successCount} ${t('tickersAddedToPortfolio')}`
-                          : t('errorAddingTickers')
+                      const response = await fetch('/api/proxy/stocks/activate-for-dan', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                          tickers: tickersArray
+                        })
                       });
                       
-                      if (successCount > 0) {
-                        setAddForm({...addForm, tickers: ''});
-                        // Refresh stocks list
-                        window.location.reload();
+                      if (response.ok) {
+                        const result = await response.json();
+                        const totalProcessed = result.activated.length + result.added_to_dan.length;
+                        
+                        let message = '';
+                        if (result.activated.length > 0) {
+                          message += language === 'fr' 
+                            ? `${result.activated.length} ticker(s) activé(s): ${result.activated.join(', ')}`
+                            : `${result.activated.length} ticker(s) activated: ${result.activated.join(', ')}`;
+                        }
+                        if (result.added_to_dan.length > 0) {
+                          if (message) message += '. ';
+                          message += language === 'fr'
+                            ? `${result.added_to_dan.length} ticker(s) ajouté(s): ${result.added_to_dan.join(', ')}`
+                            : `${result.added_to_dan.length} ticker(s) added: ${result.added_to_dan.join(', ')}`;
+                        }
+                        if (result.not_found.length > 0) {
+                          if (message) message += '. ';
+                          message += language === 'fr'
+                            ? `${result.not_found.length} ticker(s) non trouvé(s): ${result.not_found.join(', ')}`
+                            : `${result.not_found.length} ticker(s) not found: ${result.not_found.join(', ')}`;
+                        }
+                        
+                        setAddResult({ 
+                          success: totalProcessed > 0, 
+                          message: message || (language === 'fr' ? 'Aucun ticker traité' : 'No tickers processed')
+                        });
+                        
+                        if (totalProcessed > 0) {
+                          setAddForm({...addForm, tickers: ''});
+                          // Refresh stocks list
+                          window.location.reload();
+                        }
+                      } else {
+                        const errorData = await response.json();
+                        setAddResult({ 
+                          success: false, 
+                          message: errorData.error || (language === 'fr' ? 'Erreur lors de l\'ajout' : 'Error adding tickers')
+                        });
                       }
                     } catch (error) {
                       console.error('Error adding tickers:', error);

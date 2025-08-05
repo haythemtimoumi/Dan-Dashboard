@@ -57,15 +57,35 @@ export async function POST(request: NextRequest) {
       danGuruId = newGuruResult.rows[0].id;
     }
     
-    // Check if ticker already exists in scraper_tasks
+    // Check if ticker already exists in scraper_tasks (symbol is unique)
     const existingTickerResult = await client.query(
-      'SELECT id FROM scraper_tasks WHERE symbol = $1 AND guru_id = $2',
-      [symbol.toUpperCase(), danGuruId]
+      'SELECT id, guru_id FROM scraper_tasks WHERE symbol = $1',
+      [symbol.toUpperCase()]
     );
     
     if (existingTickerResult.rows.length > 0) {
+      const existingId = existingTickerResult.rows[0].id;
+      // Update existing ticker to be target and set dan as guru
+      await client.query(
+        'UPDATE scraper_tasks SET target = $1, guru_id = $2, active = $3, color = $4 WHERE id = $5',
+        [target, danGuruId, active, color, existingId]
+      );
+      
+      // Ensure guru_ticker_map entry exists
+      const mapExists = await client.query(
+        'SELECT 1 FROM guru_ticker_map WHERE guru_id = $1 AND scraper_task_id = $2',
+        [danGuruId, existingId]
+      );
+      
+      if (mapExists.rows.length === 0) {
+        await client.query(
+          'INSERT INTO guru_ticker_map (guru_id, scraper_task_id) VALUES ($1, $2)',
+          [danGuruId, existingId]
+        );
+      }
+      
       await client.query('COMMIT');
-      return NextResponse.json({ message: t.alreadyLinked, ticker_id: existingTickerResult.rows[0].id });
+      return NextResponse.json({ message: t.alreadyLinked, ticker_id: existingId });
     }
     
     // Insert into scraper_tasks
@@ -93,7 +113,8 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     await client.query('ROLLBACK');
     console.error('Error creating ticker:', error);
-    return NextResponse.json({ error: 'Failed to create ticker' }, { status: 500 });
+    console.error('Error details:', error.message, error.stack);
+    return NextResponse.json({ error: `Failed to create ticker: ${error.message}` }, { status: 500 });
   } finally {
     client.release();
   }
