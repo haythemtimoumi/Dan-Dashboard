@@ -1,22 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+const DAN_API_BASE_URL = process.env.DAN_API_BASE_URL || 'http://localhost:3000';
+
+export async function GET(request: NextRequest) {
   try {
-    const response = await fetch('http://localhost:3000/api/sources/types');
+    const response = await fetch(`${DAN_API_BASE_URL}/api/sources/types`);
     
     if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch sources' },
-        { status: response.status }
-      );
+      throw new Error(`Backend API error: ${response.statusText}`);
     }
-
+    
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching sources:', error);
+    console.error('Error fetching sources types from backend:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch sources types' }, 
       { status: 500 }
     );
   }

@@ -105,7 +105,7 @@ export default function GurusPage() {
     // Fetch last date from API
     const fetchLastDate = async () => {
       try {
-        const response = await fetch('/api/stocks/last-date');
+        const response = await fetch('/api/proxy/stocks/last-date');
         if (response.ok) {
           const data = await response.json();
           const lastDate = new Date(data.last_date).toISOString().split('T')[0];

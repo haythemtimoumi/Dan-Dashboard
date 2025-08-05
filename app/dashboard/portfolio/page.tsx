@@ -122,13 +122,15 @@ export default function NewPortfolioPage() {
     const savedComments = localStorage.getItem('stockComments');
     if (savedComments) setStockComments(JSON.parse(savedComments));
     
-    // Fetch last date from API
+    // Fetch last date from backend API
     const fetchLastDate = async () => {
       try {
-        const response = await fetch('/api/stocks/last-date');
+        const response = await fetch(`/api/proxy/stocks/last-date?t=${Date.now()}`);
         if (response.ok) {
           const data = await response.json();
-          const lastDate = new Date(data.last_date).toISOString().split('T')[0];
+          console.log('Fetched last date:', data.last_date);
+          const lastDate = data.last_date.split('T')[0]; // Convert to YYYY-MM-DD format
+          console.log('Formatted date:', lastDate);
           setStartDate(lastDate);
           setEndDate(lastDate);
         } else {
@@ -673,12 +675,12 @@ export default function NewPortfolioPage() {
                 onClick={async () => {
                   setSearchTicker('');
                   setSelectedSource('');
-                  // Reset to last date from API
+                  // Reset to last date from backend API
                   try {
-                    const response = await fetch('/api/stocks/last-date');
+                    const response = await fetch(`/api/proxy/stocks/last-date?t=${Date.now()}`);
                     if (response.ok) {
                       const data = await response.json();
-                      const lastDate = new Date(data.last_date).toISOString().split('T')[0];
+                      const lastDate = data.last_date.split('T')[0]; // Convert to YYYY-MM-DD format
                       setStartDate(lastDate);
                       setEndDate(lastDate);
                     }
