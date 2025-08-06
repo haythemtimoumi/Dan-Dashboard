@@ -49,6 +49,12 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
   const [selectedDate, setSelectedDate] = useState<string>(
     searchParams.get('date') || new Date().toISOString().split('T')[0]
   );
+  const [sortBy, setSortBy] = useState<string>(
+    searchParams.get('sortBy') || 'per_upside'
+  );
+  const [sortOrder, setSortOrder] = useState<string>(
+    searchParams.get('sortOrder') || 'desc'
+  );
   const [isHourly, setIsHourly] = useState<boolean>(false);
   
   const fetchData = async (date: string) => {
@@ -227,7 +233,7 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push(`/dashboard/portfolio/${params.ticker}?date=${selectedDate}`)}
+              onClick={() => router.push(`/dashboard/portfolio/${params.ticker}?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`)}
               className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300"
             >
               <ArrowLeftIcon className="w-4 h-4" />

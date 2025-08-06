@@ -1059,7 +1059,7 @@ export default function NewPortfolioPage() {
                         onMouseLeave={handleMouseLeave}
                         onClick={() => {
                           saveStateBeforeNavigation();
-                          router.push(`/dashboard/portfolio/${stock.ticker}?date=${startDate}`);
+                          router.push(`/dashboard/portfolio/${stock.ticker}?date=${startDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
                         }}
                       >
                         <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -1192,7 +1192,6 @@ export default function NewPortfolioPage() {
                                   ? 'text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 transform hover:scale-110' 
                                   : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                               }`}
-                              title={hasComment ? t('viewComments') : t('addComment')}
                             >
                               <svg className={`${hasComment ? 'w-5 h-5' : 'w-4 h-4'} transition-all duration-200`} 
                                    fill={hasComment ? 'currentColor' : 'none'} 

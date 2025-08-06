@@ -67,6 +67,12 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
   const [selectedDate, setSelectedDate] = useState<string>(
     searchParams.get('date') || new Date().toISOString().split('T')[0]
   );
+  const [sortBy, setSortBy] = useState<string>(
+    searchParams.get('sortBy') || 'per_upside'
+  );
+  const [sortOrder, setSortOrder] = useState<string>(
+    searchParams.get('sortOrder') || 'desc'
+  );
   const [showComments, setShowComments] = useState<boolean>(false);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState<string>('');
@@ -175,24 +181,82 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
           return acc;
         }, []);
         
-        // Sort by per_upside descending with proper numeric handling
-        const sortedStocks = deduplicatedStocks.sort((a: Stock, b: Stock) => {
-          // Convert to numbers, handling string values and null/undefined
-          let valueA = 0;
-          let valueB = 0;
-          
-          if (a.per_upside !== null && a.per_upside !== undefined) {
-            valueA = typeof a.per_upside === 'string' ? parseFloat(a.per_upside) : Number(a.per_upside);
-            if (isNaN(valueA)) valueA = 0;
+        // Apply the same sorting logic as the portfolio-target table
+        const sortedStocks = [...deduplicatedStocks].sort((a: Stock, b: Stock) => {
+          // Special handling for upside calculation first (before general empty value handling)
+          if (sortBy === 'upside' || sortBy === 'per_upside') {
+            const hasUpsideA = a.per_upside !== null && a.per_upside !== undefined;
+            const hasUpsideB = b.per_upside !== null && b.per_upside !== undefined;
+            
+            // Handle null values - always put them at the bottom regardless of sort order
+            if (!hasUpsideA && !hasUpsideB) return 0;
+            if (!hasUpsideA) return 1; // A goes to bottom
+            if (!hasUpsideB) return -1; // B goes to bottom
+            
+            const comparison = a.per_upside! - b.per_upside!;
+            return sortOrder === 'asc' ? comparison : -comparison;
           }
           
-          if (b.per_upside !== null && b.per_upside !== undefined) {
-            valueB = typeof b.per_upside === 'string' ? parseFloat(b.per_upside) : Number(b.per_upside);
-            if (isNaN(valueB)) valueB = 0;
+          let valueA = a[sortBy as keyof Stock];
+          let valueB = b[sortBy as keyof Stock];
+          
+          // Handle empty values
+          const isAEmpty = valueA === null || valueA === undefined || valueA === '';
+          const isBEmpty = valueB === null || valueB === undefined || valueB === '';
+          
+          if (isAEmpty && isBEmpty) return 0;
+          if (isAEmpty) return sortOrder === 'asc' ? 1 : -1;
+          if (isBEmpty) return sortOrder === 'asc' ? -1 : 1;
+          
+          // Special handling for different field types
+          let comparison = 0;
+          
+          // Date fields
+          if (sortBy === 'created_at' || sortBy === 'date') {
+            const dateA = new Date(valueA as string).getTime();
+            const dateB = new Date(valueB as string).getTime();
+            comparison = dateA - dateB;
+          }
+          // Numeric fields (scores, prices, percentages)
+          else if (['signal_score', 'sentiment_score', 'rule1_score', 'moat_score', 'management_score', 
+                    'buy_price', 'last_price', 'long_gr', 'last_gr', 'pbt'].includes(sortBy)) {
+            const parseNumericValue = (value: any): number => {
+              if (value === null || value === undefined || value === '') return -Infinity;
+              if (typeof value === 'number') return value;
+              
+              // Handle percentage values
+              if (typeof value === 'string' && value.includes('%')) {
+                const num = parseFloat(value.replace('%', ''));
+                return isNaN(num) ? -Infinity : num;
+              }
+              
+              // Handle currency values
+              if (typeof value === 'string' && value.includes('$')) {
+                const num = parseFloat(value.replace(/[$,]/g, ''));
+                return isNaN(num) ? -Infinity : num;
+              }
+              
+              // Handle regular numeric strings
+              if (typeof value === 'string') {
+                const num = parseFloat(value.replace(/,/g, ''));
+                return isNaN(num) ? -Infinity : num;
+              }
+              
+              return -Infinity;
+            };
+            
+            const numA = parseNumericValue(valueA);
+            const numB = parseNumericValue(valueB);
+            comparison = numA - numB;
+          }
+          // String fields (ticker, guru, full_name, source)
+          else {
+            const strA = String(valueA).toLowerCase();
+            const strB = String(valueB).toLowerCase();
+            comparison = strA.localeCompare(strB);
           }
           
-          // Sort descending (highest first): 2442%, 623%, 251%, 74%, 72%, -100%
-          return valueB - valueA;
+          return sortOrder === 'asc' ? comparison : -comparison;
         });
         
         setAllStocks(sortedStocks);
@@ -238,17 +302,17 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
     if (currentIndex > 0) {
       const newIndex = currentIndex - 1;
       const newStock = allStocks[newIndex];
-      router.push(`/dashboard/portfolio-target/${newStock.ticker}?date=${selectedDate}`);
+      router.push(`/dashboard/portfolio-target/${newStock.ticker}?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
     }
-  }, [currentIndex, allStocks, router, selectedDate]);
+  }, [currentIndex, allStocks, router, selectedDate, sortBy, sortOrder]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < allStocks.length - 1) {
       const newIndex = currentIndex + 1;
       const newStock = allStocks[newIndex];
-      router.push(`/dashboard/portfolio-target/${newStock.ticker}?date=${selectedDate}`);
+      router.push(`/dashboard/portfolio-target/${newStock.ticker}?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
     }
-  }, [currentIndex, allStocks, router, selectedDate]);
+  }, [currentIndex, allStocks, router, selectedDate, sortBy, sortOrder]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -895,7 +959,7 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
                   key={stock.id}
                   onClick={() => {
                     // Don't save state when navigating between tickers, only when going back to portfolio-target
-                    router.push(`/dashboard/portfolio-target/${stock.ticker}?date=${selectedDate}`);
+                    router.push(`/dashboard/portfolio-target/${stock.ticker}?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
                   }}
                   className={`p-1.5 rounded-lg text-xs font-medium transition-all border ${
                     index === currentIndex
