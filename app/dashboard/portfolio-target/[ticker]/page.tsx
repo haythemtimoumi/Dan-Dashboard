@@ -54,7 +54,7 @@ const formatBuyPrice = (value: any): string => {
   return formatCurrency(num);
 };
 
-export default function StockAnalysisPage({ params }: { params: { ticker: string } }) {
+export default function PortfolioTargetStockAnalysisPage({ params }: { params: { ticker: string } }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, language } = useSettings();
@@ -156,8 +156,11 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
         
         const stocksData = await response.json();
         
+        // Filter only target=true stocks
+        const targetStocks = stocksData.filter((stock: Stock) => stock.target === true);
+        
         // Deduplicate by ticker, keeping only the latest updated record
-        const deduplicatedStocks = stocksData.reduce((acc: Stock[], stock: Stock) => {
+        const deduplicatedStocks = targetStocks.reduce((acc: Stock[], stock: Stock) => {
           const existingStock = acc.find(s => s.ticker === stock.ticker);
           if (!existingStock) {
             acc.push(stock);
@@ -235,7 +238,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
     if (currentIndex > 0) {
       const newIndex = currentIndex - 1;
       const newStock = allStocks[newIndex];
-      router.push(`/dashboard/portfolio/${newStock.ticker}?date=${selectedDate}`);
+      router.push(`/dashboard/portfolio-target/${newStock.ticker}?date=${selectedDate}`);
     }
   }, [currentIndex, allStocks, router, selectedDate]);
 
@@ -243,7 +246,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
     if (currentIndex < allStocks.length - 1) {
       const newIndex = currentIndex + 1;
       const newStock = allStocks[newIndex];
-      router.push(`/dashboard/portfolio/${newStock.ticker}?date=${selectedDate}`);
+      router.push(`/dashboard/portfolio-target/${newStock.ticker}?date=${selectedDate}`);
     }
   }, [currentIndex, allStocks, router, selectedDate]);
 
@@ -253,14 +256,14 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
       if (e.key === 'ArrowLeft') handlePrevious();
       if (e.key === 'ArrowRight') handleNext();
       if (e.key === 'Escape') {
-        // Go back to portfolio with preserved state
+        // Go back to portfolio-target with preserved state
         const referrer = document.referrer;
-        const isFromPortfolio = referrer.includes('/dashboard/portfolio') && !referrer.includes('/dashboard/portfolio/');
+        const isFromPortfolioTarget = referrer.includes('/dashboard/portfolio-target') && !referrer.includes('/dashboard/portfolio-target/');
         
-        if (isFromPortfolio && window.history.length > 1) {
+        if (isFromPortfolioTarget && window.history.length > 1) {
           window.history.back();
         } else {
-          router.push('/dashboard/portfolio');
+          router.push('/dashboard/portfolio-target');
         }
       }
     };
@@ -372,26 +375,26 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  // Check if we came from portfolio page
+                  // Check if we came from portfolio-target page
                   const referrer = document.referrer;
-                  const isFromPortfolio = referrer.includes('/dashboard/portfolio') && !referrer.includes('/dashboard/portfolio/');
+                  const isFromPortfolioTarget = referrer.includes('/dashboard/portfolio-target') && !referrer.includes('/dashboard/portfolio-target/');
                   
-                  if (isFromPortfolio && window.history.length > 1) {
+                  if (isFromPortfolioTarget && window.history.length > 1) {
                     // Use browser back to preserve state
                     window.history.back();
                   } else {
                     // Fallback to direct navigation
-                    router.push('/dashboard/portfolio');
+                    router.push('/dashboard/portfolio-target');
                   }
                 }}
                 className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300"
-                title={language === 'fr' ? 'Retour au Portfolio' : 'Back to Portfolio'}
+                title={language === 'fr' ? 'Retour au Portfolio Target' : 'Back to Portfolio Target'}
               >
                 <ArrowLeftIcon className="w-4 h-4" />
               </button>
               <div>
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                  {params.ticker} {language === 'fr' ? 'Analyse' : 'Analysis'}
+                  {params.ticker} {language === 'fr' ? 'Analyse (Target)' : 'Analysis (Target)'}
                 </h2>
               </div>
             </div>
@@ -460,26 +463,26 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
-                // Check if we came from portfolio page
+                // Check if we came from portfolio-target page
                 const referrer = document.referrer;
-                const isFromPortfolio = referrer.includes('/dashboard/portfolio') && !referrer.includes('/dashboard/portfolio/');
+                const isFromPortfolioTarget = referrer.includes('/dashboard/portfolio-target') && !referrer.includes('/dashboard/portfolio-target/');
                 
-                if (isFromPortfolio && window.history.length > 1) {
+                if (isFromPortfolioTarget && window.history.length > 1) {
                   // Use browser back to preserve state
                   window.history.back();
                 } else {
                   // Fallback to direct navigation
-                  router.push('/dashboard/portfolio');
+                  router.push('/dashboard/portfolio-target');
                 }
               }}
               className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300"
-              title={language === 'fr' ? 'Retour au Portfolio' : 'Back to Portfolio'}
+              title={language === 'fr' ? 'Retour au Portfolio Target' : 'Back to Portfolio Target'}
             >
               <ArrowLeftIcon className="w-4 h-4" />
             </button>
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                {params.ticker} {language === 'fr' ? 'Analyse' : 'Analysis'}
+                {params.ticker} {language === 'fr' ? 'Analyse (Target)' : 'Analysis (Target)'}
               </h2>
               {allStocks.length > 0 && (
                 <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -877,7 +880,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
         <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              {language === 'fr' ? 'Navigation Rapide' : 'Quick Navigation'}
+              {language === 'fr' ? 'Navigation Rapide (Target)' : 'Quick Navigation (Target)'}
             </h3>
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {language === 'fr' ? 'Trié par potentiel • Utilisez ← →' : 'Sorted by upside • Use ← →'}
@@ -891,8 +894,8 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                 <button
                   key={stock.id}
                   onClick={() => {
-                    // Don't save state when navigating between tickers, only when going back to portfolio
-                    router.push(`/dashboard/portfolio/${stock.ticker}?date=${selectedDate}`);
+                    // Don't save state when navigating between tickers, only when going back to portfolio-target
+                    router.push(`/dashboard/portfolio-target/${stock.ticker}?date=${selectedDate}`);
                   }}
                   className={`p-1.5 rounded-lg text-xs font-medium transition-all border ${
                     index === currentIndex

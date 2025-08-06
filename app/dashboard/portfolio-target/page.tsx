@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Stock } from '@/app/lib/definitions';
 import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatLargeNumber } from '@/app/lib/utils';
@@ -128,6 +128,57 @@ export default function TargetPortfolioPage() {
     management: 85
   });
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  // Save table scroll position and data before navigating
+  const saveStateBeforeNavigation = () => {
+    const tableScrollTop = tableContainerRef.current?.scrollTop || 0;
+    const state = {
+      tableScrollTop: tableScrollTop,
+      stocks: stocks,
+      searchTicker: searchTicker,
+      selectedSource: selectedSource,
+      startDate: startDate,
+      endDate: endDate,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
+      filters: filters,
+      isFiltered: isFiltered
+    };
+    localStorage.setItem('portfolioTargetState', JSON.stringify(state));
+  };
+
+  // Restore state on page load
+  useEffect(() => {
+    const savedState = localStorage.getItem('portfolioTargetState');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        if (state.stocks && state.stocks.length > 0) {
+          setStocks(state.stocks);
+          setSearchTicker(state.searchTicker || '');
+          setSelectedSource(state.selectedSource || '');
+          setStartDate(state.startDate || '');
+          setEndDate(state.endDate || '');
+          setSortBy(state.sortBy || 'per_upside');
+          setSortOrder(state.sortOrder || 'desc');
+          setFilters(state.filters || { sentiment: 60, moat: 85, rule1: 85, management: 85 });
+          setIsFiltered(state.isFiltered || false);
+          setLoading(false);
+          
+          // Restore table scroll position
+          setTimeout(() => {
+            if (tableContainerRef.current && state.tableScrollTop) {
+              tableContainerRef.current.scrollTop = state.tableScrollTop;
+            }
+            localStorage.removeItem('portfolioTargetState');
+          }, 100);
+        }
+      } catch (error) {
+        console.error('Error restoring portfolio target state:', error);
+      }
+    }
+  }, []);
 
   // Load data from localStorage and fetch last date on component mount
   useEffect(() => {
@@ -972,7 +1023,7 @@ export default function TargetPortfolioPage() {
               ))}
             </div>
           ) : (
-            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
+            <div ref={tableContainerRef} className="overflow-x-auto max-h-[70vh] overflow-y-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                   <tr>
@@ -1083,7 +1134,10 @@ export default function TargetPortfolioPage() {
                         }`}
                         onMouseEnter={(e) => handleMouseEnter(e, stock)}
                         onMouseLeave={handleMouseLeave}
-                        onClick={() => router.push(`/dashboard/portfolio/${stock.ticker}?date=${startDate}`)}
+                        onClick={() => {
+                          saveStateBeforeNavigation();
+                          router.push(`/dashboard/portfolio-target/${stock.ticker}?date=${startDate}`);
+                        }}
                       >
                         <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                           <div className="flex items-center gap-2">

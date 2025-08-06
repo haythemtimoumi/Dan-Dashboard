@@ -17,7 +17,7 @@ export default function FloatingSettingsButton() {
       {isAdmin && (
         <Link
           href="/dashboard/scraper"
-          className="fixed bottom-20 left-24 z-[60] w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 group"
+          className="fixed bottom-36 left-6 z-[60] w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 group"
           title={language === 'fr' ? 'Gestion Scraper' : 'Scraper Management'}
         >
           <div className="flex items-center justify-center w-full h-full">

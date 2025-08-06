@@ -33,6 +33,7 @@ export type Stock = {
   full_name?: string; // Full company name
   color?: string; // Ticker color for visual categorization
   ticker_id?: number; // Ticker ID for API operations
+  target?: boolean; // Whether this is a target stock
 };
 
 export type StocksTable = {

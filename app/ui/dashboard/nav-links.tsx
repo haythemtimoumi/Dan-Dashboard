@@ -19,11 +19,17 @@ import { useSettings } from '@/app/contexts/settings-context';
 import { useAuth } from '@/app/contexts/auth-context';
 import SettingsModal from './settings-modal';
 
-export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolean }) {
+export default function NavLinks({ isCollapsed = false, onNavigate }: { isCollapsed?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const { t, language } = useSettings();
   const { isAdmin } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  const handleLinkClick = () => {
+    if (onNavigate) {
+      onNavigate();
+    }
+  };
 
   return (
     <>
@@ -31,6 +37,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
         {/* Stock Data Link */}
         <Link
           href="/dashboard/portfolio"
+          onClick={handleLinkClick}
           className={clsx(
             "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200",
             (pathname === '/dashboard/portfolio' || (pathname.startsWith('/dashboard/portfolio') && !pathname.startsWith('/dashboard/portfolio-target')))
@@ -51,6 +58,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
         {/* Target Portfolio Link */}
         <Link
           href="/dashboard/portfolio-target"
+          onClick={handleLinkClick}
           className={clsx(
             "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200",
             pathname === '/dashboard/portfolio-target' || pathname.startsWith('/dashboard/portfolio-target')
@@ -71,6 +79,7 @@ export default function NavLinks({ isCollapsed = false }: { isCollapsed?: boolea
         {/* Gurus Link */}
         <Link
           href="/dashboard/gurus"
+          onClick={handleLinkClick}
           className={clsx(
             "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200",
             pathname === '/dashboard/gurus'

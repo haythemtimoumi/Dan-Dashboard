@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Stock } from '@/app/lib/definitions';
 import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatLargeNumber } from '@/app/lib/utils';
@@ -91,6 +91,107 @@ export default function NewPortfolioPage() {
     management: 85
   });
   const [isFiltered, setIsFiltered] = useState<boolean>(false);
+  const [isRestoredFromCache, setIsRestoredFromCache] = useState<boolean>(false);
+  const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  // Save table scroll position and data before navigating
+  const saveStateBeforeNavigation = () => {
+    // Get the most recent scroll position from sessionStorage or current ref
+    const savedScrollTop = sessionStorage.getItem('portfolioScrollPosition');
+    const tableScrollTop = savedScrollTop ? parseInt(savedScrollTop) : (tableContainerRef.current?.scrollTop || 0);
+    
+    const state = {
+      tableScrollTop: tableScrollTop,
+      stocks: stocks,
+      searchTicker: searchTicker,
+      selectedSource: selectedSource,
+      startDate: startDate,
+      endDate: endDate,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
+      filters: filters,
+      isFiltered: isFiltered,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('portfolioState', JSON.stringify(state));
+    sessionStorage.setItem('portfolioState', JSON.stringify(state));
+  };
+
+  // Restore state on page load
+  useEffect(() => {
+    // Try sessionStorage first (more reliable), then localStorage
+    const savedState = sessionStorage.getItem('portfolioState') || localStorage.getItem('portfolioState');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        // Check if state is recent (within 5 minutes) and has data
+        const isRecent = state.timestamp && (Date.now() - state.timestamp) < 5 * 60 * 1000;
+        if (state.stocks && state.stocks.length > 0 && isRecent) {
+          setStocks(state.stocks);
+          setSearchTicker(state.searchTicker || '');
+          setSelectedSource(state.selectedSource || '');
+          setStartDate(state.startDate || '');
+          setEndDate(state.endDate || '');
+          setSortBy(state.sortBy || 'per_upside');
+          setSortOrder(state.sortOrder || 'desc');
+          setFilters(state.filters || { sentiment: 60, moat: 85, rule1: 85, management: 85 });
+          setIsFiltered(state.isFiltered || false);
+          setIsRestoredFromCache(true);
+          setSavedScrollPosition(state.tableScrollTop || 0);
+          setLoading(false);
+          
+          // Clean up saved state after successful restoration
+          setTimeout(() => {
+            localStorage.removeItem('portfolioState');
+            sessionStorage.removeItem('portfolioState');
+            sessionStorage.removeItem('portfolioScrollPosition');
+          }, 1000);
+        } else {
+          // State is too old or invalid, clean it up
+          localStorage.removeItem('portfolioState');
+          sessionStorage.removeItem('portfolioState');
+        }
+      } catch (error) {
+        console.error('Error restoring portfolio state:', error);
+        localStorage.removeItem('portfolioState');
+        sessionStorage.removeItem('portfolioState');
+      }
+    }
+  }, []);
+
+  // Restore scroll position after stocks are loaded and table is rendered
+  useEffect(() => {
+    if (savedScrollPosition > 0 && stocks.length > 0 && !loading) {
+      // Wait for table to render, then restore scroll
+      const restoreScroll = () => {
+        if (tableContainerRef.current) {
+          tableContainerRef.current.scrollTop = savedScrollPosition;
+          setSavedScrollPosition(0); // Clear after restoration
+        }
+      };
+      
+      // Try multiple times with increasing delays
+      setTimeout(restoreScroll, 50);
+      setTimeout(restoreScroll, 150);
+      setTimeout(restoreScroll, 300);
+    }
+  }, [savedScrollPosition, stocks.length, loading]);
+
+  // Save scroll position continuously as user scrolls
+  useEffect(() => {
+    const tableContainer = tableContainerRef.current;
+    if (!tableContainer) return;
+
+    const handleScroll = () => {
+      const scrollTop = tableContainer.scrollTop;
+      // Save to sessionStorage for immediate access
+      sessionStorage.setItem('portfolioScrollPosition', scrollTop.toString());
+    };
+
+    tableContainer.addEventListener('scroll', handleScroll);
+    return () => tableContainer.removeEventListener('scroll', handleScroll);
+  }, [stocks.length]); // Re-attach when stocks change
 
   const parseNumericValue = (value: any): number => {
     if (value === null || value === undefined || value === '') return -Infinity;
@@ -323,6 +424,11 @@ export default function NewPortfolioPage() {
     // Only fetch stocks if dates are set
     if (!startDate || !endDate) return;
     
+    // Skip API call if we already have stocks data (from restored state)
+    if (stocks.length > 0 && !loading) {
+      return;
+    }
+    
     const fetchStocks = async () => {
       try {
         setLoading(true);
@@ -357,7 +463,7 @@ export default function NewPortfolioPage() {
     };
 
     fetchStocks();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, stocks.length, loading]);
 
   // Function to check comments for all stocks using batch API
   const checkCommentsForStocks = async (stocksList: StockWithHighlight[]) => {
@@ -577,32 +683,61 @@ export default function NewPortfolioPage() {
       <div className="inline-block min-w-full align-middle">
         <div className="rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg border border-gray-100 dark:border-gray-700">
           {/* Header */}
-          <div className="mb-6 flex items-center">
-            <button
-              onClick={() => {
-                const newShowFilters = !showFilters;
-                setShowFilters(newShowFilters);
-                // Auto-apply filters when opening for the first time
-                if (newShowFilters && !isFiltered) {
-                  setIsFiltered(true);
-                }
-              }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                isFiltered 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-              </svg>
-              {language === 'fr' ? 'Filtre Avancé' : 'Advanced Filter'}
-              {isFiltered && (
-                <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
-                  {language === 'fr' ? 'Actif' : 'Active'}
-                </span>
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const newShowFilters = !showFilters;
+                  setShowFilters(newShowFilters);
+                  // Auto-apply filters when opening for the first time
+                  if (newShowFilters && !isFiltered) {
+                    setIsFiltered(true);
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                  isFiltered 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                </svg>
+                {language === 'fr' ? 'Filtre Avancé' : 'Advanced Filter'}
+                {isFiltered && (
+                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                    {language === 'fr' ? 'Actif' : 'Active'}
+                  </span>
+                )}
+              </button>
+              
+              {isRestoredFromCache && (
+                <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>{language === 'fr' ? 'Position restaurée' : 'Position restored'}</span>
+                </div>
               )}
-            </button>
+            </div>
+            
+            {isRestoredFromCache && (
+              <button
+                onClick={() => {
+                  setIsRestoredFromCache(false);
+                  setStocks([]);
+                  setLoading(true);
+                  // This will trigger a fresh fetch
+                }}
+                className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2"
+                title={language === 'fr' ? 'Actualiser les données' : 'Refresh data'}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {language === 'fr' ? 'Actualiser' : 'Refresh'}
+              </button>
+            )}
           </div>
 
           {/* Filters */}
@@ -811,7 +946,7 @@ export default function NewPortfolioPage() {
               ))}
             </div>
           ) : (
-            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
+            <div ref={tableContainerRef} className="overflow-x-auto max-h-[70vh] overflow-y-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                   <tr>
@@ -922,7 +1057,10 @@ export default function NewPortfolioPage() {
                         }`}
                         onMouseEnter={(e) => handleMouseEnter(e, stock)}
                         onMouseLeave={handleMouseLeave}
-                        onClick={() => router.push(`/dashboard/portfolio/${stock.ticker}?date=${startDate}`)}
+                        onClick={() => {
+                          saveStateBeforeNavigation();
+                          router.push(`/dashboard/portfolio/${stock.ticker}?date=${startDate}`);
+                        }}
                       >
                         <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                           <div className="flex items-center gap-2">
