@@ -78,6 +78,9 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   const [newComment, setNewComment] = useState<string>('');
   const [loadingComments, setLoadingComments] = useState<boolean>(false);
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
+  const [isEditingAction, setIsEditingAction] = useState<boolean>(false);
+  const [editAction, setEditAction] = useState<string>('');
+  const [editPortfolio, setEditPortfolio] = useState<string>('');
 
   // Color management using API
   const cycleColor = async () => {
@@ -113,6 +116,48 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
         // Revert local state on error
         setCurrentStock({ ...currentStock, color: currentStock.color });
       }
+    }
+  };
+
+  // Update ticker info via API
+  const updateTickerInfo = async () => {
+    if (!currentStock || !editAction.trim()) return;
+    
+    try {
+      const response = await fetch(`/api/proxy/stocks/dan/ticker-info`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ticker: currentStock.ticker,
+          last_action: editAction,
+          per_portfolio: editPortfolio || '0%'
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        // Update local state
+        setCurrentStock({
+          ...currentStock,
+          last_action: result.last_action,
+          per_portfolio: result.per_portfolio
+        });
+        setIsEditingAction(false);
+        setEditAction('');
+        setEditPortfolio('');
+      } else {
+        try {
+          const error = await response.json();
+          alert(error.error || `Server error: ${response.status}`);
+        } catch {
+          alert(`Server error: ${response.status} - API endpoint not available`);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating ticker info:', error);
+      alert('API server is not running or endpoint not found');
     }
   };
 
@@ -924,15 +969,85 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
           )}
           
           {/* Analysis Summary */}
-          {currentStock.last_action && (
-            <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
-              <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Résumé' : 'Summary'}</h3>
-              <div className="text-sm">
-                <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Dernière Action:' : 'Last Action:'}</span>
-                <span className="font-medium text-gray-900 dark:text-white ml-1">{currentStock.last_action}</span>
-              </div>
+          <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Résumé' : 'Summary'}</h3>
+              <button
+                onClick={() => {
+                  setIsEditingAction(!isEditingAction);
+                  if (!isEditingAction) {
+                    setEditAction(currentStock.last_action || '');
+                    setEditPortfolio(String(currentStock.per_portfolio || ''));
+                  }
+                }}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300"
+                title={language === 'fr' ? 'Modifier' : 'Edit'}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
             </div>
-          )}
+            
+            {isEditingAction ? (
+              <div className="space-y-2">
+                <div>
+                  <label className="text-xs text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Dernière Action:' : 'Last Action:'}</label>
+                  <select
+                    value={editAction}
+                    onChange={(e) => setEditAction(e.target.value)}
+                    className="w-full p-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
+                  >
+                    <option value="">{language === 'fr' ? 'Sélectionner...' : 'Select...'}</option>
+                    <option value="Increased">Increased</option>
+                    <option value="Decreased">Decreased</option>
+                    <option value="Held">Held</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Pourcentage Portfolio:' : 'Portfolio %:'}</label>
+                  <input
+                    type="text"
+                    value={editPortfolio}
+                    onChange={(e) => setEditPortfolio(e.target.value)}
+                    className="w-full p-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
+                    placeholder="5%, 10%, etc."
+                  />
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={updateTickerInfo}
+                    className="flex-1 bg-blue-600 text-white py-1 px-2 rounded text-xs hover:bg-blue-700"
+                  >
+                    {language === 'fr' ? 'Sauvegarder' : 'Save'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingAction(false);
+                      setEditAction('');
+                      setEditPortfolio('');
+                    }}
+                    className="flex-1 bg-gray-500 text-white py-1 px-2 rounded text-xs hover:bg-gray-600"
+                  >
+                    {language === 'fr' ? 'Annuler' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Dernière Action:' : 'Last Action:'}</span>
+                  <span className="font-medium text-gray-900 dark:text-white ml-1">{currentStock.last_action || '-'}</span>
+                </div>
+                {currentStock.per_portfolio && (
+                  <div className="text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Portfolio:' : 'Portfolio:'}</span>
+                    <span className="font-medium text-gray-900 dark:text-white ml-1">{currentStock.per_portfolio}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       
