@@ -73,7 +73,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   const [sortOrder, setSortOrder] = useState<string>(
     searchParams.get('sortOrder') || 'desc'
   );
-  const [showComments, setShowComments] = useState<boolean>(false);
+  const [showComments, setShowComments] = useState<boolean>(true);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState<string>('');
   const [loadingComments, setLoadingComments] = useState<boolean>(false);

@@ -17,6 +17,8 @@ interface Analysis {
   signal_score: number;
   sentiment_score: number;
   buy_price: string;
+  sticker_price: string;
+  per_upside: string;
   last_price: string;
   long_gr: string;
   last_gr: string;
@@ -62,21 +64,12 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
       setLoading(true);
       setError(null);
       
-      // First, try to get ticker-specific data with date filtering
-      const tickerResponse = await fetch(`/api/stocks/ticker/${params.ticker}?date=${date}&hourly=${isHourly}`);
-      
+      // Use grouped endpoint directly (fast and reliable)
+      const groupedResponse = await fetch(`/api/stocks/grouped?startDate=${date}&endDate=${date}`);
       let tickerStocks = [];
-      if (tickerResponse.ok) {
-        tickerStocks = await tickerResponse.json();
-      }
-      
-      // If no ticker-specific data, fall back to grouped endpoint
-      if (!tickerStocks || tickerStocks.length === 0) {
-        const groupedResponse = await fetch(`/api/stocks/grouped?startDate=${date}&endDate=${date}`);
-        if (groupedResponse.ok) {
-          const allStocks = await groupedResponse.json();
-          tickerStocks = allStocks.filter((stock: any) => stock.ticker === params.ticker);
-        }
+      if (groupedResponse.ok) {
+        const allStocks = await groupedResponse.json();
+        tickerStocks = allStocks.filter((stock: any) => stock.ticker === params.ticker);
       }
       
       if (!tickerStocks || tickerStocks.length === 0) {
@@ -126,6 +119,8 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
             signal_score: stock.signal_score,
             sentiment_score: stock.sentiment_score,
             buy_price: stock.buy_price,
+            sticker_price: stock.sticker_price,
+            per_upside: stock.per_upside,
             last_price: stock.last_price,
             long_gr: stock.long_gr,
             last_gr: stock.last_gr,
@@ -227,37 +222,38 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
   const sortedAnalyses = allAnalyses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
   return (
-    <main className="space-y-6">
-      {/* Header with Date Navigation */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+    <main className="space-y-3">
+      {/* Compact Header */}
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => router.push(`/dashboard/portfolio/${params.ticker}?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`)}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300"
+              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300"
             >
               <ArrowLeftIcon className="w-4 h-4" />
             </button>
-            <h1 className={`${lusitana.className} text-2xl font-bold text-gray-900 dark:text-white`}>
-              {params.ticker} {language === 'fr' ? 'Analyse' : 'Analysis'}
+            <h1 className={`${lusitana.className} text-xl font-bold text-gray-900 dark:text-white`}>
+              {params.ticker}
             </h1>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {language === 'fr' ? 'Analyse' : 'Analysis'}
+            </span>
             {isHourly && (
-              <span className="bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-1 rounded-full text-xs font-medium">
+              <span className="bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-0.5 rounded text-xs font-medium">
                 {language === 'fr' ? 'Horaire' : 'Hourly'}
               </span>
             )}
           </div>
-        </div>
-        
-        {/* Date Filter */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+          
+          {/* Compact Date Navigation */}
+          <div className="flex items-center gap-1">
             <button
               onClick={handlePreviousDay}
-              className="p-2 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg transition-colors"
+              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
               title={language === 'fr' ? 'Jour précédent' : 'Previous day'}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -265,137 +261,201 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
               type="date"
               value={selectedDate}
               onChange={(e) => handleDateChange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
             <button
               onClick={handleNextDay}
               disabled={selectedDate >= new Date().toISOString().split('T')[0]}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-1 rounded transition-colors ${
                 selectedDate >= new Date().toISOString().split('T')[0]
                   ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                  : 'hover:bg-blue-100 dark:hover:bg-blue-800'
+                  : 'hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               title={language === 'fr' ? 'Jour suivant' : 'Next day'}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {isHourly 
-              ? (language === 'fr' ? `Toutes les entrées du ${new Date(selectedDate).toLocaleDateString('fr-FR')}` : `All entries for ${new Date(selectedDate).toLocaleDateString('en-US')}`)
-              : (language === 'fr' ? `Données du ${new Date(selectedDate).toLocaleDateString('fr-FR')}` : `Data for ${new Date(selectedDate).toLocaleDateString('en-US')}`)
-            }
-          </div>
         </div>
       </div>
 
-      {/* Gurus List */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-          <h2 className="font-semibold text-gray-900 dark:text-white">
-            {language === 'fr' ? 'Gurus' : 'Gurus'} ({data?.gurus.length || 0})
+      {/* Compact Gurus Grid */}
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {language === 'fr' ? 'Analystes' : 'Analysts'} ({data?.gurus.length || 0})
           </h2>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {new Date(selectedDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
+          </div>
         </div>
-        <div className="p-4">
-          <div className="space-y-3">
-            {data.gurus.map((guru) => (
-              <div key={guru.guru_id} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    {guru.guru_name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="font-medium capitalize text-gray-900">{guru.guru_name}</div>
-                    <div className="text-xs text-gray-500">Analyst</div>
-                  </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+          {data.gurus.map((guru) => (
+            <div key={guru.guru_id} className="bg-white dark:bg-gray-700 rounded-lg p-2 border border-gray-200 dark:border-gray-600">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  {guru.guru_name.charAt(0).toUpperCase()}
                 </div>
-                <div className="text-right">
-                  {guru.last_action && (
-                    <div className="text-sm font-medium text-gray-700">{guru.last_action}</div>
-                  )}
-                  {guru.per_portfolio && (
-                    <div className="text-xs text-blue-600 font-semibold">{guru.per_portfolio}% Portfolio</div>
-                  )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium capitalize text-gray-900 dark:text-white truncate">{guru.guru_name}</div>
+                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                    {guru.per_portfolio && (
+                      <span className="text-blue-600 dark:text-blue-400 font-medium">{guru.per_portfolio}%</span>
+                    )}
+                    {guru.last_action && (
+                      <span className="truncate">{guru.last_action}</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Analysis Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      {/* Compact Analysis Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+        <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {language === 'fr' ? 'Données d\'analyse' : 'Analysis Data'}
+          </h3>
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                   {isHourly ? (language === 'fr' ? 'Heure' : 'Time') : (language === 'fr' ? 'Date' : 'Date')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Gurus</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  {language === 'fr' ? 'Règle #1' : 'Rule1'}
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  {language === 'fr' ? 'Analystes' : 'Analysts'}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  Signal
+                </th>
+                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  {language === 'fr' ? 'Sentiment' : 'Sentiment'}
+                </th>
+                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  {language === 'fr' ? 'Règle #1' : 'Rule #1'}
+                </th>
+                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                   {language === 'fr' ? 'Fossé' : 'Moat'}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  {language === 'fr' ? 'Gestion' : 'Management'}
+                <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  {language === 'fr' ? 'Mgmt' : 'Management'}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Signal</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                   {language === 'fr' ? 'Prix Achat' : 'Buy Price'}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  {language === 'fr' ? 'Prix' : 'Last Price'}
+                <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  {language === 'fr' ? 'Prix Sticker' : 'Sticker Price'}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  {language === 'fr' ? 'Croissance' : 'Growth'}
+                <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  {language === 'fr' ? '% Hausse' : '% Upside'}
+                </th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  {language === 'fr' ? 'Prix' : 'Price'}
+                </th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  {language === 'fr' ? 'Croiss. Long' : 'Long Growth'}
+                </th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  {language === 'fr' ? 'Dern. Croiss.' : 'Last Growth'}
+                </th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  PBT
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {sortedAnalyses.map((analysis, index) => (
                 <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                  <td className="px-2 py-2 text-xs text-gray-900 dark:text-gray-100">
                     {isHourly 
-                      ? new Date(analysis.date).toLocaleTimeString(language === 'fr' ? 'fr-FR' : 'en-US')
-                      : new Date(analysis.date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')
+                      ? new Date(analysis.date).toLocaleTimeString(language === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' })
+                      : new Date(analysis.date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', { month: 'short', day: 'numeric' })
                     }
                   </td>
-                  <td className="px-4 py-3 text-sm">
-                    <div className="space-y-1">
+                  <td className="px-2 py-2 text-xs">
+                    <div className="flex flex-wrap gap-1">
                       {analysis.gurus.map((guru: any, guruIndex: number) => (
-                        <div key={guruIndex} className="text-xs bg-blue-100 px-2 py-1 rounded">
-                          <div className="font-medium capitalize">{guru.name}</div>
-                          {guru.last_action && <div className="text-gray-600">Action: {guru.last_action}</div>}
-                          {guru.per_portfolio && <div className="text-gray-600">Portfolio: {guru.per_portfolio}%</div>}
-                        </div>
+                        <span key={guruIndex} className="inline-flex items-center px-1 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                          {guru.name.charAt(0).toUpperCase()}
+                        </span>
                       ))}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {analysis.rule1_score || '-'}
+                  <td className="px-2 py-2 text-xs text-center text-gray-900 dark:text-gray-100">
+                    <span className={`inline-flex items-center justify-center w-6 h-5 rounded text-xs font-medium ${
+                      analysis.signal_score ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                    }`}>
+                      {analysis.signal_score || '-'}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {analysis.moat_score || '-'}
+                  <td className="px-2 py-2 text-xs text-center text-gray-900 dark:text-gray-100">
+                    <span className={`inline-flex items-center justify-center w-6 h-5 rounded text-xs font-medium ${
+                      analysis.sentiment_score ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                    }`}>
+                      {analysis.sentiment_score || '-'}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {analysis.management_score || '-'}
+                  <td className="px-2 py-2 text-xs text-center text-gray-900 dark:text-gray-100">
+                    <span className={`inline-flex items-center justify-center w-6 h-5 rounded text-xs font-medium ${
+                      analysis.rule1_score ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                    }`}>
+                      {analysis.rule1_score || '-'}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {analysis.signal_score || '-'}
+                  <td className="px-2 py-2 text-xs text-center text-gray-900 dark:text-gray-100">
+                    <span className={`inline-flex items-center justify-center w-6 h-5 rounded text-xs font-medium ${
+                      analysis.moat_score ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                    }`}>
+                      {analysis.moat_score || '-'}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {analysis.buy_price || '-'}
+                  <td className="px-2 py-2 text-xs text-center text-gray-900 dark:text-gray-100">
+                    <span className={`inline-flex items-center justify-center w-6 h-5 rounded text-xs font-medium ${
+                      analysis.management_score ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                    }`}>
+                      {analysis.management_score || '-'}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    ${analysis.last_price || '-'}
+                  <td className="px-2 py-2 text-xs text-right text-gray-900 dark:text-gray-100 font-mono">
+                    {analysis.buy_price ? `$${parseFloat(analysis.buy_price).toFixed(2)}` : '-'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                    {analysis.long_gr ? `${analysis.long_gr}%` : '-'}
+                  <td className="px-2 py-2 text-xs text-right text-gray-900 dark:text-gray-100 font-mono">
+                    {analysis.sticker_price ? `$${parseFloat(analysis.sticker_price).toFixed(2)}` : 
+                     analysis.buy_price ? `$${(parseFloat(analysis.buy_price) * 2).toFixed(2)}` : '-'}
+                  </td>
+                  <td className="px-2 py-2 text-xs text-right text-gray-900 dark:text-gray-100 font-mono">
+                    {analysis.per_upside ? (
+                      <span className={`${parseFloat(analysis.per_upside) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {parseFloat(analysis.per_upside).toFixed(1)}%
+                      </span>
+                    ) : '-'}
+                  </td>
+                  <td className="px-2 py-2 text-xs text-right text-gray-900 dark:text-gray-100 font-mono font-medium">
+                    {analysis.last_price ? `$${parseFloat(analysis.last_price).toFixed(2)}` : '-'}
+                  </td>
+                  <td className="px-2 py-2 text-xs text-right text-gray-900 dark:text-gray-100 font-mono">
+                    {analysis.long_gr ? (
+                      <span className={`${parseFloat(analysis.long_gr) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {parseFloat(analysis.long_gr).toFixed(1)}%
+                      </span>
+                    ) : '-'}
+                  </td>
+                  <td className="px-2 py-2 text-xs text-right text-gray-900 dark:text-gray-100 font-mono">
+                    {analysis.last_gr ? (
+                      <span className={`${parseFloat(analysis.last_gr) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {parseFloat(analysis.last_gr).toFixed(1)}%
+                      </span>
+                    ) : '-'}
+                  </td>
+                  <td className="px-2 py-2 text-xs text-right text-gray-900 dark:text-gray-100 font-mono">
+                    {analysis.pbt ? `$${parseFloat(analysis.pbt).toFixed(2)}` : '-'}
                   </td>
                 </tr>
               ))}
