@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const DAN_API_BASE_URL = process.env.DAN_API_BASE_URL || 'http://localhost:3000';
-
 export async function GET(
   request: NextRequest,
   { params }: { params: { ticker: string } }
 ) {
   try {
-    const { ticker } = params;
-    
-    const response = await fetch(`${DAN_API_BASE_URL}/api/comments/ticker/${ticker}`, {
+    const response = await fetch(`http://localhost:3000/api/comments/ticker/${params.ticker}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -17,15 +13,15 @@ export async function GET(
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch comments: ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const comments = await response.json();
-    return NextResponse.json(comments);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching comments:', error);
+    console.error('Error fetching ticker comments:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch comments' },
+      { error: 'Failed to fetch ticker comments' },
       { status: 500 }
     );
   }
@@ -36,31 +32,26 @@ export async function POST(
   { params }: { params: { ticker: string } }
 ) {
   try {
-    const { ticker } = params;
     const body = await request.json();
     
-    const response = await fetch(`${DAN_API_BASE_URL}/api/comments`, {
+    const response = await fetch(`http://localhost:3000/api/comments/ticker/${params.ticker}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ticker: ticker.toUpperCase(),
-        comment_text: body.comment_text,
-        user_id: body.user_id || 1, // Default user ID
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to create comment: ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const comment = await response.json();
-    return NextResponse.json(comment);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Error creating comment:', error);
+    console.error('Error creating ticker comment:', error);
     return NextResponse.json(
-      { error: 'Failed to create comment' },
+      { error: 'Failed to create ticker comment' },
       { status: 500 }
     );
   }

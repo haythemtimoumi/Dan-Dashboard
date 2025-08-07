@@ -6,9 +6,11 @@ import { useAuth } from '@/app/contexts/auth-context';
 
 interface Comment {
   id: number;
-  ticker: string;
+  ticker?: string;
+  ticker_symbol?: string;
   user_id?: number;
-  comment_text: string;
+  comment_text?: string;
+  comment?: string;
   created_at: string;
   updated_at: string;
   username?: string;
@@ -23,6 +25,7 @@ interface EnhancedCommentModalProps {
   currentComment: string;
   setCurrentComment: (comment: string) => void;
   tickerColor?: string;
+  userComments?: Comment[];
 }
 
 export function EnhancedCommentModal({
@@ -32,35 +35,18 @@ export function EnhancedCommentModal({
   onSave,
   currentComment,
   setCurrentComment,
-  tickerColor = 'neutral'
+  tickerColor = 'neutral',
+  userComments = []
 }: EnhancedCommentModalProps) {
   const { language, t } = useSettings();
   const { user } = useAuth();
-  const [allComments, setAllComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(false);
   const [editingComment, setEditingComment] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
-
-  useEffect(() => {
-    if (isOpen && ticker) {
-      fetchComments();
-    }
-  }, [isOpen, ticker]);
-
-  const fetchComments = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/proxy/comments/ticker/${ticker}`);
-      if (response.ok) {
-        const comments = await response.json();
-        setAllComments(comments);
-      }
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  // Filter user comments for this ticker
+  const tickerComments = userComments.filter(comment => 
+    comment.ticker === ticker || comment.ticker_symbol === ticker
+  );
 
   const handleSave = async () => {
     if (!user) {
@@ -87,7 +73,6 @@ export function EnhancedCommentModal({
         
         if (response.ok) {
           onSave(currentComment); // Save to localStorage
-          fetchComments(); // Refresh comments after saving
         } else {
           console.error('Failed to save comment to backend');
           // Still save locally even if backend fails
@@ -103,7 +88,7 @@ export function EnhancedCommentModal({
 
   const handleEdit = (comment: Comment) => {
     setEditingComment(comment.id);
-    setEditText(comment.comment_text);
+    setEditText(comment.comment_text || comment.comment || '');
   };
 
   const handleSaveEdit = async (commentId: number) => {
@@ -123,7 +108,6 @@ export function EnhancedCommentModal({
       if (response.ok) {
         setEditingComment(null);
         setEditText('');
-        fetchComments();
         onSave(editText);
       }
     } catch (error) {
@@ -143,8 +127,7 @@ export function EnhancedCommentModal({
         });
         
         if (response.ok) {
-          const remainingComments = allComments.filter(c => c.id !== commentId);
-          fetchComments();
+          const remainingComments = tickerComments.filter(c => c.id !== commentId);
           if (remainingComments.length === 0) {
             onSave('');
           }
@@ -187,14 +170,9 @@ export function EnhancedCommentModal({
 
         {/* Comments Section */}
         <div className="flex-1 overflow-hidden p-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-6">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">{t('loading')}</span>
-            </div>
-          ) : allComments.length > 0 ? (
+          {tickerComments.length > 0 ? (
             <div className="space-y-3 max-h-48 overflow-y-auto">
-              {allComments.map((comment) => (
+              {tickerComments.map((comment) => (
                 <div key={comment.id} className={`rounded-lg p-3 border-l-4 ${
                   comment.color === 'red' ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
                   comment.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-500' :
@@ -227,7 +205,7 @@ export function EnhancedCommentModal({
                   ) : (
                     <div>
                       <div className="text-sm text-gray-900 dark:text-white mb-2">
-                        {comment.comment_text}
+                        {comment.comment_text || comment.comment}
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="text-xs text-gray-500 dark:text-gray-400">

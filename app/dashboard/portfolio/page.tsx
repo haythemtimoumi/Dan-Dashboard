@@ -82,6 +82,7 @@ export default function NewPortfolioPage() {
   const [stocksWithComments, setStocksWithComments] = useState<Set<string>>(new Set());
   const [lastComments, setLastComments] = useState<{[key: string]: string}>({});
   const [commentTooltip, setCommentTooltip] = useState<{ ticker: string; comment: string; position: { x: number; y: number } } | null>(null);
+  const [allUserComments, setAllUserComments] = useState<any[]>([]);
   const [searchTicker, setSearchTicker] = useState<string>('');
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [filters, setFilters] = useState({
@@ -465,33 +466,42 @@ export default function NewPortfolioPage() {
     fetchStocks();
   }, [startDate, endDate, stocks.length, loading]);
 
-  // Function to check comments for all stocks using batch API
+  // Function to check comments for all stocks using user API
   const checkCommentsForStocks = async (stocksList: StockWithHighlight[]) => {
-    const tickers = stocksList.map(stock => stock.ticker);
+    if (!user?.id) return;
     
     try {
-      const response = await fetch('/api/comments/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tickers })
-      });
+      const response = await fetch(`/api/proxy/comments/user/${user.id}`);
       
       if (response.ok) {
-        const commentsData = await response.json();
+        const allComments = await response.json();
         const newStocksWithComments = new Set<string>();
         const newLastComments: {[key: string]: string} = {};
         
-        Object.entries(commentsData).forEach(([ticker, data]: [string, any]) => {
-          if (data.hasComments) {
+        // Group comments by ticker and get the latest comment for each
+        const commentsByTicker: {[key: string]: any[]} = {};
+        allComments.forEach((comment: any) => {
+          if (!commentsByTicker[comment.ticker_symbol]) {
+            commentsByTicker[comment.ticker_symbol] = [];
+          }
+          commentsByTicker[comment.ticker_symbol].push(comment);
+        });
+        
+        // Process each ticker's comments
+        Object.entries(commentsByTicker).forEach(([ticker, comments]) => {
+          if (comments.length > 0) {
             newStocksWithComments.add(ticker);
-            if (data.lastComment) {
-              newLastComments[ticker] = data.lastComment;
-            }
+            // Get the most recent comment
+            const latestComment = comments.sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0];
+            newLastComments[ticker] = latestComment.comment;
           }
         });
         
         setStocksWithComments(newStocksWithComments);
         setLastComments(newLastComments);
+        setAllUserComments(allComments);
       }
     } catch (error) {
       console.error('Error checking comments:', error);
@@ -1310,6 +1320,7 @@ export default function NewPortfolioPage() {
           currentComment={currentComment}
           setCurrentComment={setCurrentComment}
           tickerColor={stocks.find(s => s.id === showCommentModal)?.color || 'neutral'}
+          userComments={allUserComments}
         />
       )}
     </div>

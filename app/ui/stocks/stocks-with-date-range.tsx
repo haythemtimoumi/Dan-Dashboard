@@ -7,6 +7,7 @@ import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatDate } fr
 import clsx from 'clsx';
 import { CalendarIcon } from '@heroicons/react/24/outline';
 import { UpdateStock, DeleteStock, CreateStock } from '@/app/ui/stocks/buttons';
+import TickerComments from '@/app/ui/comments/ticker-comments';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import '@/app/ui/datepicker-custom.css';
@@ -638,6 +639,11 @@ export default function StocksWithDateRange({
                             </svg>
                             View
                           </button>
+                          <TickerComments 
+                            tickerId={stock.id} 
+                            tickerSymbol={stock.ticker} 
+                            userId={1} 
+                          />
                           <UpdateStock id={stock.id} />
                           <DeleteStock id={stock.id} />
                         </div>
@@ -793,6 +799,11 @@ export default function StocksWithDateRange({
                               </svg>
                               View
                             </button>
+                            <TickerComments 
+                              tickerId={stock.id} 
+                              tickerSymbol={stock.ticker} 
+                              userId={1} 
+                            />
                             <UpdateStock id={stock.id} />
                             <DeleteStock id={stock.id} />
                           </div>
