@@ -467,11 +467,11 @@ export default function NewPortfolioPage() {
   }, [startDate, endDate, stocks.length, loading]);
 
   // Function to check comments for all stocks using user API
-  const checkCommentsForStocks = async (stocksList: StockWithHighlight[]) => {
+  const checkCommentsForStocks = async (stocksList?: StockWithHighlight[]) => {
     if (!user?.id) return;
     
     try {
-      const response = await fetch(`/api/proxy/comments/user/${user.id}`);
+      const response = await fetch(`/api/proxy/comments/user/${user.id}?t=${Date.now()}`);
       
       if (response.ok) {
         const allComments = await response.json();
@@ -1321,6 +1321,7 @@ export default function NewPortfolioPage() {
           setCurrentComment={setCurrentComment}
           tickerColor={stocks.find(s => s.id === showCommentModal)?.color || 'neutral'}
           userComments={allUserComments}
+          onRefreshComments={() => checkCommentsForStocks()}
         />
       )}
     </div>

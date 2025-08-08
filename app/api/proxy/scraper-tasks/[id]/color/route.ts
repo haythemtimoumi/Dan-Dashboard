@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
+    const { id } = params;
     const body = await request.json();
-    console.log('Creating comment:', body);
     
-    const response = await fetch('http://localhost:3000/api/comments', {
-      method: 'POST',
+    const response = await fetch(`http://localhost:3000/api/scraper-tasks/${id}/color`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -14,17 +17,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      console.error(`Backend API error: ${response.status} ${response.statusText}`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('Comment created:', data);
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error creating comment:', error);
+    console.error('Error updating scraper task color:', error);
     return NextResponse.json(
-      { error: 'Failed to create comment' },
+      { error: 'Failed to update color' },
       { status: 500 }
     );
   }

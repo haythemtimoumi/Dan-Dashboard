@@ -5,18 +5,24 @@ export async function GET(
   { params }: { params: { userId: string } }
 ) {
   try {
-    const response = await fetch(`http://localhost:3000/api/comments/user/${params.userId}`, {
+    const timestamp = Date.now();
+    const response = await fetch(`http://localhost:3000/api/comments/user/${params.userId}?t=${timestamp}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       },
     });
 
     if (!response.ok) {
+      console.error(`Backend API error: ${response.status} ${response.statusText}`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log(`Fetched ${data.length} comments for user ${params.userId}`);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching user comments:', error);

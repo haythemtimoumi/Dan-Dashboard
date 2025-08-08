@@ -83,6 +83,7 @@ export default function TargetPortfolioPage() {
   const [stocksWithComments, setStocksWithComments] = useState<Set<string>>(new Set());
   const [lastComments, setLastComments] = useState<{[key: string]: string}>({});
   const [commentTooltip, setCommentTooltip] = useState<{ ticker: string; comment: string; position: { x: number; y: number } } | null>(null);
+  const [allUserComments, setAllUserComments] = useState<any[]>([]);
   const [searchTicker, setSearchTicker] = useState<string>('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -506,62 +507,45 @@ export default function TargetPortfolioPage() {
     }
   };
 
-  // Function to check comments for all stocks using batch API
-  const checkCommentsForStocks = async (stocksList: StockWithHighlight[]) => {
-    const tickers = stocksList.map(stock => stock.ticker);
-    
-    // Get persisted comment status from localStorage
-    const savedStocksWithComments = localStorage.getItem('stocksWithComments');
-    const savedLastComments = localStorage.getItem('lastComments');
-    
-    let persistedStocksWithComments = new Set<string>();
-    let persistedLastComments: {[key: string]: string} = {};
-    
-    if (savedStocksWithComments) {
-      persistedStocksWithComments = new Set(JSON.parse(savedStocksWithComments));
-    }
-    
-    if (savedLastComments) {
-      persistedLastComments = JSON.parse(savedLastComments);
-    }
+  // Function to check comments for all stocks using user API
+  const checkCommentsForStocks = async (stocksList?: StockWithHighlight[]) => {
+    if (!user?.id) return;
     
     try {
-      const response = await fetch('/api/comments/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tickers })
-      });
+      const response = await fetch(`/api/proxy/comments/user/${user.id}?t=${Date.now()}`);
       
       if (response.ok) {
-        const commentsData = await response.json();
-        const newStocksWithComments = new Set<string>(persistedStocksWithComments);
-        const newLastComments: {[key: string]: string} = { ...persistedLastComments };
+        const allComments = await response.json();
+        const newStocksWithComments = new Set<string>();
+        const newLastComments: {[key: string]: string} = {};
         
-        Object.entries(commentsData).forEach(([ticker, data]: [string, any]) => {
-          if (data.hasComments) {
+        // Group comments by ticker and get the latest comment for each
+        const commentsByTicker: {[key: string]: any[]} = {};
+        allComments.forEach((comment: any) => {
+          if (!commentsByTicker[comment.ticker_symbol]) {
+            commentsByTicker[comment.ticker_symbol] = [];
+          }
+          commentsByTicker[comment.ticker_symbol].push(comment);
+        });
+        
+        // Process each ticker's comments
+        Object.entries(commentsByTicker).forEach(([ticker, comments]) => {
+          if (comments.length > 0) {
             newStocksWithComments.add(ticker);
-            if (data.lastComment) {
-              newLastComments[ticker] = data.lastComment;
-            }
+            // Get the most recent comment
+            const latestComment = comments.sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0];
+            newLastComments[ticker] = latestComment.comment;
           }
         });
         
         setStocksWithComments(newStocksWithComments);
         setLastComments(newLastComments);
-        
-        // Update localStorage with merged data
-        localStorage.setItem('stocksWithComments', JSON.stringify(Array.from(newStocksWithComments)));
-        localStorage.setItem('lastComments', JSON.stringify(newLastComments));
-      } else {
-        // If API fails, use persisted data
-        setStocksWithComments(persistedStocksWithComments);
-        setLastComments(persistedLastComments);
+        setAllUserComments(allComments);
       }
     } catch (error) {
       console.error('Error checking comments:', error);
-      // If API fails, use persisted data
-      setStocksWithComments(persistedStocksWithComments);
-      setLastComments(persistedLastComments);
     }
   };
 
@@ -1424,6 +1408,8 @@ export default function TargetPortfolioPage() {
           currentComment={currentComment}
           setCurrentComment={setCurrentComment}
           tickerColor={stocks.find(s => s.id === showCommentModal)?.color || 'neutral'}
+          userComments={allUserComments}
+          onRefreshComments={() => checkCommentsForStocks()}
         />
       )}
 

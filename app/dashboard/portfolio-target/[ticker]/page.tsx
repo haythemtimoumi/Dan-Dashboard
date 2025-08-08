@@ -75,6 +75,7 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
   );
   const [showComments, setShowComments] = useState<boolean>(true);
   const [comments, setComments] = useState<any[]>([]);
+  const [allUserComments, setAllUserComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState<string>('');
   const [loadingComments, setLoadingComments] = useState<boolean>(false);
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
@@ -380,42 +381,53 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [handleNext, handlePrevious, router]);
 
-  // Fetch comments
-  const fetchComments = async () => {
-    if (!currentStock) return;
+  // Fetch all user comments
+  const fetchAllUserComments = async () => {
+    if (!user) return;
     try {
-      setLoadingComments(true);
-      const response = await fetch(`/api/proxy/comments/ticker/${currentStock.ticker}`);
+      const timestamp = Date.now();
+      const response = await fetch(`/api/proxy/comments/user/${user.id}?t=${timestamp}`);
       if (response.ok) {
         const commentsData = await response.json();
-        setComments(commentsData);
+        setAllUserComments(commentsData);
       }
     } catch (error) {
-      console.error('Error fetching comments:', error);
-    } finally {
-      setLoadingComments(false);
+      console.error('Error fetching user comments:', error);
     }
+  };
+
+  // Filter comments for current ticker
+  const filterCommentsForTicker = () => {
+    if (!currentStock || !allUserComments.length) {
+      setComments([]);
+      return;
+    }
+    const tickerComments = allUserComments.filter(comment => 
+      comment.ticker_symbol === currentStock.ticker
+    );
+    setComments(tickerComments);
   };
 
   // Save comment
   const handleSaveComment = async () => {
     if (!newComment.trim() || !user || !currentStock) return;
     try {
-      const response = await fetch(`/api/proxy/comments/ticker/${currentStock.ticker}`, {
+      const response = await fetch('/api/proxy/comments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          comment_text: newComment,
+          comment: newComment,
           user_id: user.id || 1,
+          ticker_symbol: currentStock.ticker,
           color: currentStock.color || 'neutral'
         }),
       });
       
       if (response.ok) {
         setNewComment('');
-        fetchComments();
+        await fetchAllUserComments();
       }
     } catch (error) {
       console.error('Error saving comment:', error);
@@ -426,12 +438,12 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
   const handleDeleteComment = async (commentId: number) => {
     if (!confirm(language === 'fr' ? 'Êtes-vous sûr de vouloir supprimer ce commentaire?' : 'Are you sure you want to delete this comment?')) return;
     try {
-      const response = await fetch(`/api/proxy/comments/${commentId}`, {
+      const response = await fetch(`/api/proxy/comments/${commentId}/user/${user?.id}`, {
         method: 'DELETE'
       });
       
       if (response.ok) {
-        fetchComments();
+        await fetchAllUserComments();
       }
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -449,19 +461,17 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
     setExpandedComments(newExpanded);
   };
 
-  // Load comments when showing comments panel
+  // Load user comments on mount and when user changes
   useEffect(() => {
-    if (showComments && currentStock) {
-      fetchComments();
+    if (user) {
+      fetchAllUserComments();
     }
-  }, [showComments, currentStock]);
+  }, [user]);
 
-  // Check for comments on page load
+  // Filter comments when stock or user comments change
   useEffect(() => {
-    if (currentStock) {
-      fetchComments();
-    }
-  }, [currentStock]);
+    filterCommentsForTicker();
+  }, [currentStock, allUserComments]);
 
   if (loading) {
     return (
@@ -864,9 +874,9 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black dark:bg-white text-white dark:text-black text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 w-48">
                       <div className="font-medium mb-1">{language === 'fr' ? 'Dernier commentaire:' : 'Latest comment:'}</div>
                       <div className="text-xs opacity-90 line-clamp-3">
-                        {comments[0]?.comment_text?.length > 60 
-                          ? comments[0].comment_text.substring(0, 60) + '...' 
-                          : comments[0]?.comment_text}
+                        {comments[0]?.comment?.length > 60 
+                          ? comments[0].comment.substring(0, 60) + '...' 
+                          : comments[0]?.comment}
                       </div>
                       <div className="text-xs opacity-70 mt-1">
                         {new Date(comments[0]?.created_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
@@ -894,10 +904,10 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
                 ) : comments.length > 0 ? (
                   comments.map((comment) => {
                     const isExpanded = expandedComments.has(comment.id);
-                    const isLong = comment.comment_text.length > 80;
+                    const isLong = comment.comment.length > 80;
                     const displayText = isLong && !isExpanded 
-                      ? comment.comment_text.substring(0, 80) + '...' 
-                      : comment.comment_text;
+                      ? comment.comment.substring(0, 80) + '...' 
+                      : comment.comment;
                     
                     return (
                       <div key={comment.id} className={`rounded-lg p-2 border-l-4 ${
