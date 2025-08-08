@@ -334,6 +334,12 @@ export default function GurusPage() {
                               {language === 'fr' ? 'Prix' : 'Price'}
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Croiss. Analyste' : 'Analyst Growth'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                              {language === 'fr' ? 'Croiss. Composite' : 'Composite Growth'}
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                               {language === 'fr' ? 'Dernière Action' : 'Last Action'}
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -403,6 +409,12 @@ export default function GurusPage() {
                                 </td>
                                 <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                   {stock.last_price ? `$${formatNumber(stock.last_price)}` : '-'}
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {formatNumber((stock as any).long_gr)}
+                                </td>
+                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {formatNumber((stock as any).last_gr)}
                                 </td>
                                 <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                   {(() => {

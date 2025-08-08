@@ -1011,6 +1011,11 @@ export default function TargetPortfolioPage() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
                   <tr>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      <div className="flex items-center">
+                        {language === 'fr' ? 'Position' : 'Position'}
+                      </div>
+                    </th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('ticker')}>
                       <div className="flex items-center">
                         {language === 'fr' ? 'Symbole' : 'Ticker'}
@@ -1076,13 +1081,13 @@ export default function TargetPortfolioPage() {
                     </th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('long_gr')}>
                       <div className="flex items-center">
-                        {language === 'fr' ? 'Croiss. Long' : 'Long Growth'}
+                        {language === 'fr' ? 'Croiss. Analyste' : 'Analyst Growth'}
                         {getSortIcon('long_gr')}
                       </div>
                     </th>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600" onClick={() => handleSort('last_gr')}>
                       <div className="flex items-center">
-                        {language === 'fr' ? 'Dern. Croiss.' : 'Last Growth'}
+                        {language === 'fr' ? 'Croiss. Composite' : 'Composite Growth'}
                         {getSortIcon('last_gr')}
                       </div>
                     </th>
@@ -1104,7 +1109,7 @@ export default function TargetPortfolioPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {sortedStocks.map((stock) => {
+                  {sortedStocks.map((stock, index) => {
                     const stockColor = stock.color || '';
                     const hasComment = stocksWithComments.has(stock.ticker);
                     
@@ -1123,6 +1128,11 @@ export default function TargetPortfolioPage() {
                           router.push(`/dashboard/portfolio-target/${stock.ticker}?date=${startDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
                         }}
                       >
+                        <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center justify-center w-8 h-8 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs font-bold">
+                            {index + 1}
+                          </div>
+                        </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                           <div className="flex items-center gap-2">
                             <button

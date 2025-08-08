@@ -73,6 +73,28 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   const [sortOrder, setSortOrder] = useState<string>(
     searchParams.get('sortOrder') || 'desc'
   );
+
+  // Get sort display info
+  const getSortDisplayInfo = () => {
+    const sortLabels: { [key: string]: string } = {
+      'per_upside': '% Upside',
+      'buy_price': 'Buy Price',
+      'sentiment_score': 'Sentiment',
+      'signal_score': 'Signal',
+      'rule1_score': 'Rule1',
+      'moat_score': 'Moat',
+      'management_score': 'Management',
+      'last_price': 'Current Price',
+      'ticker': 'Ticker',
+      'created_at': 'Date',
+      'date': 'Date'
+    };
+    
+    return {
+      field: sortLabels[sortBy] || sortBy,
+      order: sortOrder === 'asc' ? 'ascending' : 'descending'
+    };
+  };
   const [showComments, setShowComments] = useState<boolean>(true);
   const [comments, setComments] = useState<any[]>([]);
   const [allUserComments, setAllUserComments] = useState<any[]>([]);
@@ -596,18 +618,39 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
               {params.ticker}
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {currentStock?.full_name || currentStock?.source}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {currentStock?.full_name || currentStock?.source}
+              </p>
+              {/* Sort indicator badge */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-2 py-1 rounded-md">
+                <div className="flex items-center gap-1">
+                  <svg className="w-3 h-3 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                    {getSortDisplayInfo().field} {sortOrder === 'asc' ? '↑' : '↓'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
         {/* Navigation Controls */}
         {allStocks.length > 1 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {currentIndex + 1}/{allStocks.length}
-            </span>
+          <div className="flex items-center gap-3">
+            {/* Enhanced position indicator */}
+            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  #{currentIndex + 1} of {allStocks.length}
+                </span>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  (sorted by {getSortDisplayInfo().field.toLowerCase()})
+                </div>
+              </div>
+            </div>
             <div className="flex gap-1">
               <button
                 onClick={handlePrevious}
@@ -647,37 +690,58 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <div className={`text-lg font-bold ${
+              <div className={`text-lg font-bold flex items-center gap-1 justify-center ${
                 (currentStock.per_upside ?? 0) > 0 ? 'text-green-600' : 'text-gray-600'
               }`}>
                 {(currentStock.per_upside ?? 0) > 0 ? '+' : ''}{formatNumber(currentStock.per_upside)}%
+                {(sortBy === 'per_upside' || sortBy === 'upside') && (
+                  <span className="text-blue-500 text-sm">
+                    {sortOrder === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">{t('upside')}</div>
             </div>
             
             <div className="text-center">
-              <div className="text-lg font-bold text-gray-900 dark:text-white">
+              <div className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-1 justify-center">
                 {formatBuyPrice(currentStock.buy_price)}
+                {sortBy === 'buy_price' && (
+                  <span className="text-blue-500 text-sm">
+                    {sortOrder === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">{t('buyPrice')}</div>
             </div>
             
             <div className="text-center">
-              <div className="text-lg font-bold text-gray-900 dark:text-white">
+              <div className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-1 justify-center">
                 {formatNumber(currentStock.sentiment_score)}
+                {sortBy === 'sentiment_score' && (
+                  <span className="text-blue-500 text-sm">
+                    {sortOrder === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">{t('sentiment')}</div>
             </div>
             
             <div className="text-center">
-              <div className="text-lg font-bold text-gray-900 dark:text-white">
+              <div className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-1 justify-center">
                 {formatNumber(currentStock.signal_score)}
+                {sortBy === 'signal_score' && (
+                  <span className="text-blue-500 text-sm">
+                    {sortOrder === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">{t('signal')}</div>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
+
             <button
               onClick={cycleColor}
               className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 hover:border-gray-400 transition-colors"
@@ -777,10 +841,30 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                   <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.management_score)}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">{t('stickerPrice')}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {(() => {
+                      if (!currentStock.buy_price) return '-';
+                      const buyPriceStr = String(currentStock.buy_price);
+                      if (buyPriceStr === '$0' || buyPriceStr === '0') return '-';
+                      const buyPrice = parseFloat(buyPriceStr.replace(/[$,]/g, ''));
+                      return isNaN(buyPrice) || buyPrice === 0 ? '-' : formatCurrency(buyPrice * 2);
+                    })()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Prix Actuel' : 'Current Price'}</span>
                   <span className="font-semibold text-gray-900 dark:text-white">
                     {currentStock.last_price ? `$${formatNumber(currentStock.last_price)}` : '-'}
                   </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Croiss. Analyste' : 'Analyst Growth'}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.long_gr)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Croiss. Composite' : 'Composite Growth'}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.last_gr)}</span>
                 </div>
               </div>
             </div>
