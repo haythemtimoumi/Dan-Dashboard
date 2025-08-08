@@ -572,56 +572,54 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   }
 
   return (
-    <div className="space-y-3">
-      {/* Compact Header with Navigation */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                // Check if we came from portfolio page
-                const referrer = document.referrer;
-                const isFromPortfolio = referrer.includes('/dashboard/portfolio') && !referrer.includes('/dashboard/portfolio/');
-                
-                if (isFromPortfolio && window.history.length > 1) {
-                  // Use browser back to preserve state
-                  window.history.back();
-                } else {
-                  // Fallback to direct navigation
-                  router.push('/dashboard/portfolio');
-                }
-              }}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300"
-              title={language === 'fr' ? 'Retour au Portfolio' : 'Back to Portfolio'}
-            >
-              <ArrowLeftIcon className="w-4 h-4" />
-            </button>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                {params.ticker} {language === 'fr' ? 'Analyse' : 'Analysis'}
-              </h2>
-              {allStocks.length > 0 && (
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  #{currentIndex + 1} / {allStocks.length} • {Math.round(((allStocks.length - currentIndex) / allStocks.length) * 100)}% {language === 'fr' ? 'percentile' : 'percentile'}
-                </span>
-              )}
-            </div>
-          </div>
+    <div className="h-screen flex flex-col p-4 max-w-full overflow-hidden">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              const referrer = document.referrer;
+              const isFromPortfolio = referrer.includes('/dashboard/portfolio') && !referrer.includes('/dashboard/portfolio/');
+              
+              if (isFromPortfolio && window.history.length > 1) {
+                window.history.back();
+              } else {
+                router.push('/dashboard/portfolio');
+              }
+            }}
+            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <ArrowLeftIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </button>
           
-          {/* Inline Navigation */}
-          {allStocks.length > 1 && (
-            <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              {params.ticker}
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {currentStock?.full_name || currentStock?.source}
+            </p>
+          </div>
+        </div>
+        
+        {/* Navigation Controls */}
+        {allStocks.length > 1 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {currentIndex + 1}/{allStocks.length}
+            </span>
+            <div className="flex gap-1">
               <button
                 onClick={handlePrevious}
                 disabled={currentIndex === 0}
                 className={clsx(
-                  "p-2 rounded-lg transition-all",
+                  "p-1.5 rounded-lg transition-all",
                   currentIndex === 0
-                    ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                    : "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                    ? "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
                 )}
               >
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
                 </svg>
               </button>
@@ -629,431 +627,368 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                 onClick={handleNext}
                 disabled={currentIndex === allStocks.length - 1}
                 className={clsx(
-                  "p-2 rounded-lg transition-all",
+                  "p-1.5 rounded-lg transition-all",
                   currentIndex === allStocks.length - 1
-                    ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                    : "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                    ? "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
                 )}
               >
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                 </svg>
               </button>
             </div>
-          )}
+          </div>
+        )}
+      </div>
+      
+      {/* Inline Key Metrics */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <div className="text-center">
+              <div className={`text-lg font-bold ${
+                (currentStock.per_upside ?? 0) > 0 ? 'text-green-600' : 'text-gray-600'
+              }`}>
+                {(currentStock.per_upside ?? 0) > 0 ? '+' : ''}{formatNumber(currentStock.per_upside)}%
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t('upside')}</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-lg font-bold text-gray-900 dark:text-white">
+                {formatBuyPrice(currentStock.buy_price)}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t('buyPrice')}</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-lg font-bold text-gray-900 dark:text-white">
+                {formatNumber(currentStock.sentiment_score)}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t('sentiment')}</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-lg font-bold text-gray-900 dark:text-white">
+                {formatNumber(currentStock.signal_score)}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t('signal')}</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={cycleColor}
+              className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 hover:border-gray-400 transition-colors"
+              style={{ backgroundColor: (currentStock.color === 'neutral' || !currentStock.color) ? 'transparent' : currentStock.color }}
+            />
+            <span className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-lg text-xs font-medium">
+              {currentStock.source}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handlePreviousDay}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span className="text-xs text-gray-600 dark:text-gray-400 font-medium px-2">
+                {new Date(selectedDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
+              </span>
+              <button
+                onClick={handleNextDay}
+                disabled={selectedDate >= new Date().toISOString().split('T')[0]}
+                className={`p-1 rounded transition-colors ${
+                  selectedDate >= new Date().toISOString().split('T')[0]
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       
-      {/* Main Content - Single Row Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-3">
-        {/* Chart Section - Takes 4/5 width on xl screens */}
-        <div className="xl:col-span-4">
-          <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden">
-            {/* Stock Header Bar */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-b border-blue-200 dark:border-blue-800 p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={cycleColor}
-                    className="w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 transition-colors flex-shrink-0"
-                    style={{ backgroundColor: (currentStock.color === 'neutral' || !currentStock.color) ? 'transparent' : currentStock.color }}
-                    title={language === 'fr' ? 'Changer la couleur' : 'Change color'}
-                  />
-                  <div>
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-white">{currentStock.ticker}</h1>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{currentStock.full_name || currentStock.guru || currentStock.source}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs font-medium">
-                      {currentStock.source}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handlePreviousDay}
-                        className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded transition-colors"
-                        title={language === 'fr' ? 'Jour précédent' : 'Previous day'}
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                      </button>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                        {new Date(selectedDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
-                      </span>
-                      <button
-                        onClick={handleNextDay}
-                        disabled={selectedDate >= new Date().toISOString().split('T')[0]}
-                        className={`p-1 rounded transition-colors ${
-                          selectedDate >= new Date().toISOString().split('T')[0]
-                            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                            : 'hover:bg-blue-200 dark:hover:bg-blue-800'
-                        }`}
-                        title={language === 'fr' ? 'Jour suivant' : 'Next day'}
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Key Metrics Inline */}
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <div className="text-sm font-bold text-gray-900 dark:text-white">{formatBuyPrice(currentStock.buy_price)}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Prix Achat' : 'Buy Price'}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-bold text-gray-900 dark:text-white">{formatNumber(currentStock.sentiment_score)}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">{t('sentiment')}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-bold text-gray-900 dark:text-white">{formatNumber(currentStock.signal_score)}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">{t('signal')}</div>
-                  </div>
-                  <div className={`font-bold rounded-lg px-3 py-2 text-lg ${
-                    (currentStock.per_upside ?? 0) > 0 
-                      ? 'bg-green-600 text-white' 
-                      : 'bg-gray-600 text-white'
-                  }`}>
-                    {(currentStock.per_upside ?? 0) > 0 ? '+' : ''}{formatNumber(currentStock.per_upside)}%
-                  </div>
-                </div>
-              </div>
-            </div>
-            
+      {/* Main Content Layout - Flex to fill remaining height */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-3 min-h-0 mb-3">
+        {/* Chart Section */}
+        <div className="lg:col-span-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 h-full flex flex-col">
             {/* Chart */}
             {currentStock.screenshot ? (
-              <div className="relative h-[500px] bg-gray-50 dark:bg-gray-700 group">
+              <div className="relative flex-1 bg-gray-50 dark:bg-gray-900 group rounded-xl overflow-hidden">
                 <Image 
                   src={currentStock.screenshot} 
                   alt={`${currentStock.ticker} chart`}
                   fill
-                  className="object-contain cursor-pointer transition-transform hover:scale-105"
+                  className="object-contain cursor-pointer transition-all hover:scale-[1.02]"
                   priority
                   onClick={() => window.open(currentStock.screenshot, '_blank')}
                 />
-                {/* Fullscreen overlay button */}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => window.open(currentStock.screenshot, '_blank')}
-                    className="bg-black/70 hover:bg-black/90 text-white p-2 rounded-lg transition-colors"
-                    title={language === 'fr' ? 'Ouvrir en plein écran' : 'Open fullscreen'}
+                    className="bg-black/80 hover:bg-black text-white p-1.5 rounded-lg transition-colors backdrop-blur-sm"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                     </svg>
                   </button>
                 </div>
-                {/* Chart info overlay */}
-                <div className="absolute bottom-2 left-2 bg-black/70 text-white rounded-lg px-2 py-1">
-                  <span className="text-xs font-medium">{language === 'fr' ? 'Cliquer pour agrandir' : 'Click to enlarge'}</span>
-                </div>
               </div>
             ) : (
-              <div className="h-[500px] flex items-center justify-center bg-gray-50 dark:bg-gray-700">
+              <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-xl">
                 <div className="text-center">
-                  <div className="text-gray-400 mb-2">
-                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400">No chart available</p>
+                  <svg className="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{language === 'fr' ? 'Aucun graphique' : 'No chart'}</p>
                 </div>
               </div>
             )}
-            
-            {/* Bottom Metrics Bar */}
-            <div className="bg-gray-50 dark:bg-gray-700 p-3 border-t border-gray-200 dark:border-gray-600">
-              <div className="grid grid-cols-6 gap-4 text-center">
-                <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">{formatNumber(currentStock.rule1_score)}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Règle #1' : 'Rule #1'}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">{formatNumber(currentStock.moat_score)}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Fossé' : 'Moat'}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">{formatNumber(currentStock.management_score)}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Gestion' : 'Management'}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">{formatNumber(currentStock.long_gr)}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Croiss. Long' : 'Long Growth'}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">{formatNumber(currentStock.last_gr)}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Dern. Croiss.' : 'Last Growth'}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-gray-900 dark:text-white">{formatNumber(currentStock.pbt)}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">PBT</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
         
-        {/* Sidebar - Takes 1/5 width on xl screens */}
-        <div className="space-y-3">
-          {/* Financial Summary */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
-            <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{t('financial')}</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">{t('stickerPrice')}</span>
-                <span className="font-bold text-gray-900 dark:text-white">
-                  {(() => {
-                    if (!currentStock.buy_price) return '-';
-                    const buyPriceStr = String(currentStock.buy_price);
-                    if (buyPriceStr === '$0' || buyPriceStr === '0') return '-';
-                    const buyPrice = parseFloat(buyPriceStr.replace(/[$,]/g, ''));
-                    return isNaN(buyPrice) || buyPrice === 0 ? '-' : formatCurrency(buyPrice * 2);
-                  })()}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Prix' : 'Price'}</span>
-                <span className="font-bold text-gray-900 dark:text-white">
-                  {currentStock.last_price ? `$${formatNumber(currentStock.last_price)}` : '-'}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
-            <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Actions' : 'Actions'}</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => router.push(`/dashboard/portfolio/${currentStock.ticker}/analysis?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`)}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                {language === 'fr' ? 'Détails' : 'Details'}
-              </button>
-              
-              <div className="grid grid-cols-3 gap-1">
-                <button
-                  onClick={() => window.open(`https://finance.yahoo.com/quote/${currentStock.ticker}`, '_blank')}
-                  className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-1 rounded-lg text-xs font-medium transition-colors flex items-center justify-center"
-                >
-                  Yahoo
-                </button>
-                <button
-                  onClick={() => window.open(`https://www.google.com/finance/quote/${currentStock.ticker}:NASDAQ`, '_blank')}
-                  className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-1 rounded-lg text-xs font-medium transition-colors flex items-center justify-center"
-                >
-                  Google
-                </button>
-                <div className="relative group">
-                  <button
-                    onClick={() => setShowComments(!showComments)}
-                    className={`py-2 px-1 rounded-lg text-xs font-medium transition-all duration-300 flex items-center justify-center relative ${
-                      showComments 
-                        ? 'bg-blue-600 text-white' 
-                        : comments.length > 0
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 animate-pulse'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    💬
-                    {comments.length > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 rounded-full h-2 w-2 animate-bounce"></span>
-                    )}
-                  </button>
-                  {/* Hover tooltip with latest comment */}
-                  {comments.length > 0 && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black dark:bg-white text-white dark:text-black text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 w-48">
-                      <div className="font-medium mb-1">{language === 'fr' ? 'Dernier commentaire:' : 'Latest comment:'}</div>
-                      <div className="text-xs opacity-90 line-clamp-3">
-                        {comments[0]?.comment?.length > 60 
-                          ? comments[0].comment.substring(0, 60) + '...' 
-                          : comments[0]?.comment}
-                      </div>
-                      <div className="text-xs opacity-70 mt-1">
-                        {new Date(comments[0]?.created_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
-                      </div>
-                      {/* Arrow */}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black dark:border-t-white"></div>
-                    </div>
-                  )}
+        {/* Compact Sidebar */}
+        <div className="flex flex-col h-full overflow-hidden">
+          {/* All-in-one Sidebar Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 flex-1 flex flex-col min-h-0">
+            {/* Metrics */}
+            <div className="mb-3">
+              <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Métriques' : 'Metrics'}</h3>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">{t('rule1')}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.rule1_score)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">{t('moat')}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.moat_score)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">{t('management')}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.management_score)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Prix Actuel' : 'Current Price'}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {currentStock.last_price ? `$${formatNumber(currentStock.last_price)}` : '-'}
+                  </span>
                 </div>
               </div>
             </div>
-          </div>
+            
+            {/* Actions */}
+            <div className="mb-3">
+              <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Actions' : 'Actions'}</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => router.push(`/dashboard/portfolio/${currentStock.ticker}/analysis?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-colors"
+                >
+                  {language === 'fr' ? 'Analyse' : 'Analysis'}
+                </button>
+                
+                <div className="grid grid-cols-2 gap-1">
+                  <button
+                    onClick={() => window.open(`https://finance.yahoo.com/quote/${currentStock.ticker}`, '_blank')}
+                    className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    Yahoo
+                  </button>
+                  <button
+                    onClick={() => window.open(`https://www.google.com/finance/quote/${currentStock.ticker}:NASDAQ`, '_blank')}
+                    className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    Google
+                  </button>
+                </div>
+                
+                <button
+                  onClick={() => setShowComments(!showComments)}
+                  className={`w-full py-2 px-3 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1 ${
+                    showComments 
+                      ? 'bg-blue-600 text-white' 
+                      : comments.length > 0
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  💬 {language === 'fr' ? 'Commentaires' : 'Comments'}
+                  {comments.length > 0 && (
+                    <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">
+                      {comments.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
 
-          {/* Comments Section */}
-          {showComments && (
-            <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
-              <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{t('commentsFor')} {currentStock.ticker}</h3>
-              
-              {/* Comments List */}
-              <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
-                {loadingComments ? (
-                  <div className="text-center py-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
-                  </div>
-                ) : comments.length > 0 ? (
-                  comments.map((comment) => {
-                    const isExpanded = expandedComments.has(comment.id);
-
-                    const isLong = comment.comment.length > 80;
-                    const displayText = isLong && !isExpanded 
-                      ? comment.comment.substring(0, 80) + '...' 
-                      : comment.comment;
-                    
-                    return (
-                      <div key={comment.id} className={`rounded-lg p-2 border-l-4 ${
-                        comment.color === 'red' ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
-                        comment.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-500' :
-                        comment.color === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500' :
-                        'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600'
-                      }`}>
-                        <div className="flex justify-between items-start mb-1">
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {comment.username || `${language === 'fr' ? 'Utilisateur' : 'User'} ${comment.user_id}`}
+            {/* Comments Section */}
+            {showComments && (
+              <div className="flex-1 flex flex-col min-h-0">
+                <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Commentaires' : 'Comments'}</h3>
+                
+                {/* Comments List */}
+                <div className="flex-1 space-y-2 mb-2 overflow-y-auto min-h-0">
+                  {loadingComments ? (
+                    <div className="text-center py-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
+                    </div>
+                  ) : comments.length > 0 ? (
+                    comments.map((comment) => {
+                      const isExpanded = expandedComments.has(comment.id);
+                      const isLong = comment.comment.length > 60;
+                      const displayText = isLong && !isExpanded 
+                        ? comment.comment.substring(0, 60) + '...' 
+                        : comment.comment;
+                      
+                      return (
+                        <div key={comment.id} className={`rounded-lg p-2 border-l-2 text-xs ${
+                          comment.color === 'red' ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
+                          comment.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-500' :
+                          comment.color === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500' :
+                          'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600'
+                        }`}>
+                          <div className="flex justify-between items-start mb-1">
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              {comment.username || `${language === 'fr' ? 'User' : 'User'} ${comment.user_id}`}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {new Date(comment.created_at).toLocaleDateString()}
+                              </span>
+                              {user && comment.user_id === user.id && (
+                                <button
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                  className="p-0.5 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
+                                >
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-400 dark:text-gray-500">
-                              {new Date(comment.created_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
-                            </span>
-                            {user && comment.user_id === user.id && (
+                          <div className="text-xs text-gray-900 dark:text-white">
+                            {displayText}
+                            {isLong && (
                               <button
-                                onClick={() => handleDeleteComment(comment.id)}
-                                className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
-                                title={language === 'fr' ? 'Supprimer' : 'Delete'}
+                                onClick={() => toggleCommentExpansion(comment.id)}
+                                className="ml-1 text-blue-600 dark:text-blue-400 hover:underline"
                               >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
+                                {isExpanded ? '↑' : '↓'}
                               </button>
                             )}
                           </div>
                         </div>
-                        <div className="text-xs text-gray-900 dark:text-white">
-                          {displayText}
-                          {isLong && (
-                            <button
-                              onClick={() => toggleCommentExpansion(comment.id)}
-                              className="ml-1 text-blue-600 dark:text-blue-400 hover:underline"
-                            >
-                              {isExpanded 
-                                ? (language === 'fr' ? 'Voir moins' : 'Read less')
-                                : (language === 'fr' ? 'Lire plus' : 'Read more')
-                              }
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-2 text-xs text-gray-500 dark:text-gray-400">
-                    {t('noCommentsFound')}
-                  </div>
-                )}
-              </div>
-              
-              {/* Add Comment */}
-              <div className="space-y-2">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder={t('enterYourComment')}
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 resize-none text-xs"
-                  rows={2}
-                />
-                <button
-                  onClick={handleSaveComment}
-                  disabled={!newComment.trim() || !user}
-                  className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {!user ? t('loginRequired') : t('saveComment')}
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {/* Analysis Summary */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Résumé' : 'Summary'}</h3>
-              <button
-                onClick={() => {
-                  setIsEditingAction(!isEditingAction);
-                  if (!isEditingAction) {
-                    setEditAction(currentStock.last_action || '');
-                    setEditPortfolio(String(currentStock.per_portfolio || ''));
-                  }
-                }}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300"
-                title={language === 'fr' ? 'Modifier' : 'Edit'}
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-            </div>
-            
-            {isEditingAction ? (
-              <div className="space-y-2">
-                <div>
-                  <label className="text-xs text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Dernière Action:' : 'Last Action:'}</label>
-                  <select
-                    value={editAction}
-                    onChange={(e) => setEditAction(e.target.value)}
-                    className="w-full p-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
-                  >
-                    <option value="">{language === 'fr' ? 'Sélectionner...' : 'Select...'}</option>
-                    <option value="Increased">Increased</option>
-                    <option value="Decreased">Decreased</option>
-                    <option value="Held">Held</option>
-                  </select>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-2 text-xs text-gray-500 dark:text-gray-400">
+                      {t('noCommentsFound')}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <label className="text-xs text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Pourcentage Portfolio:' : 'Portfolio %:'}</label>
-                  <input
-                    type="text"
-                    value={editPortfolio}
-                    onChange={(e) => setEditPortfolio(e.target.value)}
-                    className="w-full p-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
-                    placeholder="5%, 10%, etc."
+                
+                {/* Add Comment */}
+                <div className="space-y-2">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder={t('enterYourComment')}
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-transparent resize-none text-xs"
+                    rows={2}
                   />
-                </div>
-                <div className="flex gap-1">
                   <button
-                    onClick={updateTickerInfo}
-                    className="flex-1 bg-blue-600 text-white py-1 px-2 rounded text-xs hover:bg-blue-700"
+                    onClick={handleSaveComment}
+                    disabled={!newComment.trim() || !user}
+                    className="w-full px-2 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {language === 'fr' ? 'Sauvegarder' : 'Save'}
+                    {!user ? t('loginRequired') : t('saveComment')}
                   </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Portfolio Summary */}
+            {!showComments && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Portfolio' : 'Portfolio'}</h3>
                   <button
                     onClick={() => {
-                      setIsEditingAction(false);
-                      setEditAction('');
-                      setEditPortfolio('');
+                      setIsEditingAction(!isEditingAction);
+                      if (!isEditingAction) {
+                        setEditAction(currentStock.last_action || '');
+                        setEditPortfolio(String(currentStock.per_portfolio || ''));
+                      }
                     }}
-                    className="flex-1 bg-gray-500 text-white py-1 px-2 rounded text-xs hover:bg-gray-600"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors"
                   >
-                    {language === 'fr' ? 'Annuler' : 'Cancel'}
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
                   </button>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <div className="text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Dernière Action:' : 'Last Action:'}</span>
-                  <span className="font-medium text-gray-900 dark:text-white ml-1">{currentStock.last_action || '-'}</span>
-                </div>
-                {currentStock.per_portfolio && (
-                  <div className="text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Portfolio:' : 'Portfolio:'}</span>
-                    <span className="font-medium text-gray-900 dark:text-white ml-1">{currentStock.per_portfolio}</span>
+                
+                {isEditingAction ? (
+                  <div className="space-y-2">
+                    <select
+                      value={editAction}
+                      onChange={(e) => setEditAction(e.target.value)}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
+                    >
+                      <option value="">{language === 'fr' ? 'Sélectionner...' : 'Select...'}</option>
+                      <option value="Increased">Increased</option>
+                      <option value="Decreased">Decreased</option>
+                      <option value="Held">Held</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={editPortfolio}
+                      onChange={(e) => setEditPortfolio(e.target.value)}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
+                      placeholder="5%, 10%, etc."
+                    />
+                    <div className="flex gap-1">
+                      <button
+                        onClick={updateTickerInfo}
+                        className="flex-1 bg-blue-600 text-white py-1.5 px-2 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        {language === 'fr' ? 'Save' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingAction(false);
+                          setEditAction('');
+                          setEditPortfolio('');
+                        }}
+                        className="flex-1 bg-gray-500 text-white py-1.5 px-2 rounded-lg text-xs font-medium hover:bg-gray-600 transition-colors"
+                      >
+                        {language === 'fr' ? 'Cancel' : 'Cancel'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Action' : 'Action'}</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{currentStock.last_action || '-'}</span>
+                    </div>
+                    {currentStock.per_portfolio && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Allocation' : 'Allocation'}</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{currentStock.per_portfolio}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1061,49 +996,6 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
           </div>
         </div>
       </div>
-      
-      {/* Quick Navigation Strip */}
-      {allStocks.length > 1 && (
-        <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-3">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              {language === 'fr' ? 'Navigation Rapide' : 'Quick Navigation'}
-            </h3>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {language === 'fr' ? 'Trié par potentiel • Utilisez ← →' : 'Sorted by upside • Use ← →'}
-            </span>
-          </div>
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-2 max-h-20 overflow-y-auto">
-            {allStocks.map((stock, index) => {
-              const upside = stock.per_upside ?? 0;
-              const isPositive = upside > 0;
-              return (
-                <button
-                  key={stock.id}
-                  onClick={() => {
-                    // Don't save state when navigating between tickers, only when going back to portfolio
-                    router.push(`/dashboard/portfolio/${stock.ticker}?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
-                  }}
-                  className={`p-1.5 rounded-lg text-xs font-medium transition-all border ${
-                    index === currentIndex
-                      ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                      : isPositive
-                      ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800'
-                      : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600'
-                  }`}
-                >
-                  <div className="truncate font-bold text-xs">{stock.ticker}</div>
-                  <div className={`text-[10px] font-semibold ${
-                    index === currentIndex ? 'opacity-70' : isPositive ? 'text-green-600 dark:text-green-400' : 'text-gray-500'
-                  }`}>
-                    {isPositive ? '+' : ''}{formatNumber(upside)}%
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
