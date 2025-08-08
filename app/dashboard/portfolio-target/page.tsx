@@ -473,10 +473,10 @@ export default function TargetPortfolioPage() {
             const rule1Score = parseNumericValue(stock.rule1_score);
             const managementScore = parseNumericValue(stock.management_score);
             
-            // Check if all three scores are green (>85)
-            const allScoresGreen = rule1Score > 85 && moatScore > 85 && managementScore > 85;
+            // Check if all three scores are green (>=85)
+            const allScoresGreen = rule1Score >= 85 && moatScore >= 85 && managementScore >= 85;
             
-            // If scores are green, sentiment must be >60, otherwise use filter value
+            // If scores are green, sentiment must be >=60, otherwise use filter value
             const minSentiment = allScoresGreen ? 60 : filters.sentiment;
             
             return sentimentScore >= minSentiment &&
@@ -1187,28 +1187,28 @@ export default function TargetPortfolioPage() {
                           {formatNumber(stock.signal_score)}
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                          parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                          parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
                           {formatNumber(stock.sentiment_score)}
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                          parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                          parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
                           {formatNumber(stock.rule1_score)}
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                          parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                          parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
                           {formatNumber(stock.moat_score)}
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                          parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                          parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>

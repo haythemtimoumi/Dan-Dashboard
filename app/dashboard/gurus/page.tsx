@@ -374,28 +374,28 @@ export default function GurusPage() {
                                   {formatNumber(stock.signal_score)}
                                 </td>
                                 <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                                  parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                                  parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                                     ? 'text-green-600 dark:text-green-400 font-bold'
                                     : 'text-gray-500 dark:text-gray-400'
                                 }`}>
                                   {formatNumber(stock.sentiment_score)}
                                 </td>
                                 <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                                  parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                                  parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                                     ? 'text-green-600 dark:text-green-400 font-bold'
                                     : 'text-gray-500 dark:text-gray-400'
                                 }`}>
                                   {formatNumber(stock.rule1_score)}
                                 </td>
                                 <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                                  parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                                  parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                                     ? 'text-green-600 dark:text-green-400 font-bold'
                                     : 'text-gray-500 dark:text-gray-400'
                                 }`}>
                                   {formatNumber(stock.moat_score)}
                                 </td>
                                 <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                                  parseNumericValue(stock.sentiment_score) > 60 && parseNumericValue(stock.rule1_score) > 85 && parseNumericValue(stock.moat_score) > 85 && parseNumericValue(stock.management_score) > 85
+                                  parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                                     ? 'text-green-600 dark:text-green-400 font-bold'
                                     : 'text-gray-500 dark:text-gray-400'
                                 }`}>
