@@ -91,32 +91,39 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
     const currentIndex = colors.indexOf(currentStock.color || 'neutral');
     const nextColor = colors[(currentIndex + 1) % colors.length];
     
+    const originalColor = currentStock.color;
+    
     // Update local state immediately for instant feedback
     setCurrentStock({ ...currentStock, color: nextColor });
     
-    // Update via API if ticker_id is available
-    if (currentStock.ticker_id) {
-      try {
-        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        const response = await fetch(`/api/scraper-tasks/${currentStock.ticker_id}/color`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ color: nextColor })
-        });
-        
-        if (!response.ok) {
-          console.error('Failed to update color:', response.statusText);
-          // Revert local state on API failure
-          setCurrentStock({ ...currentStock, color: currentStock.color });
-        }
-      } catch (error) {
-        console.error('Error updating color:', error);
-        // Revert local state on error
-        setCurrentStock({ ...currentStock, color: currentStock.color });
+    // Update via proxy API using ticker
+    try {
+      const response = await fetch(`/api/proxy/stocks/${currentStock.ticker}/color`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ color: nextColor })
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to update color:', response.statusText);
+        // Revert local state on API failure
+        setCurrentStock({ ...currentStock, color: originalColor });
+      } else {
+        // Update the stock in allStocks array to persist the change
+        setAllStocks(prevStocks => 
+          prevStocks.map(stock => 
+            stock.ticker === currentStock.ticker 
+              ? { ...stock, color: nextColor }
+              : stock
+          )
+        );
       }
+    } catch (error) {
+      console.error('Error updating color:', error);
+      // Revert local state on error
+      setCurrentStock({ ...currentStock, color: originalColor });
     }
   };
 
@@ -166,8 +173,8 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
     try {
       setLoading(true);
       
-      // Fetch stocks for specific date
-      const response = await fetch(`/api/stocks/grouped?startDate=${date}&endDate=${date}`);
+      // Fetch stocks for specific date using proxy API to ensure color data is included
+      const response = await fetch(`/api/proxy/stocks/grouped?startDate=${date}&endDate=${date}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch stocks: ${response.statusText}`);
@@ -200,7 +207,7 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
         setLoading(true);
         
         // Fetch all stocks from grouped endpoint for navigation
-        const response = await fetch('/api/stocks/grouped');
+        const response = await fetch('/api/proxy/stocks/grouped');
         
         if (!response.ok) {
           throw new Error(`Failed to fetch stocks: ${response.statusText}`);
@@ -327,6 +334,16 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
   useEffect(() => {
     fetchStocksForDate(selectedDate);
   }, [selectedDate, params.ticker]);
+
+  // Sync currentStock with allStocks when ticker changes
+  useEffect(() => {
+    if (allStocks.length > 0) {
+      const stockFromList = allStocks.find(stock => stock.ticker === params.ticker);
+      if (stockFromList && currentStock) {
+        setCurrentStock({ ...currentStock, color: stockFromList.color });
+      }
+    }
+  }, [params.ticker, allStocks]);
 
   const handlePreviousDay = () => {
     const prevDate = new Date(selectedDate);
