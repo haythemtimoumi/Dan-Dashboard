@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 
 interface Comment {
@@ -29,13 +29,7 @@ export default function TickerComments({ tickerId, tickerSymbol, userId = 1 }: T
   const [loading, setLoading] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
-  useEffect(() => {
-    if (showComments && userId) {
-      fetchComments();
-    }
-  }, [showComments, userId]);
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}/comments/user/${userId}`);
@@ -51,7 +45,13 @@ export default function TickerComments({ tickerId, tickerSymbol, userId = 1 }: T
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, tickerSymbol]);
+
+  useEffect(() => {
+    if (showComments && userId) {
+      fetchComments();
+    }
+  }, [showComments, userId, fetchComments]);
 
   const getColorClass = (color: string | null) => {
     switch (color) {

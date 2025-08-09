@@ -184,7 +184,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
     }
   };
 
-  const fetchStocksForDate = async (date: string) => {
+  const fetchStocksForDate = useCallback(async (date: string) => {
     try {
       setLoading(true);
       
@@ -214,7 +214,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.ticker]);
 
   useEffect(() => {
     const fetchAllStocks = async () => {
@@ -401,7 +401,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   }, [handleNext, handlePrevious, router]);
 
   // Fetch all user comments
-  const fetchAllUserComments = async () => {
+  const fetchAllUserComments = useCallback(async () => {
     if (!user) return;
     try {
       const timestamp = Date.now();
@@ -413,10 +413,10 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
     } catch (error) {
       console.error('Error fetching user comments:', error);
     }
-  };
+  }, [user]);
 
   // Filter comments for current ticker
-  const filterCommentsForTicker = () => {
+  const filterCommentsForTicker = useCallback(() => {
     if (!currentStock || !allUserComments.length) {
       setComments([]);
       return;
@@ -425,7 +425,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
       comment.ticker_symbol === currentStock.ticker
     );
     setComments(tickerComments);
-  };
+  }, [currentStock, allUserComments]);
 
   // Save comment
   const handleSaveComment = async () => {

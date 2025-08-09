@@ -6,9 +6,11 @@ const pool = new Pool({
   port: parseInt(process.env.POSTGRES_PORT || '5432'),
   database: process.env.POSTGRES_DATABASE,
   user: process.env.POSTGRES_USER,
-  password: process.env.POSTGRES_PASSWORD,
+  password: String(process.env.POSTGRES_PASSWORD || ''),
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const client = await pool.connect();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, useRef } from 'react';
+import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Stock } from '@/app/lib/definitions';
 import { formatCurrency, getSentimentColor, getSourceBadgeColor, formatLargeNumber } from '@/app/lib/utils';
@@ -85,6 +85,7 @@ export default function TargetPortfolioPage() {
   const [commentTooltip, setCommentTooltip] = useState<{ ticker: string; comment: string; position: { x: number; y: number } } | null>(null);
   const [allUserComments, setAllUserComments] = useState<any[]>([]);
   const [searchTicker, setSearchTicker] = useState<string>('');
+  const [tickerChanges, setTickerChanges] = useState<{[key: string]: any}>({});
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
     tickers: '',
@@ -419,6 +420,48 @@ export default function TargetPortfolioPage() {
     setCommentTooltip(null);
   };
 
+  // Function to check comments for all stocks using user API
+  const checkCommentsForStocks = useCallback(async (stocksList?: StockWithHighlight[]) => {
+    if (!user?.id) return;
+    
+    try {
+      const response = await fetch(`/api/proxy/comments/user/${user.id}?t=${Date.now()}`);
+      
+      if (response.ok) {
+        const allComments = await response.json();
+        const newStocksWithComments = new Set<string>();
+        const newLastComments: {[key: string]: string} = {};
+        
+        // Group comments by ticker and get the latest comment for each
+        const commentsByTicker: {[key: string]: any[]} = {};
+        allComments.forEach((comment: any) => {
+          if (!commentsByTicker[comment.ticker_symbol]) {
+            commentsByTicker[comment.ticker_symbol] = [];
+          }
+          commentsByTicker[comment.ticker_symbol].push(comment);
+        });
+        
+        // Process each ticker's comments
+        Object.entries(commentsByTicker).forEach(([ticker, comments]) => {
+          if (comments.length > 0) {
+            newStocksWithComments.add(ticker);
+            // Get the most recent comment
+            const latestComment = comments.sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0];
+            newLastComments[ticker] = latestComment.comment;
+          }
+        });
+        
+        setStocksWithComments(newStocksWithComments);
+        setLastComments(newLastComments);
+        setAllUserComments(allComments);
+      }
+    } catch (error) {
+      console.error('Error checking comments:', error);
+    }
+  }, [user?.id]);
+
   // Load sources from API
   useEffect(() => {
     const fetchSources = async () => {
@@ -488,6 +531,37 @@ export default function TargetPortfolioPage() {
         
         // Check comments for all stocks before setting stocks
         await checkCommentsForStocks(targetStocks);
+        
+        // Fetch ticker changes
+        if (startDate && endDate) {
+          try {
+            let fromDate = startDate;
+            let toDate = endDate;
+            if (startDate === endDate) {
+              const currentDate = new Date(startDate);
+              const previousDate = new Date(currentDate);
+              previousDate.setDate(currentDate.getDate() - 1);
+              fromDate = previousDate.toISOString().split('T')[0];
+              toDate = startDate;
+            }
+            const url = `/api/proxy/stocks/tickers/changes?from=${fromDate}&to=${toDate}`;
+            const response = await fetch(url);
+            if (response.ok) {
+              const changesData = await response.json();
+              const changesMap: {[key: string]: any} = {};
+              changesData.forEach((change: any) => {
+                changesMap[change.ticker] = change;
+              });
+              setTickerChanges(changesMap);
+            } else {
+              setTickerChanges({});
+            }
+          } catch (error) {
+            console.warn('Error fetching ticker changes, continuing without change indicators:', error);
+            setTickerChanges({});
+          }
+        }
+        
         setStocks(targetStocks);
       } catch (err) {
         console.error('Error fetching stocks:', err);
@@ -498,54 +572,12 @@ export default function TargetPortfolioPage() {
     };
 
     fetchStocks();
-  }, [startDate, endDate, isFiltered, filters]);
+  }, [startDate, endDate, isFiltered, filters, checkCommentsForStocks]);
 
   // Function to refresh comment status for all stocks
   const refreshCommentStatus = async () => {
     if (stocks.length > 0) {
       await checkCommentsForStocks(stocks);
-    }
-  };
-
-  // Function to check comments for all stocks using user API
-  const checkCommentsForStocks = async (stocksList?: StockWithHighlight[]) => {
-    if (!user?.id) return;
-    
-    try {
-      const response = await fetch(`/api/proxy/comments/user/${user.id}?t=${Date.now()}`);
-      
-      if (response.ok) {
-        const allComments = await response.json();
-        const newStocksWithComments = new Set<string>();
-        const newLastComments: {[key: string]: string} = {};
-        
-        // Group comments by ticker and get the latest comment for each
-        const commentsByTicker: {[key: string]: any[]} = {};
-        allComments.forEach((comment: any) => {
-          if (!commentsByTicker[comment.ticker_symbol]) {
-            commentsByTicker[comment.ticker_symbol] = [];
-          }
-          commentsByTicker[comment.ticker_symbol].push(comment);
-        });
-        
-        // Process each ticker's comments
-        Object.entries(commentsByTicker).forEach(([ticker, comments]) => {
-          if (comments.length > 0) {
-            newStocksWithComments.add(ticker);
-            // Get the most recent comment
-            const latestComment = comments.sort((a, b) => 
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            )[0];
-            newLastComments[ticker] = latestComment.comment;
-          }
-        });
-        
-        setStocksWithComments(newStocksWithComments);
-        setLastComments(newLastComments);
-        setAllUserComments(allComments);
-      }
-    } catch (error) {
-      console.error('Error checking comments:', error);
     }
   };
 
@@ -575,6 +607,57 @@ export default function TargetPortfolioPage() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
       </svg>
     );
+  };
+
+  // Function to get change arrow for a field
+  const getChangeArrow = (ticker: string, field: string) => {
+    const changes = tickerChanges[ticker];
+    if (!changes) {
+      return null;
+    }
+    
+    const fieldMap: {[key: string]: string} = {
+      'signal_score': 'signal_change',
+      'sentiment_score': 'sentiment_change', 
+      'rule1_score': 'rule1_change',
+      'moat_score': 'moat_change',
+      'management_score': 'management_change',
+      'buy_price': 'buy_price_change',
+      'per_upside': 'upside_change',
+      'last_price': 'price_change',
+      'long_gr': 'analyst_growth_change',
+      'last_gr': 'composite_growth_change',
+      'pbt': 'pbt_change'
+    };
+    
+    const changeField = fieldMap[field];
+    if (!changeField || !changes[changeField]) {
+      return null;
+    }
+    
+    const changeValue = changes[changeField];
+    
+    if (changeValue === 'up') {
+      return (
+        <svg className="w-4 h-4 ml-1 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M7 14l5-5 5 5z"/>
+        </svg>
+      );
+    } else if (changeValue === 'down') {
+      return (
+        <svg className="w-4 h-4 ml-1 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M7 10l5 5 5-5z"/>
+        </svg>
+      );
+    } else if (changeValue === 'stable') {
+      return (
+        <svg className="w-4 h-4 ml-1 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M5 12h14"/>
+        </svg>
+      );
+    }
+    
+    return null;
   };
 
   // Filter stocks by selected source and ticker search
@@ -1184,38 +1267,56 @@ export default function TargetPortfolioPage() {
                           }
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatNumber(stock.signal_score)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.signal_score)}
+                            {getChangeArrow(stock.ticker, 'signal_score')}
+                          </div>
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
                           parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
-                          {formatNumber(stock.sentiment_score)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.sentiment_score)}
+                            {getChangeArrow(stock.ticker, 'sentiment_score')}
+                          </div>
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
                           parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
-                          {formatNumber(stock.rule1_score)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.rule1_score)}
+                            {getChangeArrow(stock.ticker, 'rule1_score')}
+                          </div>
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
                           parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
-                          {formatNumber(stock.moat_score)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.moat_score)}
+                            {getChangeArrow(stock.ticker, 'moat_score')}
+                          </div>
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
                           parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
-                          {formatNumber(stock.management_score)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.management_score)}
+                            {getChangeArrow(stock.ticker, 'management_score')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatBuyPrice(stock.buy_price)}
+                          <div className="flex items-center">
+                            {formatBuyPrice(stock.buy_price)}
+                            {getChangeArrow(stock.ticker, 'buy_price')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {(() => {
@@ -1228,19 +1329,34 @@ export default function TargetPortfolioPage() {
                           }
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.per_upside !== null && stock.per_upside !== undefined ? `${Math.round(stock.per_upside)}%` : '-'}
+                          <div className="flex items-center">
+                            {stock.per_upside !== null && stock.per_upside !== undefined ? `${Math.round(stock.per_upside)}%` : '-'}
+                            {getChangeArrow(stock.ticker, 'per_upside')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.last_price ? `$${formatNumber(stock.last_price)}` : '-'}
+                          <div className="flex items-center">
+                            {stock.last_price ? `$${formatNumber(stock.last_price)}` : '-'}
+                            {getChangeArrow(stock.ticker, 'last_price')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatNumber(stock.long_gr)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.long_gr)}
+                            {getChangeArrow(stock.ticker, 'long_gr')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatNumber(stock.last_gr)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.last_gr)}
+                            {getChangeArrow(stock.ticker, 'last_gr')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatNumber(stock.pbt)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.pbt)}
+                            {getChangeArrow(stock.ticker, 'pbt')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '-'}

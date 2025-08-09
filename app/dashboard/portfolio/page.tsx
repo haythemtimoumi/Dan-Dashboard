@@ -85,6 +85,7 @@ export default function NewPortfolioPage() {
   const [allUserComments, setAllUserComments] = useState<any[]>([]);
   const [searchTicker, setSearchTicker] = useState<string>('');
   const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [tickerChanges, setTickerChanges] = useState<{[key: string]: any}>({});
   const [filters, setFilters] = useState({
     sentiment: 60,
     moat: 85,
@@ -455,6 +456,9 @@ export default function NewPortfolioPage() {
         
         // Auto-load comments for all stocks
         await checkCommentsForStocks(stocksData);
+        
+        // Fetch ticker changes
+        await fetchTickerChanges();
       } catch (err) {
         console.error('Error fetching stocks:', err);
         setError('Failed to load portfolio stocks. Please try again later.');
@@ -465,6 +469,45 @@ export default function NewPortfolioPage() {
 
     fetchStocks();
   }, [startDate, endDate, stocks.length, loading]);
+
+  // Function to fetch ticker changes
+  const fetchTickerChanges = async () => {
+    if (!startDate || !endDate) return;
+    
+    try {
+      // For meaningful changes, we need to compare with a previous date
+      // If startDate and endDate are the same, compare with previous day
+      let fromDate = startDate;
+      let toDate = endDate;
+      
+      if (startDate === endDate) {
+        // Compare with previous day to show actual changes
+        const currentDate = new Date(startDate);
+        const previousDate = new Date(currentDate);
+        previousDate.setDate(currentDate.getDate() - 1);
+        fromDate = previousDate.toISOString().split('T')[0];
+        toDate = startDate;
+      }
+      
+      const url = `/api/proxy/stocks/tickers/changes?from=${fromDate}&to=${toDate}`;
+      console.log('Fetching ticker changes from:', url);
+      const response = await fetch(url);
+      if (response.ok) {
+        const changesData = await response.json();
+        console.log('Ticker changes data sample:', changesData.slice(0, 2));
+        const changesMap: {[key: string]: any} = {};
+        changesData.forEach((change: any) => {
+          changesMap[change.ticker] = change;
+        });
+        console.log('Total tickers with changes:', Object.keys(changesMap).length);
+        setTickerChanges(changesMap);
+      } else {
+        console.error('Failed to fetch ticker changes:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching ticker changes:', error);
+    }
+  };
 
   // Function to check comments for all stocks using user API
   const checkCommentsForStocks = async (stocksList?: StockWithHighlight[]) => {
@@ -534,6 +577,60 @@ export default function NewPortfolioPage() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
       </svg>
     );
+  };
+
+  // Function to get change arrow for a field
+  const getChangeArrow = (ticker: string, field: string) => {
+    const changes = tickerChanges[ticker];
+    if (!changes) {
+      console.log(`No changes found for ticker: ${ticker}`);
+      return null;
+    }
+    
+    const fieldMap: {[key: string]: string} = {
+      'signal_score': 'signal_change',
+      'sentiment_score': 'sentiment_change', 
+      'rule1_score': 'rule1_change',
+      'moat_score': 'moat_change',
+      'management_score': 'management_change',
+      'buy_price': 'buy_price_change',
+      'per_upside': 'upside_change',
+      'last_price': 'price_change',
+      'long_gr': 'analyst_growth_change',
+      'last_gr': 'composite_growth_change',
+      'pbt': 'pbt_change'
+    };
+    
+    const changeField = fieldMap[field];
+    if (!changeField || !changes[changeField]) {
+      console.log(`No change field found: ${changeField} for ${ticker}`);
+      return null;
+    }
+    
+    const changeValue = changes[changeField];
+    console.log(`Change for ${ticker}.${field}: ${changeValue}`);
+    
+    if (changeValue === 'up') {
+      return (
+        <svg className="w-4 h-4 ml-1 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M7 14l5-5 5 5z"/>
+        </svg>
+      );
+    } else if (changeValue === 'down') {
+      return (
+        <svg className="w-4 h-4 ml-1 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M7 10l5 5 5-5z"/>
+        </svg>
+      );
+    } else if (changeValue === 'stable') {
+      return (
+        <svg className="w-4 h-4 ml-1 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M5 12h14"/>
+        </svg>
+      );
+    }
+    
+    return null;
   };
 
   // Filter stocks by selected source, ticker search, and advanced filters
@@ -1137,38 +1234,56 @@ export default function NewPortfolioPage() {
                           }
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatNumber(stock.signal_score)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.signal_score)}
+                            {getChangeArrow(stock.ticker, 'signal_score')}
+                          </div>
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
                           parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
-                          {formatNumber(stock.sentiment_score)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.sentiment_score)}
+                            {getChangeArrow(stock.ticker, 'sentiment_score')}
+                          </div>
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
                           parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
-                          {formatNumber(stock.rule1_score)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.rule1_score)}
+                            {getChangeArrow(stock.ticker, 'rule1_score')}
+                          </div>
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
                           parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
-                          {formatNumber(stock.moat_score)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.moat_score)}
+                            {getChangeArrow(stock.ticker, 'moat_score')}
+                          </div>
                         </td>
                         <td className={`px-3 py-4 whitespace-nowrap text-sm ${
                           parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
                             ? 'text-green-600 dark:text-green-400 font-bold'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
-                          {formatNumber(stock.management_score)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.management_score)}
+                            {getChangeArrow(stock.ticker, 'management_score')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatBuyPrice(stock.buy_price)}
+                          <div className="flex items-center">
+                            {formatBuyPrice(stock.buy_price)}
+                            {getChangeArrow(stock.ticker, 'buy_price')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {(() => {
@@ -1181,19 +1296,34 @@ export default function NewPortfolioPage() {
                           }
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.per_upside !== null && stock.per_upside !== undefined ? `${Math.round(stock.per_upside)}%` : '-'}
+                          <div className="flex items-center">
+                            {stock.per_upside !== null && stock.per_upside !== undefined ? `${Math.round(stock.per_upside)}%` : '-'}
+                            {getChangeArrow(stock.ticker, 'per_upside')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {stock.last_price ? `$${formatNumber(stock.last_price)}` : '-'}
+                          <div className="flex items-center">
+                            {stock.last_price ? `$${formatNumber(stock.last_price)}` : '-'}
+                            {getChangeArrow(stock.ticker, 'last_price')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatNumber(stock.long_gr)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.long_gr)}
+                            {getChangeArrow(stock.ticker, 'long_gr')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatNumber(stock.last_gr)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.last_gr)}
+                            {getChangeArrow(stock.ticker, 'last_gr')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatNumber(stock.pbt)}
+                          <div className="flex items-center">
+                            {formatNumber(stock.pbt)}
+                            {getChangeArrow(stock.ticker, 'pbt')}
+                          </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {(stock.date || stock.created_at) ? new Date(stock.date || stock.created_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '-'}

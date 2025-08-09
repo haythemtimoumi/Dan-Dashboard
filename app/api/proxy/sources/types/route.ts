@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const DAN_API_BASE_URL = process.env.DAN_API_BASE_URL || 'http://localhost:3000';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const response = await fetch(`${DAN_API_BASE_URL}/api/sources/types`);

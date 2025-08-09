@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/app/contexts/auth-context';
 import { useSettings } from '@/app/contexts/settings-context';
 import { useRouter } from 'next/navigation';
@@ -92,20 +92,7 @@ export default function ScraperManagement() {
   const [updatingDailySchedule, setUpdatingDailySchedule] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
 
-  useEffect(() => {
-    if (!isAdmin) {
-      router.push('/dashboard');
-      return;
-    }
-    fetchServices();
-    fetchDailyStatus();
-    
-    // Auto-refresh daily status every 30 seconds
-    const interval = setInterval(fetchDailyStatus, 30000);
-    return () => clearInterval(interval);
-  }, [isAdmin, router]);
-
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       setError(null);
       const response = await fetch('https://stock-ticker.dev/services');
@@ -118,9 +105,9 @@ export default function ScraperManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
-  const fetchDailyStatus = async () => {
+  const fetchDailyStatus = useCallback(async () => {
     try {
       const response = await fetch('https://stock-ticker.dev/status');
       if (response.ok) {
@@ -131,7 +118,20 @@ export default function ScraperManagement() {
     } catch (error) {
       console.error('Failed to fetch daily status:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      router.push('/dashboard');
+      return;
+    }
+    fetchServices();
+    fetchDailyStatus();
+    
+    // Auto-refresh daily status every 30 seconds
+    const interval = setInterval(fetchDailyStatus, 30000);
+    return () => clearInterval(interval);
+  }, [isAdmin, router, fetchServices, fetchDailyStatus]);
 
   const updateDailyConfig = async () => {
     setUpdatingConfig(true);
