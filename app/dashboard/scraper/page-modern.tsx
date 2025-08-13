@@ -13,6 +13,7 @@ import {
   CheckCircleIcon, 
   TagIcon,
   ArrowPathIcon,
+  PauseIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline';
 
