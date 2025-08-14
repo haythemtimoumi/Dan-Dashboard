@@ -1,14 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    
     const DAN_API_BASE_URL = process.env.DAN_API_BASE_URL || 'http://localhost:3000';
     
-    const response = await fetch(`${DAN_API_BASE_URL}/api/stocks/grouped?${searchParams.toString()}`, {
+    const response = await fetch(`${DAN_API_BASE_URL}/api/stocks/gurus/portfolios/latest`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -17,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Failed to fetch grouped stocks' },
+        { error: 'Failed to fetch latest guru portfolios' },
         { status: response.status }
       );
     }
@@ -25,7 +23,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching grouped stocks:', error);
+    console.error('Error fetching latest guru portfolios:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -25,10 +25,7 @@ export async function GET(request: NextRequest) {
     
     const data = await response.json();
     
-    // Filter for target stocks only
-    const targetStocks = data.filter((stock: any) => stock.target === true);
-    
-    return NextResponse.json(targetStocks);
+    return NextResponse.json(data);
     
   } catch (error) {
     console.error('Error fetching grouped stocks from Dan-API:', error);

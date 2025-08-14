@@ -4,42 +4,37 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/app/contexts/settings-context';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { Stock } from '@/app/lib/definitions';
 import { formatCurrency } from '@/app/lib/utils';
+import DatePickerInput from '@/app/ui/date-picker';
 
-interface Ticker {
-  symbol: string;
-  scrape_type: string;
-  last_act: string | null;
-  per_port: number | null;
+interface GuruStock {
+  ticker_id: number;
+  ticker: string;
+  signal: number;
+  sentiment: number;
+  rule1_score: string;
+  moat_score: string;
+  management_score: string;
+  buy_price: string;
+  upside_percent: string;
+  current_price: string;
+  analyst_growth: string;
+  composite_growth: string;
+  last_action: string;
+  portfolio_percent: string;
 }
 
 interface Guru {
-  guru_id: number;
   guru_name: string;
-  tickers: Ticker[];
+  guru_id: number;
+  stocks: GuruStock[];
 }
 
-interface StockWithHighlight {
-  id: string;
-  ticker: string;
-  guru?: string;
-  signal_score?: any;
-  sentiment_score?: any;
-  rule1_score?: any;
-  moat_score?: any;
-  management_score?: any;
-  buy_price?: any;
-  per_upside?: number;
-  last_price?: any;
-  date?: string;
-  created_at?: string;
-  highlight?: boolean;
-  target?: boolean;
-  color?: string;
-  ticker_id?: number;
-  per_port?: number | null;
-  last_action?: string | null;
+interface ApiResponse {
+  date: string;
+  total_gurus: number;
+  total_stocks: number;
+  gurus: Guru[];
 }
 
 const formatNumber = (value: any): string => {
@@ -88,133 +83,75 @@ const parseNumericValue = (value: any): number => {
 };
 
 export default function GurusPage() {
-  const [gurus, setGurus] = useState<Guru[]>([]);
+  const [apiData, setApiData] = useState<ApiResponse | null>(null);
   const [expandedGuru, setExpandedGuru] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [guruStocks, setGuruStocks] = useState<{[key: number]: StockWithHighlight[]}>({});
-  const [loadingStocks, setLoadingStocks] = useState<{[key: number]: boolean}>({});
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { t, language } = useSettings();
   const router = useRouter();
 
   useEffect(() => {
-    fetchGurus();
-    // Fetch last date from API
-    const fetchLastDate = async () => {
-      try {
-        const response = await fetch('/api/proxy/stocks/last-date');
-        if (response.ok) {
-          const data = await response.json();
-          const lastDate = new Date(data.last_date).toISOString().split('T')[0];
-          setStartDate(lastDate);
-          setEndDate(lastDate);
-        } else {
-          const today = new Date().toISOString().split('T')[0];
-          setStartDate(today);
-          setEndDate(today);
-        }
-      } catch (error) {
-        console.error('Error fetching last date:', error);
-        const today = new Date().toISOString().split('T')[0];
-        setStartDate(today);
-        setEndDate(today);
-      }
-    };
-    fetchLastDate();
+    fetchData();
   }, []);
 
-  const fetchGurus = async () => {
+  useEffect(() => {
+    if (selectedDate && apiData) {
+      fetchDataForDate(selectedDate);
+    }
+  }, [selectedDate]);
+
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/gurus-with-tickers');
-      if (!response.ok) throw new Error('Failed to fetch gurus');
-      const data = await response.json();
-      setGurus(data);
+      setError(null);
+      
+      const response = await fetch('/api/stocks/gurus/portfolios/latest');
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+      
+      const data: ApiResponse = await response.json();
+      setApiData(data);
+      setSelectedDate(new Date(data.date));
+      
     } catch (err) {
-      setError('Failed to load gurus');
-      console.error('Error fetching gurus:', err);
+      console.error('Error fetching data:', err);
+      setError(`Failed to load data: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGuruClick = async (guruId: number) => {
-    if (expandedGuru === guruId) {
-      setExpandedGuru(null);
-      return;
-    }
-    
-    setExpandedGuru(guruId);
-    
-    // Fetch stocks for this guru if not already loaded
-    if (!guruStocks[guruId] && startDate && endDate) {
-      const guru = gurus.find(g => g.guru_id === guruId);
-      if (guru) {
-        await fetchGuruStocks(guruId, guru.guru_name);
-      }
-    }
-  };
-  
-  const fetchGuruStocks = async (guruId: number, guruName: string) => {
-    setLoadingStocks(prev => ({ ...prev, [guruId]: true }));
-    
+  const fetchDataForDate = async (date: Date) => {
     try {
-      const params = new URLSearchParams();
-      params.append('startDate', startDate);
-      params.append('endDate', endDate);
-      
-      const response = await fetch(`/api/stocks/grouped?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch stocks');
-      
-      const stocksData = await response.json();
-      console.log('Fetched stocks data:', stocksData.length, 'stocks');
-      console.log('Looking for guru:', guruName);
-      console.log('Sample stock guru fields:', stocksData.slice(0, 10).map((s: any) => ({ ticker: s.ticker, guru: s.guru, gurus: s.gurus })));
-      
-      // Find stocks that might match this guru
-      const potentialMatches = stocksData.filter((s: any) => 
-        s.guru && (s.guru.toLowerCase().includes(guruName.toLowerCase()) || 
-        (s.gurus && s.gurus.toLowerCase && s.gurus.toLowerCase().includes(guruName.toLowerCase())))
-      );
-      console.log('Potential matches:', potentialMatches.length, potentialMatches.slice(0, 3).map((s: any) => ({ ticker: s.ticker, guru: s.guru, gurus: s.gurus })));
-      
-      const guruSpecificStocks = stocksData.filter((stock: any) => {
-        // Check if stock has guru data
-        const stockGuru = stock.guru || stock.gurus;
-        if (!stockGuru) return false;
-        
-        const guruLower = guruName.toLowerCase();
-        const stockGuruLower = stockGuru.toLowerCase();
-        
-        // Handle exact match (case insensitive)
-        if (stockGuruLower === guruLower) return true;
-        
-        // Handle comma-separated guru lists
-        if (stockGuruLower.includes(',')) {
-          const gurus = stockGuruLower.split(',').map((g: string) => g.trim());
-          return gurus.some((g: string) => g === guruLower || g.includes(guruLower));
-        }
-        
-        // Handle partial matches
-        return stockGuruLower.includes(guruLower);
-      });
-      
-      console.log('Filtered stocks for guru:', guruSpecificStocks.length);
-      
-      setGuruStocks(prev => ({ ...prev, [guruId]: guruSpecificStocks }));
+      setLoading(true);
+      const dateStr = date.toISOString().split('T')[0];
+      const response = await fetch(`/api/stocks/gurus/portfolios/${dateStr}`);
+      if (!response.ok) throw new Error('Failed to fetch data');
+      const data: ApiResponse = await response.json();
+      setApiData(data);
     } catch (error) {
-      console.error('Error fetching guru stocks:', error);
+      console.error('Error fetching data:', error);
+      setError('Failed to fetch data for selected date');
     } finally {
-      setLoadingStocks(prev => ({ ...prev, [guruId]: false }));
+      setLoading(false);
     }
   };
 
+  const handleGuruClick = (guruId: number) => {
+    setExpandedGuru(expandedGuru === guruId ? null : guruId);
+  };
+
+  const handleDateChange = (date: Date | null) => {
+    setSelectedDate(date);
+  };
+
   const handleTickerClick = (ticker: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    router.push(`/dashboard/portfolio/${ticker}?date=${today}`);
+    const dateStr = selectedDate ? selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    router.push(`/dashboard/portfolio/${ticker}?date=${dateStr}`);
   };
 
   if (loading) {
@@ -230,7 +167,7 @@ export default function GurusPage() {
       <div className="text-center py-12">
         <p className="text-red-600 dark:text-red-400">{error}</p>
         <button 
-          onClick={fetchGurus}
+          onClick={fetchData}
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           {t('retry')}
@@ -239,10 +176,9 @@ export default function GurusPage() {
     );
   }
 
-  const filteredGurus = gurus.filter(guru => 
-    guru.guru_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    guru.tickers.some(ticker => ticker.symbol.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredGurus = apiData?.gurus.filter(guru => 
+    guru.guru_name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
     <div className="space-y-6">
@@ -251,8 +187,28 @@ export default function GurusPage() {
           {t('gurus')}
         </h1>
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          {filteredGurus.length} of {gurus.length} {t('gurus').toLowerCase()}
+          {filteredGurus.length} of {apiData?.total_gurus || 0} {t('gurus').toLowerCase()}
         </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {language === 'fr' ? 'Date des données' : 'Data Date'}
+          </label>
+          <div className="w-full sm:w-64">
+            <DatePickerInput
+              selectedDate={selectedDate}
+              onChange={handleDateChange}
+              placeholder={language === 'fr' ? 'Sélectionner une date...' : 'Select date...'}
+            />
+          </div>
+        </div>
+        {selectedDate && (
+          <div className="text-sm text-gray-500 dark:text-gray-400 mt-6">
+            {language === 'fr' ? 'Données du' : 'Data from'}: {selectedDate.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
+          </div>
+        )}
       </div>
 
       <div className="relative">
@@ -288,7 +244,7 @@ export default function GurusPage() {
                     {guru.guru_name}
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {guru.tickers.length} {t('tickers')}
+                    {guru.stocks.length} {t('tickers')}
                   </p>
                 </div>
               </div>
@@ -297,11 +253,7 @@ export default function GurusPage() {
             {expandedGuru === guru.guru_id && (
               <div className="border-t border-gray-200 dark:border-gray-700">
                 <div className="p-6">
-                  {loadingStocks[guru.guru_id] ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : guruStocks[guru.guru_id] && guruStocks[guru.guru_id].length > 0 ? (
+                  {guru.stocks.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">
@@ -347,89 +299,54 @@ export default function GurusPage() {
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                          {guruStocks[guru.guru_id].map((stock) => {
-                            const stockColor = stock.color || '';
-                            return (
-                              <tr
-                                key={stock.id}
-                                className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
-                                  stockColor === 'red' ? 'bg-red-50 dark:bg-red-900/20' :
-                                  stockColor === 'green' ? 'bg-green-50 dark:bg-green-900/20' :
-                                  stockColor === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''
-                                }`}
-                                onClick={() => router.push(`/dashboard/portfolio/${stock.ticker}?date=${startDate}`)}
-                              >
-                                <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                                  <div className="flex items-center gap-2">
-                                    {stock.target && (
-                                      <span className="text-yellow-500 text-sm" title="Target Stock">
-                                        ⭐
-                                      </span>
-                                    )}
-                                    {stock.ticker}
-                                  </div>
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {formatNumber(stock.signal_score)}
-                                </td>
-                                <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                                  parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
-                                    ? 'text-green-600 dark:text-green-400 font-bold'
-                                    : 'text-gray-500 dark:text-gray-400'
-                                }`}>
-                                  {formatNumber(stock.sentiment_score)}
-                                </td>
-                                <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                                  parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
-                                    ? 'text-green-600 dark:text-green-400 font-bold'
-                                    : 'text-gray-500 dark:text-gray-400'
-                                }`}>
-                                  {formatNumber(stock.rule1_score)}
-                                </td>
-                                <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                                  parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
-                                    ? 'text-green-600 dark:text-green-400 font-bold'
-                                    : 'text-gray-500 dark:text-gray-400'
-                                }`}>
-                                  {formatNumber(stock.moat_score)}
-                                </td>
-                                <td className={`px-3 py-4 whitespace-nowrap text-sm ${
-                                  parseNumericValue(stock.sentiment_score) >= 60 && parseNumericValue(stock.rule1_score) >= 85 && parseNumericValue(stock.moat_score) >= 85 && parseNumericValue(stock.management_score) >= 85
-                                    ? 'text-green-600 dark:text-green-400 font-bold'
-                                    : 'text-gray-500 dark:text-gray-400'
-                                }`}>
-                                  {formatNumber(stock.management_score)}
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {formatBuyPrice(stock.buy_price)}
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {stock.per_upside !== null && stock.per_upside !== undefined ? `${Math.round(stock.per_upside)}%` : '-'}
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {stock.last_price ? `$${formatNumber(stock.last_price)}` : '-'}
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {formatNumber((stock as any).long_gr)}
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {formatNumber((stock as any).last_gr)}
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {(() => {
-                                    if (!stock.last_action || stock.last_action === '' || stock.last_action === null) return '-';
-                                    const date = new Date(stock.last_action);
-                                    return isNaN(date.getTime()) ? '-' : date.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US');
-                                  })()
-                                  }
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {stock.per_port !== null && stock.per_port !== undefined ? `${stock.per_port}%` : '-'}
-                                </td>
-                              </tr>
-                            );
-                          })}
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {guru.stocks.map((stock) => (
+                          <tr
+                            key={stock.ticker_id}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                            onClick={() => handleTickerClick(stock.ticker)}
+                          >
+                            <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {stock.ticker}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {stock.signal}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {stock.sentiment}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {stock.rule1_score}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {stock.moat_score}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {stock.management_score}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              ${stock.buy_price}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {stock.upside_percent}%
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              ${stock.current_price}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {stock.analyst_growth}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {stock.composite_growth}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {stock.last_action}
+                            </td>
+                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {stock.portfolio_percent}
+                            </td>
+                          </tr>
+                        ))}
                         </tbody>
                       </table>
                     </div>
@@ -445,7 +362,7 @@ export default function GurusPage() {
         ))}
       </div>
 
-      {filteredGurus.length === 0 && gurus.length > 0 && (
+      {filteredGurus.length === 0 && apiData && apiData.gurus.length > 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 dark:text-gray-400">
             {language === 'fr' ? 'Aucun guru trouvé pour cette recherche' : 'No gurus found for this search'}
@@ -453,7 +370,7 @@ export default function GurusPage() {
         </div>
       )}
 
-      {gurus.length === 0 && (
+      {!apiData || apiData.gurus.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 dark:text-gray-400">
             {t('noGurusFound')}
