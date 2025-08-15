@@ -104,6 +104,8 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
   const [isEditingAction, setIsEditingAction] = useState<boolean>(false);
   const [editAction, setEditAction] = useState<string>('');
   const [editPortfolio, setEditPortfolio] = useState<string>('');
+  const [companyInfo, setCompanyInfo] = useState<any>(null);
+  const [loadingCompanyInfo, setLoadingCompanyInfo] = useState<boolean>(false);
 
   // Color management using API
   const cycleColor = async () => {
@@ -148,6 +150,27 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
       setCurrentStock({ ...currentStock, color: originalColor });
     }
   };
+
+  // Fetch company information
+  const fetchCompanyInfo = useCallback(async (ticker: string) => {
+    if (!ticker) return;
+    
+    try {
+      setLoadingCompanyInfo(true);
+      const response = await fetch(`/api/proxy/stocks/company/${ticker}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCompanyInfo(data);
+      } else {
+        console.error('Failed to fetch company info:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching company info:', error);
+    } finally {
+      setLoadingCompanyInfo(false);
+    }
+  }, []);
 
   // Update ticker info via API
   const updateTickerInfo = async () => {
@@ -210,6 +233,8 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
       if (tickerStock) {
         setCurrentStock(tickerStock);
         setError(null);
+        // Fetch company info by ticker symbol
+        fetchCompanyInfo(tickerStock.ticker);
       } else {
         setCurrentStock(null);
         setError(`No data found for ${params.ticker} on ${date}`);
@@ -1022,6 +1047,52 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
               </div>
             )}
             
+            {/* Company Information */}
+            {!showComments && companyInfo && (
+              <div className="mb-3">
+                <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Informations Société' : 'Company Info'}</h3>
+                <div className="space-y-1.5 text-xs">
+                  {companyInfo.business_description && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400 block mb-1">{language === 'fr' ? 'Description' : 'Description'}</span>
+                      <span className="text-gray-900 dark:text-white text-xs leading-relaxed">
+                        {companyInfo.business_description.length > 150 
+                          ? `${companyInfo.business_description.substring(0, 150)}...` 
+                          : companyInfo.business_description
+                        }
+                      </span>
+                    </div>
+                  )}
+                  {companyInfo.website && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Site Web' : 'Website'}</span>
+                      <a href={companyInfo.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline text-xs">
+                        {companyInfo.website.replace(/^https?:\/\//, '').substring(0, 20)}
+                      </a>
+                    </div>
+                  )}
+                  {companyInfo.ceo && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">CEO</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{companyInfo.ceo}</span>
+                    </div>
+                  )}
+                  {companyInfo.number_of_employees && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Employés' : 'Employees'}</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{companyInfo.number_of_employees.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {companyInfo.year_established && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Fondée' : 'Founded'}</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{companyInfo.year_established}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Portfolio Summary */}
             {!showComments && (
               <div>
