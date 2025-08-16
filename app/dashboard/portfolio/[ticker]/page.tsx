@@ -95,7 +95,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
       order: sortOrder === 'asc' ? 'ascending' : 'descending'
     };
   };
-  const [showComments, setShowComments] = useState<boolean>(true);
+  const [showComments, setShowComments] = useState<boolean>(false);
   const [comments, setComments] = useState<any[]>([]);
   const [allUserComments, setAllUserComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState<string>('');
@@ -106,6 +106,8 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   const [editPortfolio, setEditPortfolio] = useState<string>('');
   const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [loadingCompanyInfo, setLoadingCompanyInfo] = useState<boolean>(false);
+  const [expandedDescription, setExpandedDescription] = useState<boolean>(false);
+  const [copiedEmail, setCopiedEmail] = useState<boolean>(false);
 
   // Color management using API
   const cycleColor = async () => {
@@ -1030,45 +1032,145 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
             {/* Company Information */}
             {!showComments && companyInfo && (
               <div className="mb-3">
-                <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Informations Société' : 'Company Info'}</h3>
-                <div className="space-y-1.5 text-xs">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <h3 className="font-medium text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Informations Société' : 'Company Info'}</h3>
+                </div>
+                <div className="space-y-2">
                   {companyInfo.business_description && (
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400 block mb-1">{language === 'fr' ? 'Description' : 'Description'}</span>
-                      <span className="text-gray-900 dark:text-white text-xs leading-relaxed">
-                        {companyInfo.business_description.length > 150 
-                          ? `${companyInfo.business_description.substring(0, 150)}...` 
-                          : companyInfo.business_description
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">
+                      <div className="text-gray-900 dark:text-white text-xs leading-relaxed">
+                        {expandedDescription || companyInfo.business_description.length <= 120 
+                          ? companyInfo.business_description
+                          : `${companyInfo.business_description.substring(0, 120)}...`
                         }
-                      </span>
+                        {companyInfo.business_description.length > 120 && (
+                          <button
+                            onClick={() => setExpandedDescription(!expandedDescription)}
+                            className="ml-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                          >
+                            {expandedDescription ? (language === 'fr' ? 'Moins' : 'Less') : (language === 'fr' ? 'Plus' : 'More')}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
-                  {companyInfo.website && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Site Web' : 'Website'}</span>
-                      <a href={companyInfo.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline text-xs">
-                        {companyInfo.website.replace(/^https?:\/\//, '').substring(0, 20)}
-                      </a>
-                    </div>
-                  )}
-                  {companyInfo.ceo && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">CEO</span>
-                      <span className="font-semibold text-gray-900 dark:text-white">{companyInfo.ceo}</span>
-                    </div>
-                  )}
-                  {companyInfo.number_of_employees && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Employés' : 'Employees'}</span>
-                      <span className="font-semibold text-gray-900 dark:text-white">{companyInfo.number_of_employees.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {companyInfo.year_established && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Fondée' : 'Founded'}</span>
-                      <span className="font-semibold text-gray-900 dark:text-white">{companyInfo.year_established}</span>
-                    </div>
-                  )}
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {companyInfo.address && (
+                      <div className="flex items-start justify-between py-1">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
+                          <svg className="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          {language === 'fr' ? 'Adresse' : 'Address'}
+                        </span>
+                        <span className="text-gray-900 dark:text-white text-xs font-medium text-right max-w-[60%]">{companyInfo.address}</span>
+                      </div>
+                    )}
+                    {companyInfo.website && (
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                          </svg>
+                          {language === 'fr' ? 'Site' : 'Website'}
+                        </span>
+                        <a href={companyInfo.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium">
+                          {companyInfo.website.replace(/^https?:\/\//, '').split('/')[0]}
+                        </a>
+                      </div>
+                    )}
+                    {companyInfo.ir_phone_number && (
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                          {language === 'fr' ? 'Tél. IR' : 'IR Phone'}
+                        </span>
+                        <span className="text-gray-900 dark:text-white text-xs font-medium">{companyInfo.ir_phone_number}</span>
+                      </div>
+                    )}
+                    {companyInfo.email_address && (
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          Email
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-900 dark:text-white text-xs font-medium">{companyInfo.email_address}</span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(companyInfo.email_address);
+                              setCopiedEmail(true);
+                              setTimeout(() => setCopiedEmail(false), 2000);
+                            }}
+                            className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                            title={language === 'fr' ? 'Copier l\'email' : 'Copy email'}
+                          >
+                            {copiedEmail ? (
+                              <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {companyInfo.ceo && (
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          CEO
+                        </span>
+                        <span className="text-gray-900 dark:text-white text-xs font-medium">{companyInfo.ceo}</span>
+                      </div>
+                    )}
+                    {companyInfo.number_of_employees && (
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          {language === 'fr' ? 'Employés' : 'Employees'}
+                        </span>
+                        <span className="text-gray-900 dark:text-white text-xs font-medium">{companyInfo.number_of_employees.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {companyInfo.year_established && (
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {language === 'fr' ? 'Fondée' : 'Founded'}
+                        </span>
+                        <span className="text-gray-900 dark:text-white text-xs font-medium">{companyInfo.year_established}</span>
+                      </div>
+                    )}
+                    {companyInfo.fiscal_year_end && (
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          {language === 'fr' ? 'Fin Exercice' : 'Fiscal Year End'}
+                        </span>
+                        <span className="text-gray-900 dark:text-white text-xs font-medium">
+                          {new Date(companyInfo.fiscal_year_end).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
