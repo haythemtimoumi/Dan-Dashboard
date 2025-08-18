@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/app/contexts/settings-context';
+import TradingViewWidget from '@/app/ui/trading-view-widget';
+import NewsSection from '@/app/ui/news-section';
 
 interface Analysis {
   id: number;
@@ -222,7 +224,8 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
   const sortedAnalyses = allAnalyses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
   return (
-    <main className="space-y-3">
+    <main className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div className="lg:col-span-2 space-y-3">
       {/* Compact Header */}
       <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 shadow-sm">
         <div className="flex items-center justify-between">
@@ -314,6 +317,9 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
           ))}
         </div>
       </div>
+
+      {/* TradingView Chart */}
+      <TradingViewWidget ticker={params.ticker} height="400px" />
 
       {/* Compact Analysis Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
@@ -462,6 +468,12 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
             </tbody>
           </table>
         </div>
+      </div>
+      </div>
+      
+      {/* Right sidebar with news */}
+      <div className="lg:col-span-1">
+        <NewsSection ticker={params.ticker} />
       </div>
     </main>
   );

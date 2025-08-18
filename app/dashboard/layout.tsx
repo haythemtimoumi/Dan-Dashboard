@@ -8,6 +8,7 @@ import { auth } from '@/app/lib/auth';
 import { ArrowRightOnRectangleIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { useSettings } from '@/app/contexts/settings-context';
 import FloatingSettingsButton from '@/app/ui/dashboard/floating-settings-button';
+import ChatbotSimple from '@/app/ui/chatbot-simple';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
@@ -94,6 +95,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </div>
       <FloatingSettingsButton />
+      <ChatbotSimple />
     </div>
   );
 }
