@@ -9,6 +9,7 @@ import { useSettings } from '@/app/contexts/settings-context';
 import { useAuth } from '@/app/contexts/auth-context';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
+import NewsSection from '@/app/ui/news-section';
 
 interface Comment {
   id: number;
@@ -73,6 +74,21 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   const [sortOrder, setSortOrder] = useState<string>(
     searchParams.get('sortOrder') || 'desc'
   );
+  const [selectedSource, setSelectedSource] = useState<string>(
+    searchParams.get('source') || ''
+  );
+  const [searchTicker, setSearchTicker] = useState<string>(
+    searchParams.get('search') || ''
+  );
+  const [isFiltered, setIsFiltered] = useState<boolean>(
+    searchParams.get('filtered') === 'true'
+  );
+  const [filters, setFilters] = useState({
+    sentiment: parseInt(searchParams.get('sentiment') || '60'),
+    moat: parseInt(searchParams.get('moat') || '85'),
+    rule1: parseInt(searchParams.get('rule1') || '85'),
+    management: parseInt(searchParams.get('management') || '85')
+  });
 
   // Get sort display info
   const getSortDisplayInfo = () => {
@@ -108,6 +124,8 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   const [loadingCompanyInfo, setLoadingCompanyInfo] = useState<boolean>(false);
   const [expandedDescription, setExpandedDescription] = useState<boolean>(false);
   const [copiedEmail, setCopiedEmail] = useState<boolean>(false);
+  const [tickerChanges, setTickerChanges] = useState<{[key: string]: any}>({});
+  const [sidebarTab, setSidebarTab] = useState<'news' | 'company' | 'portfolio' | 'comments'>('news');
 
   // Color management using API
   const cycleColor = async () => {
@@ -144,6 +162,84 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
         setCurrentStock({ ...currentStock, color: currentStock.color });
       }
     }
+  };
+
+  // Function to fetch ticker changes
+  const fetchTickerChanges = useCallback(async (date: string) => {
+    if (!date) return;
+    
+    try {
+      // Compare with previous day to show actual changes
+      const currentDate = new Date(date);
+      const previousDate = new Date(currentDate);
+      previousDate.setDate(currentDate.getDate() - 1);
+      const fromDate = previousDate.toISOString().split('T')[0];
+      const toDate = date;
+      
+      const url = `/api/proxy/stocks/tickers/changes?from=${fromDate}&to=${toDate}`;
+      const response = await fetch(url);
+      if (response.ok) {
+        const changesData = await response.json();
+        const changesMap: {[key: string]: any} = {};
+        changesData.forEach((change: any) => {
+          changesMap[change.ticker] = change;
+        });
+        setTickerChanges(changesMap);
+      }
+    } catch (error) {
+      console.error('Error fetching ticker changes:', error);
+    }
+  }, []);
+
+  // Function to get change arrow for a field
+  const getChangeArrow = (ticker: string, field: string) => {
+    const changes = tickerChanges[ticker];
+    if (!changes) {
+      return null;
+    }
+    
+    const fieldMap: {[key: string]: string} = {
+      'signal_score': 'signal_change',
+      'sentiment_score': 'sentiment_change', 
+      'rule1_score': 'rule1_change',
+      'moat_score': 'moat_change',
+      'management_score': 'management_change',
+      'buy_price': 'buy_price_change',
+      'per_upside': 'upside_change',
+      'last_price': 'price_change',
+      'long_gr': 'analyst_growth_change',
+      'last_gr': 'composite_growth_change',
+      'pbt': 'pbt_change'
+    };
+    
+    const changeField = fieldMap[field];
+    if (!changeField || !changes[changeField]) {
+      return null;
+    }
+    
+    const changeValue = changes[changeField];
+    
+    if (changeValue === 'up') {
+      return (
+        <svg className="w-3 h-3 ml-1 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M7 14l5-5 5 5z"/>
+        </svg>
+      );
+    } else if (changeValue === 'down') {
+      return (
+        <svg className="w-3 h-3 ml-1 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M7 10l5 5 5-5z"/>
+        </svg>
+      );
+    } else if (changeValue === 'stable') {
+      return (
+        <svg className="w-3 h-3 ml-1 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M5 12h14"/>
+        </svg>
+      );
+    }
+    
+    return null;
   };
 
   // Fetch company information
@@ -351,10 +447,55 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
           return sortOrder === 'asc' ? comparison : -comparison;
         });
         
-        setAllStocks(sortedStocks);
+        // Apply filters if enabled
+        let filteredStocks = sortedStocks;
+        if (selectedSource) {
+          filteredStocks = filteredStocks.filter(stock => stock.source === selectedSource);
+        }
+        if (searchTicker) {
+          filteredStocks = filteredStocks.filter(stock => 
+            stock.ticker.toLowerCase().includes(searchTicker.toLowerCase())
+          );
+        }
+        if (isFiltered) {
+          const parseNumericValue = (value: any): number => {
+            if (value === null || value === undefined || value === '') return -Infinity;
+            if (typeof value === 'number') return value;
+            if (typeof value === 'string' && value.includes('%')) {
+              const num = parseFloat(value.replace('%', ''));
+              return isNaN(num) ? -Infinity : num;
+            }
+            if (typeof value === 'string' && value.includes('$')) {
+              const num = parseFloat(value.replace(/[$,]/g, ''));
+              return isNaN(num) ? -Infinity : num;
+            }
+            if (typeof value === 'string') {
+              const num = parseFloat(value.replace(/,/g, ''));
+              return isNaN(num) ? -Infinity : num;
+            }
+            return -Infinity;
+          };
+          
+          filteredStocks = filteredStocks.filter((stock: Stock) => {
+            const sentimentScore = parseNumericValue(stock.sentiment_score);
+            const moatScore = parseNumericValue(stock.moat_score);
+            const rule1Score = parseNumericValue(stock.rule1_score);
+            const managementScore = parseNumericValue(stock.management_score);
+            
+            const allScoresGreen = rule1Score >= 85 && moatScore >= 85 && managementScore >= 85;
+            const minSentiment = allScoresGreen ? 60 : filters.sentiment;
+            
+            return sentimentScore >= minSentiment &&
+                   moatScore >= filters.moat &&
+                   rule1Score >= filters.rule1 &&
+                   managementScore >= filters.management;
+          });
+        }
         
-        // Find current ticker index
-        const tickerIndex = sortedStocks.findIndex((stock: Stock) => stock.ticker === params.ticker);
+        setAllStocks(filteredStocks);
+        
+        // Find current ticker index in filtered results
+        const tickerIndex = filteredStocks.findIndex((stock: Stock) => stock.ticker === params.ticker);
         if (tickerIndex !== -1) {
           setCurrentIndex(tickerIndex);
         }
@@ -372,6 +513,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   // Fetch stock data when date changes
   useEffect(() => {
     fetchStocksForDate(selectedDate);
+    fetchTickerChanges(selectedDate);
   }, [selectedDate, params.ticker]);
 
   const handlePreviousDay = () => {
@@ -394,17 +536,45 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
     if (currentIndex > 0) {
       const newIndex = currentIndex - 1;
       const newStock = allStocks[newIndex];
-      router.push(`/dashboard/portfolio/${newStock.ticker}?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
+      const params = new URLSearchParams({
+        date: selectedDate,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+        ...(selectedSource && { source: selectedSource }),
+        ...(searchTicker && { search: searchTicker }),
+        ...(isFiltered && {
+          filtered: 'true',
+          sentiment: filters.sentiment.toString(),
+          moat: filters.moat.toString(),
+          rule1: filters.rule1.toString(),
+          management: filters.management.toString()
+        })
+      });
+      router.push(`/dashboard/portfolio/${newStock.ticker}?${params.toString()}`);
     }
-  }, [currentIndex, allStocks, router, selectedDate, sortBy, sortOrder]);
+  }, [currentIndex, allStocks, router, selectedDate, sortBy, sortOrder, selectedSource, searchTicker, isFiltered, filters]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < allStocks.length - 1) {
       const newIndex = currentIndex + 1;
       const newStock = allStocks[newIndex];
-      router.push(`/dashboard/portfolio/${newStock.ticker}?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
+      const params = new URLSearchParams({
+        date: selectedDate,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+        ...(selectedSource && { source: selectedSource }),
+        ...(searchTicker && { search: searchTicker }),
+        ...(isFiltered && {
+          filtered: 'true',
+          sentiment: filters.sentiment.toString(),
+          moat: filters.moat.toString(),
+          rule1: filters.rule1.toString(),
+          management: filters.management.toString()
+        })
+      });
+      router.push(`/dashboard/portfolio/${newStock.ticker}?${params.toString()}`);
     }
-  }, [currentIndex, allStocks, router, selectedDate, sortBy, sortOrder]);
+  }, [currentIndex, allStocks, router, selectedDate, sortBy, sortOrder, selectedSource, searchTicker, isFiltered, filters]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -674,7 +844,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                   #{currentIndex + 1} of {allStocks.length}
                 </span>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  (sorted by {getSortDisplayInfo().field.toLowerCase()})
+                  (sorted by {getSortDisplayInfo().field.toLowerCase()}{isFiltered || selectedSource || searchTicker ? ', filtered' : ''})
                 </div>
               </div>
             </div>
@@ -712,63 +882,13 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
         )}
       </div>
       
-      {/* Inline Key Metrics */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="text-center">
-              <div className={`text-lg font-bold flex items-center gap-1 justify-center ${
-                (currentStock.per_upside ?? 0) > 0 ? 'text-green-600' : 'text-gray-600'
-              }`}>
-                {(currentStock.per_upside ?? 0) > 0 ? '+' : ''}{formatNumber(currentStock.per_upside)}%
-                {(sortBy === 'per_upside' || sortBy === 'upside') && (
-                  <span className="text-blue-500 text-sm">
-                    {sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{t('upside')}</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-1 justify-center">
-                {formatBuyPrice(currentStock.buy_price)}
-                {sortBy === 'buy_price' && (
-                  <span className="text-blue-500 text-sm">
-                    {sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{t('buyPrice')}</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-1 justify-center">
-                {formatNumber(currentStock.sentiment_score)}
-                {sortBy === 'sentiment_score' && (
-                  <span className="text-blue-500 text-sm">
-                    {sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{t('sentiment')}</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-1 justify-center">
-                {formatNumber(currentStock.signal_score)}
-                {sortBy === 'signal_score' && (
-                  <span className="text-blue-500 text-sm">
-                    {sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{t('signal')}</div>
-            </div>
-          </div>
-          
+      {/* Analysis Data Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 mb-3">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {language === 'fr' ? 'Données d\'Analyse' : 'Analysis Data'}
+          </h3>
           <div className="flex items-center gap-2">
-
             <button
               onClick={cycleColor}
               className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 hover:border-gray-400 transition-colors"
@@ -805,10 +925,122 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
             </div>
           </div>
         </div>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {language === 'fr' ? 'Date' : 'Date'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {language === 'fr' ? 'Analystes' : 'Analysts'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Signal
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Sentiment
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {language === 'fr' ? 'Règle #1' : 'Rule #1'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {language === 'fr' ? 'Fossé' : 'Moat'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {language === 'fr' ? 'Gestion' : 'Management'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {language === 'fr' ? 'Prix Achat' : 'Buy Price'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {language === 'fr' ? 'Prix Autocollant' : 'Sticker Price'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  % {language === 'fr' ? 'Hausse' : 'Upside'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {language === 'fr' ? 'Prix' : 'Price'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {language === 'fr' ? 'Croiss. Long' : 'Long Growth'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {language === 'fr' ? 'Dern. Croiss.' : 'Last Growth'}
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  PBT
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-gray-100 dark:border-gray-700">
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white">
+                  {new Date(selectedDate).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white">
+                  <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-bold">
+                    {currentStock.guru ? currentStock.guru.charAt(0).toUpperCase() : 'D'}
+                  </span>
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {formatNumber(currentStock.signal_score)}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {formatNumber(currentStock.sentiment_score)}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {formatNumber(currentStock.rule1_score)}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {formatNumber(currentStock.moat_score)}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {formatNumber(currentStock.management_score)}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {formatBuyPrice(currentStock.buy_price)}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {(() => {
+                    if (!currentStock.buy_price) return '-';
+                    const buyPriceStr = String(currentStock.buy_price);
+                    if (buyPriceStr === '$0' || buyPriceStr === '0') return '-';
+                    const buyPrice = parseFloat(buyPriceStr.replace(/[$,]/g, ''));
+                    return isNaN(buyPrice) || buyPrice === 0 ? '-' : formatCurrency(buyPrice * 2);
+                  })()}
+                </td>
+                <td className="py-3 px-3 text-sm font-medium">
+                  <span className={`${
+                    (currentStock.per_upside ?? 0) > 0 ? 'text-green-600' : 'text-gray-600'
+                  }`}>
+                    {(currentStock.per_upside ?? 0) > 0 ? '+' : ''}{formatNumber(currentStock.per_upside)}%
+                  </span>
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {currentStock.last_price ? `$${formatNumber(currentStock.last_price)}` : '-'}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {formatNumber(currentStock.long_gr)}%
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {formatNumber(currentStock.last_gr)}%
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {formatBuyPrice(currentStock.pbt)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       
       {/* Main Content Layout - Flex to fill remaining height */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-3 min-h-0 mb-3">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-3 min-h-0">
         {/* Chart Section */}
         <div className="lg:col-span-3">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 h-full flex flex-col">
@@ -847,110 +1079,201 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
           </div>
         </div>
         
-        {/* Compact Sidebar */}
+        {/* Right Sidebar with Tabs */}
         <div className="flex flex-col h-full overflow-hidden">
-          {/* All-in-one Sidebar Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 flex-1 flex flex-col min-h-0">
-            {/* Metrics */}
-            <div className="mb-3">
-              <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Métriques' : 'Metrics'}</h3>
-              <div className="space-y-1.5 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('rule1')}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.rule1_score)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('moat')}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.moat_score)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('management')}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.management_score)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('stickerPrice')}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {(() => {
-                      if (!currentStock.buy_price) return '-';
-                      const buyPriceStr = String(currentStock.buy_price);
-                      if (buyPriceStr === '$0' || buyPriceStr === '0') return '-';
-                      const buyPrice = parseFloat(buyPriceStr.replace(/[$,]/g, ''));
-                      return isNaN(buyPrice) || buyPrice === 0 ? '-' : formatCurrency(buyPrice * 2);
-                    })()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Prix Actuel' : 'Current Price'}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {currentStock.last_price ? `$${formatNumber(currentStock.last_price)}` : '-'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Croiss. Analyste' : 'Analyst Growth'}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.long_gr)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Croiss. Composite' : 'Composite Growth'}</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{formatNumber(currentStock.last_gr)}</span>
-                </div>
-              </div>
-            </div>
+          {/* Tab Buttons */}
+          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mb-3">
+            <button
+              onClick={() => setSidebarTab('news')}
+              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-colors ${
+                sidebarTab === 'news'
+                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {language === 'fr' ? 'Actualités' : 'News'}
+            </button>
+            <button
+              onClick={() => setSidebarTab('company')}
+              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-colors ${
+                sidebarTab === 'company'
+                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {language === 'fr' ? 'Société' : 'Company'}
+            </button>
+            <button
+              onClick={() => setSidebarTab('portfolio')}
+              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-colors ${
+                sidebarTab === 'portfolio'
+                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Portfolio
+            </button>
+            <button
+              onClick={() => {
+                setSidebarTab('comments');
+                setShowComments(true);
+              }}
+              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-colors relative ${
+                sidebarTab === 'comments'
+                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {language === 'fr' ? 'Commentaires' : 'Comments'}
+              {comments.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[16px] h-4 flex items-center justify-center">
+                  {comments.length}
+                </span>
+              )}
+            </button>
+          </div>
+          
+          {/* Tab Content */}
+          <div className="flex-1 overflow-hidden">
+            {sidebarTab === 'news' && (
+              <NewsSection ticker={currentStock.ticker} />
+            )}
             
-            {/* Actions */}
-            <div className="mb-3">
-              <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Actions' : 'Actions'}</h3>
-              <div className="space-y-2">
-                <button
-                  onClick={() => router.push(`/dashboard/portfolio/${currentStock.ticker}/analysis?date=${selectedDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-colors"
-                >
-                  {language === 'fr' ? 'Analyse' : 'Analysis'}
-                </button>
-                
-                <div className="grid grid-cols-2 gap-1">
+            {sidebarTab === 'company' && companyInfo && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 h-full overflow-y-auto">
+                <h3 className="font-semibold mb-3 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Informations Société' : 'Company Information'}</h3>
+                {companyInfo.business_description && (
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-3">
+                    <div className="text-gray-900 dark:text-white text-xs leading-relaxed">
+                      {expandedDescription || companyInfo.business_description.length <= 200 
+                        ? companyInfo.business_description
+                        : `${companyInfo.business_description.substring(0, 200)}...`
+                      }
+                      {companyInfo.business_description.length > 200 && (
+                        <button
+                          onClick={() => setExpandedDescription(!expandedDescription)}
+                          className="ml-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                        >
+                          {expandedDescription ? (language === 'fr' ? 'Moins' : 'Less') : (language === 'fr' ? 'Plus' : 'More')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-2 text-xs">
+                  {companyInfo.ceo && (
+                    <div className="flex justify-between py-1">
+                      <span className="text-gray-600 dark:text-gray-400">CEO</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{companyInfo.ceo}</span>
+                    </div>
+                  )}
+                  {companyInfo.number_of_employees && (
+                    <div className="flex justify-between py-1">
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Employés' : 'Employees'}</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{companyInfo.number_of_employees.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {companyInfo.website && (
+                    <div className="flex justify-between py-1">
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Site Web' : 'Website'}</span>
+                      <a href={companyInfo.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                        {companyInfo.website.replace(/^https?:\/\//, '').split('/')[0]}
+                      </a>
+                    </div>
+                  )}
+                  {companyInfo.year_established && (
+                    <div className="flex justify-between py-1">
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Fondée' : 'Founded'}</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{companyInfo.year_established}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {sidebarTab === 'portfolio' && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 h-full">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Gestion Portfolio' : 'Portfolio Management'}</h3>
                   <button
-                    onClick={() => window.open(`https://finance.yahoo.com/quote/${currentStock.ticker}`, '_blank')}
-                    className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors"
+                    onClick={() => {
+                      setIsEditingAction(!isEditingAction);
+                      if (!isEditingAction) {
+                        setEditAction(currentStock.last_action || '');
+                        setEditPortfolio(String(currentStock.per_portfolio || ''));
+                      }
+                    }}
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors"
                   >
-                    Yahoo
-                  </button>
-                  <button
-                    onClick={() => window.open(`https://www.google.com/finance/quote/${currentStock.ticker}:NASDAQ`, '_blank')}
-                    className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors"
-                  >
-                    Google
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
                   </button>
                 </div>
                 
-                <button
-                  onClick={() => setShowComments(!showComments)}
-                  className={`w-full py-2 px-3 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1 ${
-                    showComments 
-                      ? 'bg-blue-600 text-white' 
-                      : comments.length > 0
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  💬 {language === 'fr' ? 'Commentaires' : 'Comments'}
-                  {comments.length > 0 && (
-                    <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">
-                      {comments.length}
-                    </span>
-                  )}
-                </button>
+                {isEditingAction ? (
+                  <div className="space-y-3">
+                    <select
+                      value={editAction}
+                      onChange={(e) => setEditAction(e.target.value)}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
+                    >
+                      <option value="">{language === 'fr' ? 'Sélectionner...' : 'Select...'}</option>
+                      <option value="Increased">Increased</option>
+                      <option value="Decreased">Decreased</option>
+                      <option value="Held">Held</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={editPortfolio}
+                      onChange={(e) => setEditPortfolio(e.target.value)}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
+                      placeholder="5%, 10%, etc."
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={updateTickerInfo}
+                        className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        {language === 'fr' ? 'Sauvegarder' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingAction(false);
+                          setEditAction('');
+                          setEditPortfolio('');
+                        }}
+                        className="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-600 transition-colors"
+                      >
+                        {language === 'fr' ? 'Annuler' : 'Cancel'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between py-1">
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Dernière Action' : 'Last Action'}</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{currentStock.last_action || '-'}</span>
+                    </div>
+                    {currentStock.per_portfolio && (
+                      <div className="flex justify-between py-1">
+                        <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Allocation' : 'Allocation'}</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{currentStock.per_portfolio}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-
-            {/* Comments Section */}
-            {showComments && (
-              <div className="flex-1 flex flex-col min-h-0">
-                <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Commentaires' : 'Comments'}</h3>
+            )}
+            
+            {sidebarTab === 'comments' && (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 h-full flex flex-col">
+                <h3 className="font-semibold mb-3 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Commentaires' : 'Comments'}</h3>
                 
                 {/* Comments List */}
-                <div className="flex-1 space-y-2 mb-2 overflow-y-auto min-h-0">
+                <div className="flex-1 overflow-y-auto space-y-2 mb-3">
                   {loadingComments ? (
-                    <div className="text-center py-2">
+                    <div className="text-center py-4">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
                     </div>
                   ) : comments.length > 0 ? (
@@ -970,7 +1293,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                         }`}>
                           <div className="flex justify-between items-start mb-1">
                             <div className="text-xs text-gray-600 dark:text-gray-400">
-                              {comment.username || `${language === 'fr' ? 'User' : 'User'} ${comment.user_id}`}
+                              {comment.username || `${language === 'fr' ? 'Utilisateur' : 'User'} ${comment.user_id}`}
                             </div>
                             <div className="flex items-center gap-1">
                               <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -1003,7 +1326,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                       );
                     })
                   ) : (
-                    <div className="text-center py-2 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-center py-4 text-xs text-gray-500 dark:text-gray-400">
                       {t('noCommentsFound')}
                     </div>
                   )}
@@ -1028,231 +1351,145 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                 </div>
               </div>
             )}
-            
-            {/* Company Information */}
-            {!showComments && companyInfo && (
-              <div className="mb-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <h3 className="font-medium text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Informations Société' : 'Company Info'}</h3>
-                </div>
-                <div className="space-y-2">
-                  {companyInfo.business_description && (
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">
-                      <div className="text-gray-900 dark:text-white text-xs leading-relaxed">
-                        {expandedDescription || companyInfo.business_description.length <= 120 
-                          ? companyInfo.business_description
-                          : `${companyInfo.business_description.substring(0, 120)}...`
-                        }
-                        {companyInfo.business_description.length > 120 && (
+          </div>
+          
+          {/* Analytics Button */}
+          <div className="mt-3">
+            <button
+              onClick={() => {
+                const params = new URLSearchParams({
+                  date: selectedDate,
+                  sortBy: sortBy,
+                  sortOrder: sortOrder,
+                  ...(selectedSource && { source: selectedSource }),
+                  ...(searchTicker && { search: searchTicker }),
+                  ...(isFiltered && {
+                    filtered: 'true',
+                    sentiment: filters.sentiment.toString(),
+                    moat: filters.moat.toString(),
+                    rule1: filters.rule1.toString(),
+                    management: filters.management.toString()
+                  })
+                });
+                router.push(`/dashboard/portfolio/${currentStock.ticker}/analysis?${params.toString()}`);
+              }}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 px-4 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              {language === 'fr' ? 'Analyse Avancée' : 'Advanced Analysis'}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+
+      
+      {/* External Links Bar */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 mb-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.open(`https://finance.yahoo.com/quote/${currentStock.ticker}`, '_blank')}
+            className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-3 rounded-lg text-xs font-medium transition-colors"
+          >
+            Yahoo Finance
+          </button>
+          <button
+            onClick={() => window.open(`https://www.google.com/finance/quote/${currentStock.ticker}:NASDAQ`, '_blank')}
+            className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-3 rounded-lg text-xs font-medium transition-colors"
+          >
+            Google Finance
+          </button>
+        </div>
+      </div>
+      
+      {/* Comments Section */}
+      {showComments && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 mb-3">
+          <h3 className="font-semibold mb-2 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Commentaires' : 'Comments'}</h3>
+          
+          {/* Comments List */}
+          <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
+            {loadingComments ? (
+              <div className="text-center py-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto"></div>
+              </div>
+            ) : comments.length > 0 ? (
+              comments.map((comment) => {
+                const isExpanded = expandedComments.has(comment.id);
+                const isLong = comment.comment.length > 60;
+                const displayText = isLong && !isExpanded 
+                  ? comment.comment.substring(0, 60) + '...' 
+                  : comment.comment;
+                
+                return (
+                  <div key={comment.id} className={`rounded-lg p-2 border-l-2 text-xs ${
+                    comment.color === 'red' ? 'bg-red-50 dark:bg-red-900/20 border-red-500' :
+                    comment.color === 'green' ? 'bg-green-50 dark:bg-green-900/20 border-green-500' :
+                    comment.color === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500' :
+                    'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600'
+                  }`}>
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                        {comment.username || `${language === 'fr' ? 'User' : 'User'} ${comment.user_id}`}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(comment.created_at).toLocaleDateString()}
+                        </span>
+                        {user && comment.user_id === user.id && (
                           <button
-                            onClick={() => setExpandedDescription(!expandedDescription)}
-                            className="ml-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="p-0.5 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
                           >
-                            {expandedDescription ? (language === 'fr' ? 'Moins' : 'Less') : (language === 'fr' ? 'Plus' : 'More')}
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                           </button>
                         )}
                       </div>
                     </div>
-                  )}
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {companyInfo.address && (
-                      <div className="flex items-start justify-between py-1">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
-                          <svg className="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          {language === 'fr' ? 'Adresse' : 'Address'}
-                        </span>
-                        <span className="text-gray-900 dark:text-white text-xs font-medium text-right max-w-[60%]">{companyInfo.address}</span>
-                      </div>
-                    )}
-                    {companyInfo.website && (
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-                          </svg>
-                          {language === 'fr' ? 'Site' : 'Website'}
-                        </span>
-                        <a href={companyInfo.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium">
-                          {companyInfo.website.replace(/^https?:\/\//, '').split('/')[0]}
-                        </a>
-                      </div>
-                    )}
-                    {companyInfo.ir_phone_number && (
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                          </svg>
-                          {language === 'fr' ? 'Tél. IR' : 'IR Phone'}
-                        </span>
-                        <span className="text-gray-900 dark:text-white text-xs font-medium">{companyInfo.ir_phone_number}</span>
-                      </div>
-                    )}
-                    {companyInfo.email_address && (
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                          Email
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-gray-900 dark:text-white text-xs font-medium">{companyInfo.email_address}</span>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(companyInfo.email_address);
-                              setCopiedEmail(true);
-                              setTimeout(() => setCopiedEmail(false), 2000);
-                            }}
-                            className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                            title={language === 'fr' ? 'Copier l\'email' : 'Copy email'}
-                          >
-                            {copiedEmail ? (
-                              <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            ) : (
-                              <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    {companyInfo.ceo && (
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          CEO
-                        </span>
-                        <span className="text-gray-900 dark:text-white text-xs font-medium">{companyInfo.ceo}</span>
-                      </div>
-                    )}
-                    {companyInfo.number_of_employees && (
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          {language === 'fr' ? 'Employés' : 'Employees'}
-                        </span>
-                        <span className="text-gray-900 dark:text-white text-xs font-medium">{companyInfo.number_of_employees.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {companyInfo.year_established && (
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          {language === 'fr' ? 'Fondée' : 'Founded'}
-                        </span>
-                        <span className="text-gray-900 dark:text-white text-xs font-medium">{companyInfo.year_established}</span>
-                      </div>
-                    )}
-                    {companyInfo.fiscal_year_end && (
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                          {language === 'fr' ? 'Fin Exercice' : 'Fiscal Year End'}
-                        </span>
-                        <span className="text-gray-900 dark:text-white text-xs font-medium">
-                          {new Date(companyInfo.fiscal_year_end).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Portfolio Summary */}
-            {!showComments && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Portfolio' : 'Portfolio'}</h3>
-                  <button
-                    onClick={() => {
-                      setIsEditingAction(!isEditingAction);
-                      if (!isEditingAction) {
-                        setEditAction(currentStock.last_action || '');
-                        setEditPortfolio(String(currentStock.per_portfolio || ''));
-                      }
-                    }}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-300 transition-colors"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                </div>
-                
-                {isEditingAction ? (
-                  <div className="space-y-2">
-                    <select
-                      value={editAction}
-                      onChange={(e) => setEditAction(e.target.value)}
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
-                    >
-                      <option value="">{language === 'fr' ? 'Sélectionner...' : 'Select...'}</option>
-                      <option value="Increased">Increased</option>
-                      <option value="Decreased">Decreased</option>
-                      <option value="Held">Held</option>
-                    </select>
-                    <input
-                      type="text"
-                      value={editPortfolio}
-                      onChange={(e) => setEditPortfolio(e.target.value)}
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs"
-                      placeholder="5%, 10%, etc."
-                    />
-                    <div className="flex gap-1">
-                      <button
-                        onClick={updateTickerInfo}
-                        className="flex-1 bg-blue-600 text-white py-1.5 px-2 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
-                      >
-                        {language === 'fr' ? 'Save' : 'Save'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsEditingAction(false);
-                          setEditAction('');
-                          setEditPortfolio('');
-                        }}
-                        className="flex-1 bg-gray-500 text-white py-1.5 px-2 rounded-lg text-xs font-medium hover:bg-gray-600 transition-colors"
-                      >
-                        {language === 'fr' ? 'Cancel' : 'Cancel'}
-                      </button>
+                    <div className="text-xs text-gray-900 dark:text-white">
+                      {displayText}
+                      {isLong && (
+                        <button
+                          onClick={() => toggleCommentExpansion(comment.id)}
+                          className="ml-1 text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          {isExpanded ? '↑' : '↓'}
+                        </button>
+                      )}
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-1.5 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Action' : 'Action'}</span>
-                      <span className="font-semibold text-gray-900 dark:text-white">{currentStock.last_action || '-'}</span>
-                    </div>
-                    {currentStock.per_portfolio && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Allocation' : 'Allocation'}</span>
-                        <span className="font-semibold text-gray-900 dark:text-white">{currentStock.per_portfolio}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                );
+              })
+            ) : (
+              <div className="text-center py-2 text-xs text-gray-500 dark:text-gray-400">
+                {t('noCommentsFound')}
               </div>
             )}
           </div>
+          
+          {/* Add Comment */}
+          <div className="space-y-2">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder={t('enterYourComment')}
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-transparent resize-none text-xs"
+              rows={2}
+            />
+            <button
+              onClick={handleSaveComment}
+              disabled={!newComment.trim() || !user}
+              className="w-full px-2 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {!user ? t('loginRequired') : t('saveComment')}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

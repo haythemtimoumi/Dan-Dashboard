@@ -417,32 +417,32 @@ export default function PortfolioListWithDateRange() {
         // Format date for the API using utility function with UTC noon approach
         const formattedDate = formatDateForPortfolioAPI(selectedDate);
         
-        console.log(`Fetching portfolio stocks for date: ${formattedDate} (timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone})`);
+
         
         // First, try fetching all stocks to see if the API is working
-        console.log('Testing API connection by fetching all stocks...');
+
         const testResponse = await fetch(`${API_URL}/stocks`);
-        console.log('Test response status:', testResponse.status);
+
         if (testResponse.ok) {
           const testData = await testResponse.json();
-          console.log(`API is working. Found ${Array.isArray(testData) ? testData.length : 'unknown number of'} stocks in total`);
+
         } else {
           console.error('API test failed. Status:', testResponse.status);
         }
         
         // Try fetching with the specific source first
         const url = `${API_URL}/stocks/filter-by-date-source?date=${formattedDate}&source=guru_list`;
-        console.log('Fetching from URL:', url);
+
         
         const response = await fetch(url);
-        console.log('Response status:', response.status);
+
         
         if (!response.ok) {
           throw new Error(`Failed to fetch portfolio stocks: ${response.statusText}`);
         }
         
         const data = await response.json();
-        console.log('API response data:', data);
+
         
         // Handle different response formats
         let stocksData = [];
@@ -452,23 +452,23 @@ export default function PortfolioListWithDateRange() {
           stocksData = data;
         } else if (data && typeof data === 'object') {
           // If data is an object but not in the expected format, try to extract stocks
-          console.log('Data is an object but not in expected format, trying to extract stocks');
+
           if (data.data && Array.isArray(data.data)) {
             stocksData = data.data;
-            console.log('Found stocks in data.data:', stocksData.length);
+
           } else if (data.results && Array.isArray(data.results)) {
             stocksData = data.results;
-            console.log('Found stocks in data.results:', stocksData.length);
+
           } else {
-            console.log('Could not find stocks array in response');
+
           }
         }
         
-        console.log(`Found ${stocksData.length} portfolio stocks for ${formattedDate}`);
+
         
         // If no stocks found with guru_list source, just show empty state
         if (stocksData.length === 0) {
-          console.log('No guru_list stocks found for the selected date');
+
           // Don't try to fetch all stocks - just leave stocksData as empty array
         }
         
@@ -488,16 +488,16 @@ export default function PortfolioListWithDateRange() {
 
 
   const handleSort = (field: string) => {
-    console.log(`Sorting by ${field}, current sort: ${sortBy}, order: ${sortOrder}`);
+
     
     if (sortBy === field) {
       // Toggle sort order if already sorting by this field
       const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-      console.log(`Toggling order to ${newOrder}`);
+
       setSortOrder(newOrder);
     } else {
       // Set new sort field and default to descending
-      console.log(`New sort field: ${field}, setting order to desc`);
+
       setSortBy(field);
       setSortOrder('desc');
     }

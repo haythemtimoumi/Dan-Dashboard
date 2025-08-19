@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     // Fetch data from the local backend API
     const apiUrl = `http://localhost:3000/api/stocks/tickers/changes?from=${from}&to=${to}`;
-    console.log('Fetching ticker changes from:', apiUrl);
+
     
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     }
     
     const data = await response.json();
-    console.log('Ticker changes response sample:', data.slice(0, 2));
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching ticker changes:', error);

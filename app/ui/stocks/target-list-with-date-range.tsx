@@ -395,7 +395,7 @@ export default function PortfolioListWithDateRange() {
         // Format date for the API using utility function with UTC noon approach
         const formattedDate = formatDateForPortfolioAPI(selectedDate);
         
-        console.log(`Fetching portfolio stocks for date: ${formattedDate} (timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone})`);
+
         const response = await fetch(`${API_URL}/stocks/filter-by-date-source?date=${formattedDate}&source=target`);
         
         if (!response.ok) {
@@ -412,7 +412,7 @@ export default function PortfolioListWithDateRange() {
           stocksData = data;
         }
         
-        console.log(`Found ${stocksData.length} portfolio stocks for ${formattedDate}`);
+
         setStocks(stocksData);
         setError(null);
       } catch (err) {
@@ -429,16 +429,16 @@ export default function PortfolioListWithDateRange() {
 
 
   const handleSort = (field: string) => {
-    console.log(`Sorting by ${field}, current sort: ${sortBy}, order: ${sortOrder}`);
+
     
     if (sortBy === field) {
       // Toggle sort order if already sorting by this field
       const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-      console.log(`Toggling order to ${newOrder}`);
+
       setSortOrder(newOrder);
     } else {
       // Set new sort field and default to descending
-      console.log(`New sort field: ${field}, setting order to desc`);
+
       setSortBy(field);
       setSortOrder('desc');
     }

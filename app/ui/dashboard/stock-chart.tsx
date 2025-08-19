@@ -38,7 +38,7 @@ export default function StockChart({ stocks }: { stocks: Stock[] }) {
 
   useEffect(() => {
     // Log the number of stocks received for debugging
-    console.log(`Stock chart received ${stocks.length} stocks`);
+
     
     // The stocks are already sorted by sentiment score in fetchStocksForChart
     // Just make sure we have all stocks and limit to display top 10 for readability

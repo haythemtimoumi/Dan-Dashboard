@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getTickerMappings } from '@/app/lib/ticker-mappings';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,12 +11,26 @@ export async function POST(request: NextRequest) {
 
     // Preprocess message to force stock ticker recognition
     let processedMessage = message;
-    if (/\bval\b/i.test(message) && !message.toLowerCase().includes('valaris')) {
-      processedMessage = message.replace(/\bval\b/gi, 'VAL stock (Valaris Ltd)');
+    
+    // Common ticker preprocessing
+    const tickerReplacements = [
+      { pattern: /\bval\b/gi, replacement: 'VAL stock (Valaris Ltd)', exclude: 'valaris' },
+      { pattern: /\bhci\b/gi, replacement: 'HCI stock (HCI Group Inc)', exclude: 'group' },
+      { pattern: /\bdocs\b/gi, replacement: 'DOCS stock (Doximity Inc)', exclude: 'doximity' },
+    ];
+    
+    for (const { pattern, replacement, exclude } of tickerReplacements) {
+      if (pattern.test(message) && !message.toLowerCase().includes(exclude)) {
+        processedMessage = processedMessage.replace(pattern, replacement);
+      }
     }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    // Get ticker mappings
+    const tickerMappings = await getTickerMappings();
+    const tickerCount = tickerMappings.split('\n').length;
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -33,10 +48,13 @@ export async function POST(request: NextRequest) {
 
 **TICKER PROTOCOLS**
 - ALWAYS map these tickers:
-  VAL → Valaris Ltd (NYSE: VAL) [Offshore drilling]
-  DOCS → Doximity Inc (NYSE: DOCS) [Healthcare SaaS]
-  AAPL → Apple Inc (NASDAQ: AAPL) [Technology]
-  GOOGL → Alphabet Inc (NASDAQ: GOOGL) [Technology]
+${tickerMappings}
+
+- When users mention 2-5 letter combinations, ASSUME it's a stock ticker first
+- All ${tickerCount} tickers above are in the user's portfolio
+- HCI = HCI Group Inc (Insurance company)
+- VAL = Valaris Ltd (Offshore drilling)
+- NEVER interpret tickers as other topics (HCI ≠ Human-Computer Interaction)
 
 **RESPONSE TEMPLATE**
 📌 **{Company} ({Ticker})**  

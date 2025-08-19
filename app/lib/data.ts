@@ -45,7 +45,7 @@ function createApiUrl(path: string, params?: Record<string, string>) {
 
 
 // Log the API URL for debugging
-console.log(`Using API URL: ${isProduction ? 'Proxy API' : API_URL}`);
+
 
 export async function fetchStockStats(): Promise<StockStats> {
   noStore();
@@ -398,7 +398,7 @@ export async function fetchStocksByDateAndSource(
     }
 
     const data = await response.json();
-    console.log('API Response:', data); // Debug log
+
     
     // Transform date format to match frontend expectations if needed
     return data.map((stock: any) => ({
@@ -466,7 +466,7 @@ export async function fetchStocksForChart(): Promise<Stock[]> {
     const allStocks: Stock[] = await response.json();
     
     // Log the number of stocks received for debugging
-    console.log(`Fetched ${allStocks.length} stocks for chart`);
+
     
     // Sort by sentiment score and return
     return allStocks.sort((a, b) => b.sentiment_score - a.sentiment_score);

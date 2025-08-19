@@ -231,9 +231,7 @@ export default function NewPortfolioPage() {
         const response = await fetch(`/api/proxy/stocks/last-date?t=${Date.now()}`);
         if (response.ok) {
           const data = await response.json();
-          console.log('Fetched last date:', data.last_date);
           const lastDate = data.last_date.split('T')[0]; // Convert to YYYY-MM-DD format
-          console.log('Formatted date:', lastDate);
           setStartDate(lastDate);
           setEndDate(lastDate);
         } else {
@@ -490,16 +488,13 @@ export default function NewPortfolioPage() {
       }
       
       const url = `/api/proxy/stocks/tickers/changes?from=${fromDate}&to=${toDate}`;
-      console.log('Fetching ticker changes from:', url);
       const response = await fetch(url);
       if (response.ok) {
         const changesData = await response.json();
-        console.log('Ticker changes data sample:', changesData.slice(0, 2));
         const changesMap: {[key: string]: any} = {};
         changesData.forEach((change: any) => {
           changesMap[change.ticker] = change;
         });
-        console.log('Total tickers with changes:', Object.keys(changesMap).length);
         setTickerChanges(changesMap);
       } else {
         console.error('Failed to fetch ticker changes:', response.status);
@@ -583,7 +578,6 @@ export default function NewPortfolioPage() {
   const getChangeArrow = (ticker: string, field: string) => {
     const changes = tickerChanges[ticker];
     if (!changes) {
-      console.log(`No changes found for ticker: ${ticker}`);
       return null;
     }
     
@@ -603,12 +597,10 @@ export default function NewPortfolioPage() {
     
     const changeField = fieldMap[field];
     if (!changeField || !changes[changeField]) {
-      console.log(`No change field found: ${changeField} for ${ticker}`);
       return null;
     }
     
     const changeValue = changes[changeField];
-    console.log(`Change for ${ticker}.${field}: ${changeValue}`);
     
     if (changeValue === 'up') {
       return (
@@ -1171,7 +1163,21 @@ export default function NewPortfolioPage() {
                         onMouseLeave={handleMouseLeave}
                         onClick={() => {
                           saveStateBeforeNavigation();
-                          router.push(`/dashboard/portfolio/${stock.ticker}?date=${startDate}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
+                          const params = new URLSearchParams({
+                            date: startDate,
+                            sortBy: sortBy,
+                            sortOrder: sortOrder,
+                            ...(selectedSource && { source: selectedSource }),
+                            ...(searchTicker && { search: searchTicker }),
+                            ...(isFiltered && {
+                              filtered: 'true',
+                              sentiment: filters.sentiment.toString(),
+                              moat: filters.moat.toString(),
+                              rule1: filters.rule1.toString(),
+                              management: filters.management.toString()
+                            })
+                          });
+                          router.push(`/dashboard/portfolio/${stock.ticker}?${params.toString()}`);
                         }}
                       >
                         <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-400">

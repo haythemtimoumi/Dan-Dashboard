@@ -89,7 +89,7 @@ export const formatDate = (dateStr: string | undefined): string => {
   if (!dateStr) return '';
   
   // For debugging
-  console.log('Date string to format:', dateStr);
+
   
   try {
     // Check if the date is already in MM/DD/YYYY format
@@ -102,7 +102,7 @@ export const formatDate = (dateStr: string | undefined): string => {
     
     // Check if date is valid
     if (isNaN(date.getTime())) {
-      console.log('Invalid date:', dateStr);
+
       return dateStr; // Return the original string if we can't parse it
     }
     
@@ -112,7 +112,7 @@ export const formatDate = (dateStr: string | undefined): string => {
     const year = date.getFullYear();
     
     const formatted = `${month}/${day}/${year}`;
-    console.log('Formatted date:', formatted);
+
     return formatted;
   } catch (error) {
     console.error('Error formatting date:', error, dateStr);
