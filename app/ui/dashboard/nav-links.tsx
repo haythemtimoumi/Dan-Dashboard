@@ -39,10 +39,10 @@ export default function NavLinks({ isCollapsed = false, onNavigate }: { isCollap
           href="/dashboard/portfolio"
           onClick={handleLinkClick}
           className={clsx(
-            "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200",
+            "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-300 ease-out",
             (pathname === '/dashboard/portfolio' || (pathname.startsWith('/dashboard/portfolio') && !pathname.startsWith('/dashboard/portfolio-target')))
-              ? "bg-black dark:bg-white text-white dark:text-black"
-              : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white",
+              ? "bg-gradient-to-r from-blue-400/30 via-indigo-500/30 to-purple-600/30 backdrop-blur-xl shadow-xl border border-blue-300/20 text-white shadow-blue-500/20"
+              : "text-gray-600 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-gray-700/30 hover:backdrop-blur-sm hover:text-gray-900 dark:hover:text-white",
             isCollapsed && "justify-center px-2"
           )}
           title={isCollapsed ? (language === 'fr' ? 'Règle 1' : 'Rule 1') : undefined}
@@ -51,7 +51,9 @@ export default function NavLinks({ isCollapsed = false, onNavigate }: { isCollap
           {!isCollapsed && (
             <>
               <span className="truncate">{language === 'fr' ? 'Règle 1' : 'Rule 1'}</span>
-              {(pathname === '/dashboard/portfolio' || (pathname.startsWith('/dashboard/portfolio') && !pathname.startsWith('/dashboard/portfolio-target'))) && <div className="ml-auto w-1.5 h-1.5 bg-white dark:bg-black rounded-full" />}
+              {(pathname === '/dashboard/portfolio' || (pathname.startsWith('/dashboard/portfolio') && !pathname.startsWith('/dashboard/portfolio-target'))) && 
+                <div className="ml-auto w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+              }
             </>
           )}
         </Link>
@@ -60,10 +62,10 @@ export default function NavLinks({ isCollapsed = false, onNavigate }: { isCollap
           href="/dashboard/portfolio-target"
           onClick={handleLinkClick}
           className={clsx(
-            "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200",
+            "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-300 ease-out",
             pathname === '/dashboard/portfolio-target' || pathname.startsWith('/dashboard/portfolio-target')
-              ? "bg-black dark:bg-white text-white dark:text-black"
-              : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white",
+              ? "bg-gradient-to-r from-blue-400/30 via-indigo-500/30 to-purple-600/30 backdrop-blur-xl shadow-xl border border-blue-300/20 text-white shadow-blue-500/20"
+              : "text-gray-600 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-gray-700/30 hover:backdrop-blur-sm hover:text-gray-900 dark:hover:text-white",
             isCollapsed && "justify-center px-2"
           )}
           title={isCollapsed ? (language === 'fr' ? 'Portfolio' : 'Portfolio') : undefined}
@@ -72,7 +74,9 @@ export default function NavLinks({ isCollapsed = false, onNavigate }: { isCollap
           {!isCollapsed && (
             <>
               <span className="truncate">{language === 'fr' ? 'Portfolio' : 'Portfolio'}</span>
-              {(pathname === '/dashboard/portfolio-target' || pathname.startsWith('/dashboard/portfolio-target')) && <div className="ml-auto w-1.5 h-1.5 bg-white dark:bg-black rounded-full" />}
+              {(pathname === '/dashboard/portfolio-target' || pathname.startsWith('/dashboard/portfolio-target')) && 
+                <div className="ml-auto w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+              }
             </>
           )}
         </Link>
@@ -81,10 +85,10 @@ export default function NavLinks({ isCollapsed = false, onNavigate }: { isCollap
           href="/dashboard/gurus"
           onClick={handleLinkClick}
           className={clsx(
-            "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-2xl transition-all duration-200",
+            "group flex items-center gap-4 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-300 ease-out",
             pathname === '/dashboard/gurus'
-              ? "bg-black dark:bg-white text-white dark:text-black"
-              : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white",
+              ? "bg-gradient-to-r from-blue-400/30 via-indigo-500/30 to-purple-600/30 backdrop-blur-xl shadow-xl border border-blue-300/20 text-white shadow-blue-500/20"
+              : "text-gray-600 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-gray-700/30 hover:backdrop-blur-sm hover:text-gray-900 dark:hover:text-white",
             isCollapsed && "justify-center px-2"
           )}
           title={isCollapsed ? (language === 'fr' ? 'Gurus' : 'Gurus') : undefined}
@@ -93,7 +97,9 @@ export default function NavLinks({ isCollapsed = false, onNavigate }: { isCollap
           {!isCollapsed && (
             <>
               <span className="truncate">{language === 'fr' ? 'Gurus' : 'Gurus'}</span>
-              {pathname === '/dashboard/gurus' && <div className="ml-auto w-1.5 h-1.5 bg-white dark:bg-black rounded-full" />}
+              {pathname === '/dashboard/gurus' && 
+                <div className="ml-auto w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+              }
             </>
           )}
         </Link>
