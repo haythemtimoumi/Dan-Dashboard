@@ -49,6 +49,7 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
   const [selectedDate, setSelectedDate] = useState<string>(
     searchParams.get('date') || new Date().toISOString().split('T')[0]
   );
+  const [expandedDescription, setExpandedDescription] = useState<boolean>(false);
   
   const fetchData = async (date: string) => {
     try {
@@ -177,9 +178,69 @@ export default function PortfolioAnalysisDetailPage({ params }: { params: { tick
             >
               <ArrowLeftIcon className="w-5 h-5" />
             </button>
-            <div>
-              <h1 className="text-3xl font-bold">{analysis?.ticker}</h1>
-              <p className="text-gray-600 dark:text-gray-400">{analysis?.full_name}</p>
+            <div className="flex items-start gap-6">
+              <div>
+                <h1 className="text-3xl font-bold">{analysis?.ticker} ({language === 'fr' ? 'Cible' : 'Target'})</h1>
+                <div className="flex items-center gap-2">
+                  <p className="text-gray-600 dark:text-gray-400">{analysis?.full_name}</p>
+                  {analysis && (
+                    <span className={`text-sm font-medium ${
+                      (parseFloat(analysis.buy_price || '0') > 0 && parseFloat(analysis.last_price || '0') > 0) 
+                        ? ((parseFloat(analysis.last_price) / parseFloat(analysis.buy_price) - 1) * 100) > 0 
+                          ? 'text-green-600' : 'text-red-600'
+                        : 'text-gray-600'
+                    }`}>
+                      {(parseFloat(analysis.buy_price || '0') > 0 && parseFloat(analysis.last_price || '0') > 0) 
+                        ? `${((parseFloat(analysis.last_price) / parseFloat(analysis.buy_price) - 1) * 100).toFixed(1)}% ${language === 'fr' ? 'Hausse' : 'Upside'} ↓`
+                        : '% Upside ↓'
+                      }
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Company Information beside ticker */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 min-w-0 flex-1 max-w-md">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-xs text-gray-900 dark:text-white">
+                    {language === 'fr' ? 'Informations Société' : 'Company Information'}
+                  </h3>
+                  <button
+                    onClick={() => setExpandedDescription(!expandedDescription)}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                    title={language === 'fr' ? 'Voir la description' : 'View description'}
+                  >
+                    <svg className="w-3 h-3 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </button>
+                </div>
+                {expandedDescription && (
+                  <div className="text-gray-900 dark:text-white text-xs leading-relaxed mb-2 p-2 bg-white dark:bg-gray-800 rounded border">
+                    Transportadora de Gas del Sur SA is a transporters of natural gas in Latin America. The company&apos;s operating segments include Natural Gas Transportation, Midstream, Telecommunications, Production and Commercialization services.
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                  <div>
+                    <span className="text-gray-600 dark:text-gray-400">CEO</span>
+                    <div className="font-medium text-gray-900 dark:text-white truncate">Mr. Oscar Jose Sardi</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Employés' : 'Employees'}</span>
+                    <div className="font-medium text-gray-900 dark:text-white">1147</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Site Web' : 'Website'}</span>
+                    <a href="https://www.tgs.com.ar" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline font-medium truncate block">
+                      www.tgs.com.ar
+                    </a>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Fondée' : 'Founded'}</span>
+                    <div className="font-medium text-gray-900 dark:text-white">1992</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <input

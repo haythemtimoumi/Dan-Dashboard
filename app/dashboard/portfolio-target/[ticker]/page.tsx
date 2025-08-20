@@ -663,26 +663,90 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
             <ArrowLeftIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </button>
           
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              {params.ticker} <span className="text-yellow-600">(Target)</span>
-            </h1>
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {currentStock?.full_name || currentStock?.source}
-              </p>
-              {/* Sort indicator badge */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-2 py-1 rounded-md">
-                <div className="flex items-center gap-1">
-                  <svg className="w-3 h-3 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                  </svg>
-                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                    {getSortDisplayInfo().field} {sortOrder === 'asc' ? '↑' : '↓'}
+          <div className="flex items-start gap-6">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                {params.ticker} <span className="text-yellow-600">({language === 'fr' ? 'Cible' : 'Target'})</span>
+              </h1>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {currentStock?.full_name || currentStock?.source}
+                </p>
+                {currentStock?.per_upside && (
+                  <span className={`text-xs font-medium ${
+                    (currentStock.per_upside ?? 0) > 0 ? 'text-green-600' : 'text-gray-600'
+                  }`}>
+                    {(currentStock.per_upside ?? 0) > 0 ? '+' : ''}{formatNumber(currentStock.per_upside)}% {language === 'fr' ? 'Hausse' : 'Upside'} ↓
                   </span>
+                )}
+                {/* Sort indicator badge */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-2 py-1 rounded-md">
+                  <div className="flex items-center gap-1">
+                    <svg className="w-3 h-3 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                      {getSortDisplayInfo().field} {sortOrder === 'asc' ? '↑' : '↓'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
+            
+            {/* Company Information beside ticker */}
+            {companyInfo && (
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 min-w-0 flex-1 max-w-md">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-xs text-gray-900 dark:text-white">
+                    {language === 'fr' ? 'Informations Société' : 'Company Information'}
+                  </h3>
+                  {companyInfo.business_description && (
+                    <button
+                      onClick={() => setExpandedDescription(!expandedDescription)}
+                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                      title={language === 'fr' ? 'Voir la description' : 'View description'}
+                    >
+                      <svg className="w-3 h-3 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                {expandedDescription && companyInfo.business_description && (
+                  <div className="text-gray-900 dark:text-white text-xs leading-relaxed mb-2 p-2 bg-white dark:bg-gray-800 rounded border">
+                    {companyInfo.business_description}
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                  {companyInfo.ceo && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">CEO</span>
+                      <div className="font-medium text-gray-900 dark:text-white truncate">{companyInfo.ceo}</div>
+                    </div>
+                  )}
+                  {companyInfo.number_of_employees && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Employés' : 'Employees'}</span>
+                      <div className="font-medium text-gray-900 dark:text-white">{companyInfo.number_of_employees.toLocaleString()}</div>
+                    </div>
+                  )}
+                  {companyInfo.website && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Site Web' : 'Website'}</span>
+                      <a href={companyInfo.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline font-medium truncate block">
+                        {companyInfo.website.replace(/^https?:\/\//, '').split('/')[0]}
+                      </a>
+                    </div>
+                  )}
+                  {companyInfo.year_established && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Fondée' : 'Founded'}</span>
+                      <div className="font-medium text-gray-900 dark:text-white">{companyInfo.year_established}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
@@ -946,16 +1010,7 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
             >
               {language === 'fr' ? 'Actualités' : 'News'}
             </button>
-            <button
-              onClick={() => setSidebarTab('company')}
-              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-colors ${
-                sidebarTab === 'company'
-                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {language === 'fr' ? 'Société' : 'Company'}
-            </button>
+            
             <button
               onClick={() => setSidebarTab('portfolio')}
               className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-colors ${
@@ -992,57 +1047,7 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
               <NewsSection ticker={currentStock.ticker} />
             )}
             
-            {sidebarTab === 'company' && companyInfo && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 h-full overflow-y-auto">
-                <h3 className="font-semibold mb-3 text-sm text-gray-900 dark:text-white">{language === 'fr' ? 'Informations Société' : 'Company Information'}</h3>
-                {companyInfo.business_description && (
-                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-3">
-                    <div className="text-gray-900 dark:text-white text-xs leading-relaxed">
-                      {expandedDescription || companyInfo.business_description.length <= 200 
-                        ? companyInfo.business_description
-                        : `${companyInfo.business_description.substring(0, 200)}...`
-                      }
-                      {companyInfo.business_description.length > 200 && (
-                        <button
-                          onClick={() => setExpandedDescription(!expandedDescription)}
-                          className="ml-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                        >
-                          {expandedDescription ? (language === 'fr' ? 'Moins' : 'Less') : (language === 'fr' ? 'Plus' : 'More')}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-2 text-xs">
-                  {companyInfo.ceo && (
-                    <div className="flex justify-between py-1">
-                      <span className="text-gray-600 dark:text-gray-400">CEO</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{companyInfo.ceo}</span>
-                    </div>
-                  )}
-                  {companyInfo.number_of_employees && (
-                    <div className="flex justify-between py-1">
-                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Employés' : 'Employees'}</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{companyInfo.number_of_employees.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {companyInfo.website && (
-                    <div className="flex justify-between py-1">
-                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Site Web' : 'Website'}</span>
-                      <a href={companyInfo.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                        {companyInfo.website.replace(/^https?:\/\//, '').split('/')[0]}
-                      </a>
-                    </div>
-                  )}
-                  {companyInfo.year_established && (
-                    <div className="flex justify-between py-1">
-                      <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Fondée' : 'Founded'}</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{companyInfo.year_established}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+
             
             {sidebarTab === 'portfolio' && (
               <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 h-full">
