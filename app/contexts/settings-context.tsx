@@ -259,6 +259,7 @@ const translations = {
     tickersAdded: 'tickers added',
     noGurusFound: 'No gurus found',
     tickers: 'tickers',
+    goldStocks: 'Gold Stocks',
   },
   fr: {
     // Navigation
@@ -503,6 +504,7 @@ const translations = {
     tickersAdded: 'tickers ajoutés',
     noGurusFound: 'Aucun guru trouvé',
     tickers: 'tickers',
+    goldStocks: 'Actions Or',
   },
 };
 
