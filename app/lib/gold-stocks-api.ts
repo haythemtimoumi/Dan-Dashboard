@@ -15,6 +15,8 @@ export interface CompanyAnalysis {
   free_cash_multiple: string;
   source_url: string;
   created_at: string;
+  company_url: string;
+  company_email: string;
   signal_score: number | null;
   sentiment_score: number | null;
   analysis_date: string;

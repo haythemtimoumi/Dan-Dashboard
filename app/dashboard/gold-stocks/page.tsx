@@ -25,6 +25,7 @@ export default function GoldStocksPage() {
   const [lastComments, setLastComments] = useState<{[key: string]: string}>({});
   const [commentTooltip, setCommentTooltip] = useState<{ ticker: string; comment: string; position: { x: number; y: number } } | null>(null);
   const [allUserComments, setAllUserComments] = useState<any[]>([]);
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
   const { t, language } = useSettings();
   const { user } = useAuth();
 
@@ -193,6 +194,16 @@ export default function GoldStocksPage() {
     }
   };
 
+  const copyEmail = async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopiedEmail(email);
+      setTimeout(() => setCopiedEmail(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy email:', error);
+    }
+  };
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -317,6 +328,12 @@ export default function GoldStocksPage() {
                 <SortableHeader field="sentiment_score">
                   {language === 'fr' ? 'Sentiment' : 'Sentiment'}
                 </SortableHeader>
+                <SortableHeader field="company_url">
+                  {language === 'fr' ? 'Site Web' : 'Website'}
+                </SortableHeader>
+                <SortableHeader field="company_email">
+                  {language === 'fr' ? 'Email' : 'Email'}
+                </SortableHeader>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {language === 'fr' ? 'Actions' : 'Actions'}
                 </th>
@@ -424,6 +441,54 @@ export default function GoldStocksPage() {
                       }`}>
                         {company.sentiment_score}
                       </span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    {company.company_url ? (
+                      <a 
+                        href={company.company_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {language === 'fr' ? 'Visiter' : 'Visit'}
+                      </a>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    {company.company_email ? (
+                      <div className="flex items-center gap-2">
+                        <a 
+                          href={`mailto:${company.company_email}`}
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {company.company_email}
+                        </a>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyEmail(company.company_email);
+                          }}
+                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                          title={language === 'fr' ? 'Copier l\'email' : 'Copy email'}
+                        >
+                          {copiedEmail === company.company_email ? (
+                            <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-gray-400">-</span>
                     )}
