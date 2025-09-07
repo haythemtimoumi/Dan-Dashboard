@@ -28,18 +28,46 @@ export default function NewsSection({ ticker }: NewsSectionProps) {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(
-          `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=${ticker}&apikey=06NWG6OH8CD1FO59&limit=5`
-        );
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch news');
+        // Try AlphaVantage first
+        try {
+          const alphaResponse = await fetch(
+            `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=${ticker}&apikey=06NWG6OH8CD1FO59&limit=5`
+          );
+          
+          if (alphaResponse.ok) {
+            const alphaData = await alphaResponse.json();
+            
+            if (alphaData.feed && alphaData.feed.length > 0) {
+              setNews(alphaData.feed.slice(0, 5));
+              return;
+            }
+          }
+        } catch (alphaError) {
+          console.log('AlphaVantage failed, trying Finnhub:', alphaError);
         }
         
-        const data = await response.json();
+        // Fallback to Finnhub API
+        const finnhubResponse = await fetch(
+          `https://finnhub.io/api/v1/company-news?symbol=${ticker}&from=${new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0]}&to=${new Date().toISOString().split('T')[0]}&token=d2uun99r01qq994hdcv0d2uun99r01qq994hdcvg`
+        );
         
-        if (data.feed) {
-          setNews(data.feed.slice(0, 5));
+        if (!finnhubResponse.ok) {
+          throw new Error('Failed to fetch news from both sources');
+        }
+        
+        const finnhubData = await finnhubResponse.json();
+        
+        if (finnhubData && Array.isArray(finnhubData)) {
+          // Convert Finnhub format to AlphaVantage format
+          const convertedNews = finnhubData.slice(0, 5).map((item: any) => ({
+            title: item.headline,
+            url: item.url,
+            time_published: new Date(item.datetime * 1000).toISOString().replace(/[-:]/g, '').split('.')[0],
+            summary: item.summary,
+            overall_sentiment_score: 0,
+            overall_sentiment_label: 'Neutral'
+          }));
+          setNews(convertedNews);
         } else {
           setNews([]);
         }

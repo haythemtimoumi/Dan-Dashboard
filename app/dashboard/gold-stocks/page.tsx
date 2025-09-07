@@ -3,17 +3,47 @@
 import { useState, useEffect } from 'react';
 import { fetchCompanyAnalysis, CompanyAnalysis } from '@/app/lib/gold-stocks-api';
 import { useSettings } from '@/app/contexts/settings-context';
+import { useAuth } from '@/app/contexts/auth-context';
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { EnhancedCommentModal } from '@/app/ui/stocks/enhanced-comment-modal';
+
+type SortField = keyof CompanyAnalysis;
+type SortDirection = 'asc' | 'desc';
 
 export default function GoldStocksPage() {
   const [companies, setCompanies] = useState<CompanyAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState('2025-09-03');
+  const [sortField, setSortField] = useState<SortField>('full_symbol');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [tooltip, setTooltip] = useState<{ company: CompanyAnalysis; position: { x: number; y: number } } | null>(null);
+  const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
+  const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
+  const [currentComment, setCurrentComment] = useState<string>('');
+  const [stocksWithComments, setStocksWithComments] = useState<Set<string>>(new Set());
+  const [lastComments, setLastComments] = useState<{[key: string]: string}>({});
+  const [commentTooltip, setCommentTooltip] = useState<{ ticker: string; comment: string; position: { x: number; y: number } } | null>(null);
+  const [allUserComments, setAllUserComments] = useState<any[]>([]);
   const { t, language } = useSettings();
+  const { user } = useAuth();
 
   useEffect(() => {
     loadCompanies();
   }, [selectedDate]);
+
+  // Load comments from localStorage on mount
+  useEffect(() => {
+    const savedComments = localStorage.getItem('stockComments');
+    if (savedComments) setStockComments(JSON.parse(savedComments));
+  }, []);
+
+  // Check comments for companies when user changes
+  useEffect(() => {
+    if (companies.length > 0 && user?.id) {
+      checkCommentsForStocks(companies);
+    }
+  }, [user?.id]);
 
   const loadCompanies = async () => {
     try {
@@ -21,12 +51,189 @@ export default function GoldStocksPage() {
       setError(null);
       const data = await fetchCompanyAnalysis(selectedDate);
       setCompanies(data);
+      
+      // Auto-load comments for all companies
+      await checkCommentsForStocks(data);
     } catch (err) {
       setError(language === 'fr' ? 'Erreur lors du chargement des données' : 'Error loading data');
     } finally {
       setLoading(false);
     }
   };
+
+  // Comment functionality
+  const handleCommentSave = (companyId: string, comment: string) => {
+    const company = companies.find(c => c.id.toString() === companyId);
+    const ticker = company?.full_symbol.includes(':') ? company.full_symbol.split(':')[1] : company?.full_symbol;
+    const key = ticker || companyId;
+    const newComments = { ...stockComments, [key]: comment };
+    setStockComments(newComments);
+    localStorage.setItem('stockComments', JSON.stringify(newComments));
+    
+    if (company && ticker) {
+      const newStocksWithComments = new Set(stocksWithComments);
+      const newLastComments = { ...lastComments };
+      
+      if (comment.trim()) {
+        newStocksWithComments.add(ticker);
+        newLastComments[ticker] = comment;
+      } else {
+        newStocksWithComments.delete(ticker);
+        delete newLastComments[ticker];
+      }
+      
+      setStocksWithComments(newStocksWithComments);
+      setLastComments(newLastComments);
+    }
+    
+    setCurrentComment('');
+    setShowCommentModal(null);
+  };
+
+  const openCommentModal = (companyId: string) => {
+    setCurrentComment('');
+    setShowCommentModal(companyId);
+  };
+
+  const handleCommentIconEnter = (event: React.MouseEvent, ticker: string) => {
+    const lastComment = lastComments[ticker];
+    if (lastComment) {
+      setCommentTooltip({
+        ticker,
+        comment: lastComment,
+        position: { x: event.clientX, y: event.clientY }
+      });
+    }
+  };
+
+  const handleCommentIconLeave = () => {
+    setCommentTooltip(null);
+  };
+
+  // Function to check comments for all companies using user API
+  // Color management using same API as portfolio
+  const cycleColor = async (companyId: string) => {
+    const company = companies.find(c => c.id.toString() === companyId);
+    if (!company) return;
+    
+    const ticker = company.full_symbol.includes(':') ? company.full_symbol.split(':')[1] : company.full_symbol;
+    const colors = ['neutral', 'red', 'green', 'yellow'];
+    const currentIndex = colors.indexOf((company as any).color || 'neutral');
+    const nextColor = colors[(currentIndex + 1) % colors.length];
+    
+    // Update local state immediately for instant feedback
+    setCompanies(companies.map(c => 
+      c.id.toString() === companyId ? { ...c, color: nextColor } as any : c
+    ));
+    
+    // Update via proxy API
+    try {
+      const response = await fetch(`/api/proxy/stocks/${ticker}/color`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ color: nextColor })
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to update color:', response.statusText);
+        // Revert local state on API failure
+        setCompanies(companies.map(c => 
+          c.id.toString() === companyId ? { ...c, color: (company as any).color } as any : c
+        ));
+      }
+    } catch (error) {
+      console.error('Error updating color:', error);
+      // Revert local state on error
+      setCompanies(companies.map(c => 
+        c.id.toString() === companyId ? { ...c, color: (company as any).color } as any : c
+      ));
+    }
+  };
+
+  const checkCommentsForStocks = async (companiesList?: CompanyAnalysis[]) => {
+    if (!user?.id) return;
+    
+    try {
+      const response = await fetch(`/api/proxy/comments/user/${user.id}?t=${Date.now()}`);
+      
+      if (response.ok) {
+        const allComments = await response.json();
+        const newStocksWithComments = new Set<string>();
+        const newLastComments: {[key: string]: string} = {};
+        
+        // Group comments by ticker and get the latest comment for each
+        const commentsByTicker: {[key: string]: any[]} = {};
+        allComments.forEach((comment: any) => {
+          if (!commentsByTicker[comment.ticker_symbol]) {
+            commentsByTicker[comment.ticker_symbol] = [];
+          }
+          commentsByTicker[comment.ticker_symbol].push(comment);
+        });
+        
+        // Process each ticker's comments
+        Object.entries(commentsByTicker).forEach(([ticker, comments]) => {
+          if (comments.length > 0) {
+            newStocksWithComments.add(ticker);
+            // Get the most recent comment
+            const latestComment = comments.sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0];
+            newLastComments[ticker] = latestComment.comment;
+          }
+        });
+        
+        setStocksWithComments(newStocksWithComments);
+        setLastComments(newLastComments);
+        setAllUserComments(allComments);
+      }
+    } catch (error) {
+      console.error('Error checking comments:', error);
+    }
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedCompanies = [...companies].sort((a, b) => {
+    const aVal = a[sortField];
+    const bVal = b[sortField];
+    
+    if (aVal === null || aVal === undefined) return 1;
+    if (bVal === null || bVal === undefined) return -1;
+    
+    let comparison = 0;
+    if (typeof aVal === 'string' && typeof bVal === 'string') {
+      comparison = aVal.localeCompare(bVal);
+    } else {
+      comparison = Number(aVal) - Number(bVal);
+    }
+    
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <th 
+      className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortField === field && (
+          sortDirection === 'asc' ? 
+            <ChevronUpIcon className="w-3 h-3" /> : 
+            <ChevronDownIcon className="w-3 h-3" />
+        )}
+      </div>
+    </th>
+  );
 
   if (loading) {
     return (
@@ -77,58 +284,99 @@ export default function GoldStocksPage() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <SortableHeader field="full_symbol">
                   {language === 'fr' ? 'Symbole' : 'Symbol'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  {language === 'fr' ? 'Entreprise' : 'Company'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  {language === 'fr' ? 'Bourse' : 'Exchange'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="price">
                   {language === 'fr' ? 'Prix' : 'Price'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="category">
                   {language === 'fr' ? 'Catégorie' : 'Category'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="upside">
                   {language === 'fr' ? 'Hausse' : 'Upside'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="downside">
                   {language === 'fr' ? 'Baisse' : 'Downside'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="quality">
                   {language === 'fr' ? 'Qualité' : 'Quality'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="risk">
                   {language === 'fr' ? 'Risque' : 'Risk'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="cash_flow_growth">
                   {language === 'fr' ? 'Croissance CF' : 'CF Growth'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="free_cash_multiple">
                   {language === 'fr' ? 'Multiple FCF' : 'FCF Multiple'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="signal_score">
                   {language === 'fr' ? 'Signal' : 'Signal'}
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="sentiment_score">
                   {language === 'fr' ? 'Sentiment' : 'Sentiment'}
+                </SortableHeader>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  {language === 'fr' ? 'Actions' : 'Actions'}
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {companies.map((company) => (
-                <tr key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    {company.full_symbol}
-                  </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {company.company_name}
-                  </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {company.exchange}
+              {sortedCompanies.map((company) => {
+                const companyColor = (company as any).color || '';
+                const ticker = company.full_symbol.includes(':') ? company.full_symbol.split(':')[1] : company.full_symbol;
+                const hasComment = stocksWithComments.has(ticker);
+                
+                return (
+                <tr 
+                  key={company.id} 
+                  className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
+                    companyColor === 'red' ? 'bg-red-50 dark:bg-red-900/20' :
+                    companyColor === 'green' ? 'bg-green-50 dark:bg-green-900/20' :
+                    companyColor === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''
+                  }`}
+                  onClick={() => {
+                    const params = new URLSearchParams({
+                      date: selectedDate,
+                      sortBy: sortField,
+                      sortOrder: sortDirection
+                    });
+                    // Extract ticker symbol from full_symbol (e.g., "A1G" from "ASX:A1G")
+                    const tickerSymbol = company.full_symbol.includes(':') ? company.full_symbol.split(':')[1] : company.full_symbol;
+                    window.location.href = `/dashboard/gold-stocks/${encodeURIComponent(tickerSymbol)}?${params.toString()}`;
+                  }}
+                >
+                  <td 
+                    className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white relative"
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setTooltip({
+                        company,
+                        position: { x: e.clientX, y: e.clientY }
+                      });
+                    }}
+                    onMouseLeave={() => setTooltip(null)}
+                    onMouseMove={(e) => {
+                      if (tooltip) {
+                        setTooltip({
+                          company,
+                          position: { x: e.clientX, y: e.clientY }
+                        });
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await cycleColor(company.id.toString());
+                        }}
+                        className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                        style={{ backgroundColor: companyColor === 'neutral' ? 'transparent' : companyColor || 'transparent' }}
+                      />
+                      {company.full_symbol}
+                    </div>
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {company.price} {company.currency}
@@ -180,8 +428,33 @@ export default function GoldStocksPage() {
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openCommentModal(company.id.toString());
+                        }}
+                        onMouseEnter={(e) => handleCommentIconEnter(e, ticker)}
+                        onMouseLeave={handleCommentIconLeave}
+                        className={`p-1 rounded transition-all duration-200 ${
+                          hasComment
+                            ? 'text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 transform hover:scale-110' 
+                            : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <svg className={`${hasComment ? 'w-5 h-5' : 'w-4 h-4'} transition-all duration-200`} 
+                             fill={hasComment ? 'currentColor' : 'none'} 
+                             stroke="currentColor" 
+                             viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -193,6 +466,62 @@ export default function GoldStocksPage() {
             {language === 'fr' ? 'Aucune donnée disponible' : 'No data available'}
           </p>
         </div>
+      )}
+
+      {/* Company Name Tooltip */}
+      {tooltip && (
+        <div
+          className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-3 min-w-48 pointer-events-none"
+          style={{
+            left: tooltip.position.x + 10,
+            top: tooltip.position.y - 10,
+          }}
+        >
+          <div className="text-sm font-medium text-gray-900 dark:text-white">
+            {tooltip.company.company_name}
+          </div>
+        </div>
+      )}
+
+      {/* Comment Tooltip */}
+      {commentTooltip && (
+        <div
+          className="fixed z-50 bg-blue-900 text-white p-3 rounded-lg shadow-xl text-sm max-w-xs border-2 border-blue-600 pointer-events-none"
+          style={{
+            left: Math.min(commentTooltip.position.x + 10, window.innerWidth - 320),
+            top: commentTooltip.position.y - 60,
+          }}
+        >
+          <div className="font-bold text-blue-200 mb-2 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            {language === 'fr' ? 'Dernier commentaire' : 'Last Comment'}
+          </div>
+          <div className="text-blue-100 italic">
+            &quot;{commentTooltip.comment.length > 100 
+              ? commentTooltip.comment.substring(0, 100) + '...' 
+              : commentTooltip.comment}&quot;
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Comment Modal */}
+      {showCommentModal && (
+        <EnhancedCommentModal
+          isOpen={!!showCommentModal}
+          onClose={() => setShowCommentModal(null)}
+          ticker={(() => {
+            const company = companies.find(c => c.id.toString() === showCommentModal);
+            return company?.full_symbol.includes(':') ? company.full_symbol.split(':')[1] : company?.full_symbol || '';
+          })()}
+          onSave={(comment) => handleCommentSave(showCommentModal, comment)}
+          currentComment={currentComment}
+          setCurrentComment={setCurrentComment}
+          tickerColor="neutral"
+          userComments={allUserComments}
+          onRefreshComments={() => checkCommentsForStocks()}
+        />
       )}
     </div>
   );
