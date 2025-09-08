@@ -17,8 +17,8 @@ export default function GoldStocksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState('');
-  const [sortField, setSortField] = useState<SortField>('full_symbol');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortField, setSortField] = useState<SortField>('upside');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [tooltip, setTooltip] = useState<{ company: CompanyAnalysis; position: { x: number; y: number } } | null>(null);
   const [stockComments, setStockComments] = useState<{[key: string]: string}>({});
   const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
@@ -384,7 +384,7 @@ export default function GoldStocksPage() {
                   {language === 'fr' ? 'Email' : 'Email'}
                 </SortableHeader>
                 <SortableHeader field="analysis_date">
-                  {language === 'fr' ? 'Date d\'Analyse' : 'Analysis Date'}
+                  {language === 'fr' ? 'Date' : 'Date'}
                 </SortableHeader>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {language === 'fr' ? 'Actions' : 'Actions'}
