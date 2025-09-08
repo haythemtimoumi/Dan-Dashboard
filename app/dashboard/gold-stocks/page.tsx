@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchCompanyAnalysis, CompanyAnalysis } from '@/app/lib/gold-stocks-api';
+import { useSearchParams } from 'next/navigation';
+import { fetchCompanyAnalysis, fetchRecentDate, CompanyAnalysis } from '@/app/lib/gold-stocks-api';
 import { useSettings } from '@/app/contexts/settings-context';
 import { useAuth } from '@/app/contexts/auth-context';
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
@@ -11,10 +12,11 @@ type SortField = keyof CompanyAnalysis;
 type SortDirection = 'asc' | 'desc';
 
 export default function GoldStocksPage() {
+  const searchParams = useSearchParams();
   const [companies, setCompanies] = useState<CompanyAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState('2025-09-03');
+  const [selectedDate, setSelectedDate] = useState('');
   const [sortField, setSortField] = useState<SortField>('full_symbol');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [tooltip, setTooltip] = useState<{ company: CompanyAnalysis; position: { x: number; y: number } } | null>(null);
@@ -30,7 +32,13 @@ export default function GoldStocksPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    loadCompanies();
+    loadRecentDate();
+  }, []);
+
+  useEffect(() => {
+    if (selectedDate) {
+      loadCompanies();
+    }
   }, [selectedDate]);
 
   // Load comments from localStorage on mount
@@ -46,16 +54,39 @@ export default function GoldStocksPage() {
     }
   }, [user?.id]);
 
+  const loadRecentDate = async () => {
+    try {
+      // Check if date is provided in URL params first
+      const urlDate = searchParams.get('date');
+      if (urlDate) {
+        console.log('Using date from URL params:', urlDate);
+        setSelectedDate(urlDate);
+        return;
+      }
+      
+      console.log('Fetching recent date...');
+      const recentDate = await fetchRecentDate();
+      console.log('Recent date fetched:', recentDate);
+      setSelectedDate(recentDate);
+    } catch (error) {
+      console.error('Error fetching recent date:', error);
+      setSelectedDate('2025-09-03'); // Fallback to default
+    }
+  };
+
   const loadCompanies = async () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('Loading companies with date:', selectedDate);
       const data = await fetchCompanyAnalysis(selectedDate);
+      console.log('Companies loaded:', data.length);
       setCompanies(data);
       
       // Auto-load comments for all companies
       await checkCommentsForStocks(data);
     } catch (err) {
+      console.error('Error loading companies:', err);
       setError(language === 'fr' ? 'Erreur lors du chargement des données' : 'Error loading data');
     } finally {
       setLoading(false);
@@ -271,9 +302,14 @@ export default function GoldStocksPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {language === 'fr' ? 'Actions Or' : 'Gold Stocks'}
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {language === 'fr' ? 'Actions Or' : 'Gold Stocks'}
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {language === 'fr' ? `${companies.length} enregistrement${companies.length !== 1 ? 's' : ''}` : `${companies.length} record${companies.length !== 1 ? 's' : ''}`}
+          </p>
+        </div>
         <div className="flex items-center gap-4">
           <input
             type="date"
@@ -282,10 +318,23 @@ export default function GoldStocksPage() {
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
           <button
-            onClick={loadCompanies}
+            onClick={() => {
+              console.log('Force refresh clicked');
+              loadCompanies();
+            }}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
           >
             {t('refresh')}
+          </button>
+          <button
+            onClick={() => {
+              console.log('Force reload recent date');
+              setSelectedDate('');
+              loadRecentDate();
+            }}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+          >
+            {language === 'fr' ? 'Date Récente' : 'Recent Date'}
           </button>
         </div>
       </div>
@@ -333,6 +382,9 @@ export default function GoldStocksPage() {
                 </SortableHeader>
                 <SortableHeader field="company_email">
                   {language === 'fr' ? 'Email' : 'Email'}
+                </SortableHeader>
+                <SortableHeader field="analysis_date">
+                  {language === 'fr' ? 'Date d\'Analyse' : 'Analysis Date'}
                 </SortableHeader>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {language === 'fr' ? 'Actions' : 'Actions'}
@@ -492,6 +544,9 @@ export default function GoldStocksPage() {
                     ) : (
                       <span className="text-gray-400">-</span>
                     )}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {company.analysis_date ? new Date(company.analysis_date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '-'}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                     <div className="flex items-center gap-2">
