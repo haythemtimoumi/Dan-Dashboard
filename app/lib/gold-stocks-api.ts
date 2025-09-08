@@ -25,22 +25,14 @@ export interface CompanyAnalysis {
 
 export async function fetchRecentDate(): Promise<string> {
   try {
-    const response = await fetch('/api/proxy/stocks/companies-with-analysis');
+    const response = await fetch('/api/proxy/stocks/companies/recent-date');
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     const data = await response.json();
-    if (data.length === 0) {
-      throw new Error('No data available');
-    }
-    
-    // Get the most recent analysis_date
-    const dates = data.map((item: any) => item.analysis_date).filter(Boolean);
-    const mostRecentDate = dates.sort().reverse()[0];
-    
-    return new Date(mostRecentDate).toISOString().split('T')[0];
+    return new Date(data.recent_date).toISOString().split('T')[0];
   } catch (error) {
     console.error('Error fetching recent date:', error);
     throw error;
