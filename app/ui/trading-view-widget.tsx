@@ -15,9 +15,10 @@ function TradingViewWidget({ ticker, height = "400px", width = "100%" }: Trading
   const widgetId = `tradingview_${ticker}_${Math.random().toString(36).substr(2, 9)}`;
 
   useEffect(() => {
-    if (!container.current || !ticker) return;
+    const containerElement = container.current;
+    if (!containerElement || !ticker) return;
 
-    container.current.innerHTML = `<div id="${widgetId}" style="height: ${height}; width: ${width};"></div>`;
+    containerElement.innerHTML = `<div id="${widgetId}" style="height: ${height}; width: ${width};"></div>`;
 
     const script = document.createElement("script");
     script.type = "text/javascript";
@@ -47,8 +48,8 @@ function TradingViewWidget({ ticker, height = "400px", width = "100%" }: Trading
     document.head.appendChild(script);
 
     return () => {
-      if (container.current) {
-        container.current.innerHTML = '';
+      if (containerElement) {
+        containerElement.innerHTML = '';
       }
       if (document.head.contains(script)) {
         document.head.removeChild(script);

@@ -28,6 +28,7 @@ export default function GoldStocksPage() {
   const [commentTooltip, setCommentTooltip] = useState<{ ticker: string; comment: string; position: { x: number; y: number } } | null>(null);
   const [allUserComments, setAllUserComments] = useState<any[]>([]);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { t, language } = useSettings();
   const { user } = useAuth();
 
@@ -244,7 +245,18 @@ export default function GoldStocksPage() {
     }
   };
 
-  const sortedCompanies = [...companies].sort((a, b) => {
+  const filteredCompanies = companies.filter(company => {
+    if (selectedCategory === 'all') return true;
+    
+    // Check if company has categories array and includes the selected category
+    if (company.categories && Array.isArray(company.categories)) {
+      return company.categories.includes(selectedCategory);
+    }
+    
+    return false;
+  });
+
+  const sortedCompanies = [...filteredCompanies].sort((a, b) => {
     const aVal = a[sortField];
     const bVal = b[sortField];
     
@@ -307,10 +319,20 @@ export default function GoldStocksPage() {
             {language === 'fr' ? 'Actions Or' : 'Gold Stocks'}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {language === 'fr' ? `${companies.length} enregistrement${companies.length !== 1 ? 's' : ''}` : `${companies.length} record${companies.length !== 1 ? 's' : ''}`}
+            {language === 'fr' ? `${sortedCompanies.length} enregistrement${sortedCompanies.length !== 1 ? 's' : ''} sur ${companies.length}` : `${sortedCompanies.length} record${sortedCompanies.length !== 1 ? 's' : ''} of ${companies.length}`}
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            <option value="all">{language === 'fr' ? 'Toutes les catégories' : 'All Categories'}</option>
+            <option value="top25">TOP25</option>
+            <option value="mormons">Mormons</option>
+            <option value="top_picks">{language === 'fr' ? 'Choix Principaux' : 'Top Picks'}</option>
+          </select>
           <input
             type="date"
             value={selectedDate}
@@ -580,10 +602,13 @@ export default function GoldStocksPage() {
         </div>
       </div>
 
-      {companies.length === 0 && !loading && (
+      {sortedCompanies.length === 0 && !loading && (
         <div className="text-center py-8">
           <p className="text-gray-500 dark:text-gray-400">
-            {language === 'fr' ? 'Aucune donnée disponible' : 'No data available'}
+            {selectedCategory === 'all' 
+              ? (language === 'fr' ? 'Aucune donnée disponible' : 'No data available')
+              : (language === 'fr' ? 'Aucune entreprise trouvée pour cette catégorie' : 'No companies found for this category')
+            }
           </p>
         </div>
       )}

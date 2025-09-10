@@ -7,6 +7,7 @@ export interface CompanyAnalysis {
   currency: string;
   price: string;
   category: string;
+  categories?: string[];
   upside: string;
   downside: string;
   quality: string;
