@@ -9,7 +9,7 @@ import { ChevronUpIcon, ChevronDownIcon, StarIcon } from '@heroicons/react/24/ou
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { EnhancedCommentModal } from '@/app/ui/stocks/enhanced-comment-modal';
 
-type SortField = keyof CompanyAnalysis;
+type SortField = keyof CompanyAnalysis | 'top25' | 'mormons' | 'top_picks';
 type SortDirection = 'asc' | 'desc';
 
 export default function GoldStocksPage() {
@@ -28,7 +28,7 @@ export default function GoldStocksPage() {
   const [lastComments, setLastComments] = useState<{[key: string]: string}>({});
   const [commentTooltip, setCommentTooltip] = useState<{ ticker: string; comment: string; position: { x: number; y: number } } | null>(null);
   const [allUserComments, setAllUserComments] = useState<any[]>([]);
-  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { t, language } = useSettings();
   const { user } = useAuth();
@@ -227,22 +227,14 @@ export default function GoldStocksPage() {
     }
   };
 
-  const copyEmail = async (email: string) => {
-    try {
-      await navigator.clipboard.writeText(email);
-      setCopiedEmail(email);
-      setTimeout(() => setCopiedEmail(null), 2000);
-    } catch (error) {
-      console.error('Failed to copy email:', error);
-    }
-  };
+
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection('desc');
     }
   };
 
@@ -258,8 +250,16 @@ export default function GoldStocksPage() {
   });
 
   const sortedCompanies = [...filteredCompanies].sort((a, b) => {
-    const aVal = a[sortField];
-    const bVal = b[sortField];
+    let aVal, bVal;
+    
+    // Handle category sorting
+    if (sortField === 'top25' || sortField === 'mormons' || sortField === 'top_picks') {
+      aVal = a.categories && a.categories.includes(sortField) ? 1 : 0;
+      bVal = b.categories && b.categories.includes(sortField) ? 1 : 0;
+    } else {
+      aVal = a[sortField as keyof CompanyAnalysis];
+      bVal = b[sortField as keyof CompanyAnalysis];
+    }
     
     if (aVal === null || aVal === undefined) return 1;
     if (bVal === null || bVal === undefined) return -1;
@@ -400,15 +400,17 @@ export default function GoldStocksPage() {
                 <SortableHeader field="sentiment_score">
                   {language === 'fr' ? 'Sentiment' : 'Sentiment'}
                 </SortableHeader>
-                <SortableHeader field="company_url">
-                  {language === 'fr' ? 'Site Web' : 'Website'}
+                <SortableHeader field="top25">
+                  TOP25
                 </SortableHeader>
-                <SortableHeader field="company_email">
-                  {language === 'fr' ? 'Email' : 'Email'}
+                <SortableHeader field="mormons">
+                  Mormons
                 </SortableHeader>
-                <SortableHeader field="analysis_date">
-                  {language === 'fr' ? 'Date' : 'Date'}
+                <SortableHeader field="top_picks">
+                  {language === 'fr' ? 'Choix Principaux' : 'Top Picks'}
                 </SortableHeader>
+
+
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {language === 'fr' ? 'Actions' : 'Actions'}
                 </th>
@@ -523,57 +525,35 @@ export default function GoldStocksPage() {
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {company.company_url ? (
-                      <a 
-                        href={company.company_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {language === 'fr' ? 'Visiter' : 'Visit'}
-                      </a>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-center">
+                    {company.categories && company.categories.includes('top25') ? (
+                      <svg className="w-5 h-5 text-green-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className="text-gray-300">-</span>
                     )}
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {company.company_email ? (
-                      <div className="flex items-center gap-2">
-                        <a 
-                          href={`mailto:${company.company_email}`}
-                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {company.company_email}
-                        </a>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyEmail(company.company_email);
-                          }}
-                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                          title={language === 'fr' ? 'Copier l\'email' : 'Copy email'}
-                        >
-                          {copiedEmail === company.company_email ? (
-                            <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          ) : (
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-center">
+                    {company.categories && company.categories.includes('mormons') ? (
+                      <svg className="w-5 h-5 text-green-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className="text-gray-300">-</span>
                     )}
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {company.analysis_date ? new Date(company.analysis_date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '-'}
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-center">
+                    {company.categories && company.categories.includes('top_picks') ? (
+                      <svg className="w-5 h-5 text-green-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <span className="text-gray-300">-</span>
+                    )}
                   </td>
+
+
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                     <div className="flex items-center gap-2">
                       <button
@@ -617,7 +597,7 @@ export default function GoldStocksPage() {
         </div>
       )}
 
-      {/* Company Name Tooltip */}
+      {/* Company Name and Date Tooltip */}
       {tooltip && (
         <div
           className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-3 min-w-48 pointer-events-none"
@@ -628,6 +608,9 @@ export default function GoldStocksPage() {
         >
           <div className="text-sm font-medium text-gray-900 dark:text-white">
             {tooltip.company.company_name}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {tooltip.company.analysis_date ? new Date(tooltip.company.analysis_date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '-'}
           </div>
         </div>
       )}
