@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { fetchCompanyAnalysis, fetchRecentDate, CompanyAnalysis } from '@/app/lib/gold-stocks-api';
 import { useSettings } from '@/app/contexts/settings-context';
 import { useAuth } from '@/app/contexts/auth-context';
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { ChevronUpIcon, ChevronDownIcon, StarIcon } from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { EnhancedCommentModal } from '@/app/ui/stocks/enhanced-comment-modal';
 
 type SortField = keyof CompanyAnalysis;
@@ -466,6 +467,9 @@ export default function GoldStocksPage() {
                         className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400"
                         style={{ backgroundColor: companyColor === 'neutral' ? 'transparent' : companyColor || 'transparent' }}
                       />
+                      {company.target && (
+                        <StarIconSolid className="w-4 h-4 text-yellow-500" title={language === 'fr' ? 'Cible' : 'Target'} />
+                      )}
                       {company.full_symbol}
                     </div>
                   </td>

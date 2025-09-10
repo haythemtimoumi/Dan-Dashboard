@@ -22,6 +22,7 @@ export interface CompanyAnalysis {
   sentiment_score: number | null;
   analysis_date: string;
   analysis_created_at: string;
+  target?: boolean;
 }
 
 export async function fetchRecentDate(): Promise<string> {
