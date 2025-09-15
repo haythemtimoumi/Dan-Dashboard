@@ -12,6 +12,7 @@ import { useAuth } from '@/app/contexts/auth-context';
 import { HighlightedStocksExternalSkeleton } from '@/app/ui/stocks/highlighted-stocks-external';
 import { StockTooltip } from '@/app/ui/stocks/stock-tooltip';
 import { EnhancedCommentModal } from '@/app/ui/stocks/enhanced-comment-modal';
+import { TickerViewModal } from '@/app/ui/stocks/ticker-view-modal';
 import MissingAnalysisDropdown from '@/app/ui/dashboard/missing-analysis-dropdown';
 
 // Utility function to format numbers
@@ -95,6 +96,7 @@ export default function TargetPortfolioPage() {
   const [addResult, setAddResult] = useState<{success: boolean, message: string} | null>(null);
   const [inProgressTickers, setInProgressTickers] = useState<string[]>([]);
   const [backendInProgress, setBackendInProgress] = useState<string[]>([]);
+  const [showTickerViewModal, setShowTickerViewModal] = useState<string | null>(null);
 
   // Load in-progress tickers from localStorage on mount
   useEffect(() => {
@@ -1366,6 +1368,18 @@ export default function TargetPortfolioPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setShowTickerViewModal(stock.ticker);
+                              }}
+                              className="p-1 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900 rounded transition-all duration-200"
+                              title={language === 'fr' ? 'Voir les informations du ticker' : 'View ticker information'}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 openCommentModal(stock.id);
                               }}
                               onMouseEnter={(e) => handleCommentIconEnter(e, stock.ticker)}
@@ -1536,6 +1550,15 @@ export default function TargetPortfolioPage() {
           tickerColor={stocks.find(s => s.id === showCommentModal)?.color || 'neutral'}
           userComments={allUserComments}
           onRefreshComments={() => checkCommentsForStocks()}
+        />
+      )}
+
+      {/* Ticker View Modal */}
+      {showTickerViewModal && (
+        <TickerViewModal
+          isOpen={!!showTickerViewModal}
+          onClose={() => setShowTickerViewModal(null)}
+          ticker={showTickerViewModal}
         />
       )}
 
