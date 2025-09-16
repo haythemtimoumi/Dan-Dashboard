@@ -8,6 +8,7 @@ import { useAuth } from '@/app/contexts/auth-context';
 import { ChevronUpIcon, ChevronDownIcon, StarIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { EnhancedCommentModal } from '@/app/ui/stocks/enhanced-comment-modal';
+import { TickerViewModal } from '@/app/ui/stocks/ticker-view-modal';
 
 type SortField = keyof CompanyAnalysis | 'top25' | 'mormons' | 'top_picks';
 type SortDirection = 'asc' | 'desc';
@@ -28,6 +29,7 @@ export default function GoldStocksPage() {
   const [lastComments, setLastComments] = useState<{[key: string]: string}>({});
   const [commentTooltip, setCommentTooltip] = useState<{ ticker: string; comment: string; position: { x: number; y: number } } | null>(null);
   const [allUserComments, setAllUserComments] = useState<any[]>([]);
+  const [showTickerViewModal, setShowTickerViewModal] = useState<string | null>(null);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { t, language } = useSettings();
@@ -261,12 +263,27 @@ export default function GoldStocksPage() {
       bVal = b[sortField as keyof CompanyAnalysis];
     }
     
-    if (aVal === null || aVal === undefined) return 1;
-    if (bVal === null || bVal === undefined) return -1;
+    if (aVal === null || aVal === undefined || aVal === '') return 1;
+    if (bVal === null || bVal === undefined || bVal === '') return -1;
     
     let comparison = 0;
     if (typeof aVal === 'string' && typeof bVal === 'string') {
-      comparison = aVal.localeCompare(bVal);
+      // For cash_flow_growth field with percentages and commas
+      if (sortField === 'cash_flow_growth') {
+        const aNum = aVal === 'n/a' ? -Infinity : parseFloat(aVal.replace(/[,%]/g, '')) || 0;
+        const bNum = bVal === 'n/a' ? -Infinity : parseFloat(bVal.replace(/[,%]/g, '')) || 0;
+        comparison = aNum - bNum;
+      }
+      // For numeric fields like upside/downside
+      else if (sortField === 'upside' || sortField === 'downside') {
+        const aNum = parseFloat(aVal) || 0;
+        const bNum = parseFloat(bVal) || 0;
+        comparison = aNum - bNum;
+      }
+      // For text fields like quality and risk
+      else {
+        comparison = aVal.localeCompare(bVal);
+      }
     } else {
       comparison = Number(aVal) - Number(bVal);
     }
@@ -367,14 +384,14 @@ export default function GoldStocksPage() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
+                <SortableHeader field="company_name">
+                  {language === 'fr' ? 'Entreprise' : 'Company'}
+                </SortableHeader>
                 <SortableHeader field="full_symbol">
                   {language === 'fr' ? 'Symbole' : 'Symbol'}
                 </SortableHeader>
                 <SortableHeader field="price">
                   {language === 'fr' ? 'Prix' : 'Price'}
-                </SortableHeader>
-                <SortableHeader field="category">
-                  {language === 'fr' ? 'Catégorie' : 'Category'}
                 </SortableHeader>
                 <SortableHeader field="upside">
                   {language === 'fr' ? 'Hausse' : 'Upside'}
@@ -390,9 +407,6 @@ export default function GoldStocksPage() {
                 </SortableHeader>
                 <SortableHeader field="cash_flow_growth">
                   {language === 'fr' ? 'Croissance CF' : 'CF Growth'}
-                </SortableHeader>
-                <SortableHeader field="free_cash_multiple">
-                  {language === 'fr' ? 'Multiple FCF' : 'FCF Multiple'}
                 </SortableHeader>
                 <SortableHeader field="signal_score">
                   {language === 'fr' ? 'Signal' : 'Signal'}
@@ -414,6 +428,9 @@ export default function GoldStocksPage() {
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {language === 'fr' ? 'Actions' : 'Actions'}
                 </th>
+                <SortableHeader field="category">
+                  {language === 'fr' ? 'Catégorie' : 'Category'}
+                </SortableHeader>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -441,25 +458,10 @@ export default function GoldStocksPage() {
                     window.location.href = `/dashboard/gold-stocks/${encodeURIComponent(tickerSymbol)}?${params.toString()}`;
                   }}
                 >
-                  <td 
-                    className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white relative"
-                    onMouseEnter={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setTooltip({
-                        company,
-                        position: { x: e.clientX, y: e.clientY }
-                      });
-                    }}
-                    onMouseLeave={() => setTooltip(null)}
-                    onMouseMove={(e) => {
-                      if (tooltip) {
-                        setTooltip({
-                          company,
-                          position: { x: e.clientX, y: e.clientY }
-                        });
-                      }
-                    }}
-                  >
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    {company.company_name}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={async (e) => {
@@ -478,9 +480,6 @@ export default function GoldStocksPage() {
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {company.price} {company.currency}
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {company.category}
-                  </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {company.upside || '-'}
                   </td>
@@ -495,9 +494,6 @@ export default function GoldStocksPage() {
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {company.cash_flow_growth || '-'}
-                  </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {company.free_cash_multiple || '-'}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {company.signal_score ? (
@@ -559,6 +555,18 @@ export default function GoldStocksPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          setShowTickerViewModal(company.full_symbol.includes(':') ? company.full_symbol.split(':')[1] : company.full_symbol);
+                        }}
+                        className="p-1 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900 rounded transition-all duration-200"
+                        title={language === 'fr' ? 'Voir les informations du ticker' : 'View ticker information'}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           openCommentModal(company.id.toString());
                         }}
                         onMouseEnter={(e) => handleCommentIconEnter(e, ticker)}
@@ -577,6 +585,9 @@ export default function GoldStocksPage() {
                         </svg>
                       </button>
                     </div>
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {company.category}
                   </td>
                 </tr>
                 );
@@ -597,23 +608,7 @@ export default function GoldStocksPage() {
         </div>
       )}
 
-      {/* Company Name and Date Tooltip */}
-      {tooltip && (
-        <div
-          className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-3 min-w-48 pointer-events-none"
-          style={{
-            left: tooltip.position.x + 10,
-            top: tooltip.position.y - 10,
-          }}
-        >
-          <div className="text-sm font-medium text-gray-900 dark:text-white">
-            {tooltip.company.company_name}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {tooltip.company.analysis_date ? new Date(tooltip.company.analysis_date).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '-'}
-          </div>
-        </div>
-      )}
+
 
       {/* Comment Tooltip */}
       {commentTooltip && (
@@ -636,6 +631,15 @@ export default function GoldStocksPage() {
               : commentTooltip.comment}&quot;
           </div>
         </div>
+      )}
+
+      {/* Ticker View Modal */}
+      {showTickerViewModal && (
+        <TickerViewModal
+          isOpen={!!showTickerViewModal}
+          onClose={() => setShowTickerViewModal(null)}
+          ticker={showTickerViewModal}
+        />
       )}
 
       {/* Enhanced Comment Modal */}
