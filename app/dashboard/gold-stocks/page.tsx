@@ -30,6 +30,8 @@ export default function GoldStocksPage() {
   const [commentTooltip, setCommentTooltip] = useState<{ ticker: string; comment: string; position: { x: number; y: number } } | null>(null);
   const [allUserComments, setAllUserComments] = useState<any[]>([]);
   const [showTickerViewModal, setShowTickerViewModal] = useState<string | null>(null);
+  const [tickerFilter, setTickerFilter] = useState<string>('');
+  const [targetFilter, setTargetFilter] = useState<boolean>(false);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { t, language } = useSettings();
@@ -241,17 +243,27 @@ export default function GoldStocksPage() {
   };
 
   const filteredCompanies = companies.filter(company => {
-    if (selectedCategory === 'all') return true;
+    // Filter by category
+    const categoryMatch = selectedCategory === 'all' || 
+      (company.categories && Array.isArray(company.categories) && company.categories.includes(selectedCategory));
     
-    // Check if company has categories array and includes the selected category
-    if (company.categories && Array.isArray(company.categories)) {
-      return company.categories.includes(selectedCategory);
-    }
+    // Filter by ticker (extract ticker from full_symbol)
+    const ticker = company.full_symbol.includes(':') ? company.full_symbol.split(':')[1] : company.full_symbol;
+    const tickerMatch = !tickerFilter || ticker.toLowerCase().includes(tickerFilter.toLowerCase());
     
-    return false;
+    return categoryMatch && tickerMatch;
   });
 
   const sortedCompanies = [...filteredCompanies].sort((a, b) => {
+    // If target filter is active, prioritize target stocks
+    if (targetFilter) {
+      const aTarget = a.target ? 1 : 0;
+      const bTarget = b.target ? 1 : 0;
+      if (aTarget !== bTarget) {
+        return bTarget - aTarget; // target=true comes first
+      }
+    }
+    
     let aVal, bVal;
     
     // Handle category sorting
@@ -341,6 +353,25 @@ export default function GoldStocksPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setTargetFilter(!targetFilter)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-md border transition-colors ${
+              targetFilter
+                ? 'bg-yellow-100 border-yellow-300 text-yellow-800 dark:bg-yellow-900 dark:border-yellow-600 dark:text-yellow-200'
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
+            }`}
+            title={language === 'fr' ? 'Filtrer le portefeuille en haut' : 'Filter portfolio on top'}
+          >
+            <StarIcon className="w-4 h-4" />
+            {language === 'fr' ? 'Portefeuille' : 'Portfolio'}
+          </button>
+          <input
+            type="text"
+            placeholder={language === 'fr' ? 'Filtrer par ticker...' : 'Filter by ticker...'}
+            value={tickerFilter}
+            onChange={(e) => setTickerFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+          />
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}

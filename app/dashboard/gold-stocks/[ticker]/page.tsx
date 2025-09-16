@@ -10,6 +10,7 @@ import { useAuth } from '@/app/contexts/auth-context';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import NewsSection from '@/app/ui/news-section';
+import { TickerViewModal } from '@/app/ui/stocks/ticker-view-modal';
 
 const formatNumber = (value: any): string => {
   if (value === null || value === undefined || value === '') return '-';
@@ -96,6 +97,11 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
   const [isEditingAction, setIsEditingAction] = useState<boolean>(false);
   const [editAction, setEditAction] = useState<string>('');
   const [editPortfolio, setEditPortfolio] = useState<string>('');
+  const [tickerViewData, setTickerViewData] = useState<{stock_ticker: string, ticker_view: string} | null>(null);
+  const [editingStockTicker, setEditingStockTicker] = useState<boolean>(false);
+  const [editingTickerView, setEditingTickerView] = useState<boolean>(false);
+  const [tempStockTicker, setTempStockTicker] = useState<string>('');
+  const [tempTickerView, setTempTickerView] = useState<string>('');
 
   // Color management using API
   const cycleColor = async () => {
@@ -428,6 +434,28 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
     filterCommentsForTicker();
   }, [currentStock, allUserComments, filterCommentsForTicker]);
 
+  // Fetch ticker view data
+  useEffect(() => {
+    const fetchTickerViewData = async () => {
+      if (!currentStock?.ticker) return;
+      try {
+        const response = await fetch('/api/stocks/tickers-with-view');
+        if (response.ok) {
+          const data = await response.json();
+          const tickerInfo = data.find((item: any) => item.symbol === currentStock.ticker);
+          setTickerViewData(tickerInfo ? {
+            stock_ticker: tickerInfo.stock_ticker,
+            ticker_view: tickerInfo.ticker_view
+          } : null);
+        }
+      } catch (error) {
+        console.error('Error fetching ticker view data:', error);
+      }
+    };
+    
+    fetchTickerViewData();
+  }, [currentStock?.ticker]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[600px]">
@@ -615,6 +643,12 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Stock Ticker
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Ticker View
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Signal
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -642,6 +676,90 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
             </thead>
             <tbody>
               <tr className="border-b border-gray-100 dark:border-gray-700">
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {editingStockTicker ? (
+                    <input
+                      type="text"
+                      value={tempStockTicker}
+                      onChange={(e) => setTempStockTicker(e.target.value)}
+                      onBlur={async () => {
+                        setEditingStockTicker(false);
+                        try {
+                          await fetch(`/api/stocks/ticker/${currentStock.ticker}/stock-ticker`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ stock_ticker: tempStockTicker })
+                          });
+                          setTickerViewData(prev => prev ? { ...prev, stock_ticker: tempStockTicker } : { stock_ticker: tempStockTicker, ticker_view: '' });
+                        } catch (error) {
+                          console.error('Error updating stock ticker:', error);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') e.currentTarget.blur();
+                        if (e.key === 'Escape') {
+                          setEditingStockTicker(false);
+                          setTempStockTicker(tickerViewData?.stock_ticker || '');
+                        }
+                      }}
+                      className="w-full px-2 py-1 border border-blue-500 rounded text-sm font-mono bg-white dark:bg-gray-700"
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onDoubleClick={() => {
+                        setEditingStockTicker(true);
+                        setTempStockTicker(tickerViewData?.stock_ticker || '');
+                      }}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded font-mono text-sm"
+                      title={language === 'fr' ? 'Double-cliquer pour modifier' : 'Double-click to edit'}
+                    >
+                      {tickerViewData?.stock_ticker || '-'}
+                    </div>
+                  )}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {editingTickerView ? (
+                    <input
+                      type="text"
+                      value={tempTickerView}
+                      onChange={(e) => setTempTickerView(e.target.value)}
+                      onBlur={async () => {
+                        setEditingTickerView(false);
+                        try {
+                          await fetch(`/api/stocks/ticker/${currentStock.ticker}/ticker-view`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ticker_view: tempTickerView })
+                          });
+                          setTickerViewData(prev => prev ? { ...prev, ticker_view: tempTickerView } : { stock_ticker: '', ticker_view: tempTickerView });
+                        } catch (error) {
+                          console.error('Error updating ticker view:', error);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') e.currentTarget.blur();
+                        if (e.key === 'Escape') {
+                          setEditingTickerView(false);
+                          setTempTickerView(tickerViewData?.ticker_view || '');
+                        }
+                      }}
+                      className="w-full px-2 py-1 border border-blue-500 rounded text-sm bg-white dark:bg-gray-700"
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onDoubleClick={() => {
+                        setEditingTickerView(true);
+                        setTempTickerView(tickerViewData?.ticker_view || '');
+                      }}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded text-sm"
+                      title={language === 'fr' ? 'Double-cliquer pour modifier' : 'Double-click to edit'}
+                    >
+                      {tickerViewData?.ticker_view || '-'}
+                    </div>
+                  )}
+                </td>
                 <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
                   {formatNumber(currentStock.signal_score)}
                 </td>
@@ -972,6 +1090,8 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
           </button>
         </div>
       </div>
+      
+
     </div>
   );
 }
