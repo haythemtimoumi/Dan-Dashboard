@@ -13,7 +13,7 @@ import { TickerViewModal } from '@/app/ui/stocks/ticker-view-modal';
 type SortField = keyof CompanyAnalysis | 'top25' | 'mormons' | 'top_picks';
 type SortDirection = 'asc' | 'desc';
 
-export default function GoldStocksPage() {
+export default function GoldStocksPageFr() {
   const searchParams = useSearchParams();
   const [companies, setCompanies] = useState<CompanyAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,7 +93,7 @@ export default function GoldStocksPage() {
       await checkCommentsForStocks(data);
     } catch (err) {
       console.error('Error loading companies:', err);
-      setError(language === 'fr' ? 'Erreur lors du chargement des données' : 'Error loading data');
+      setError('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -335,7 +335,7 @@ export default function GoldStocksPage() {
           onClick={loadCompanies}
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
-          {t('retry')}
+          Réessayer
         </button>
       </div>
     );
@@ -346,10 +346,10 @@ export default function GoldStocksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {language === 'fr' ? 'Actions Or' : 'Gold Stocks'}
+            Actions Or
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {language === 'fr' ? `${sortedCompanies.length} enregistrement${sortedCompanies.length !== 1 ? 's' : ''} sur ${companies.length}` : `${sortedCompanies.length} record${sortedCompanies.length !== 1 ? 's' : ''} of ${companies.length}`}
+            {`${sortedCompanies.length} enregistrement${sortedCompanies.length !== 1 ? 's' : ''} sur ${companies.length}`}
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -360,14 +360,14 @@ export default function GoldStocksPage() {
                 ? 'bg-yellow-100 border-yellow-300 text-yellow-800 dark:bg-yellow-900 dark:border-yellow-600 dark:text-yellow-200'
                 : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
-            title={language === 'fr' ? 'Filtrer le portefeuille en haut' : 'Filter portfolio on top'}
+            title="Filtrer le portefeuille en haut"
           >
             <StarIcon className="w-4 h-4" />
-            {language === 'fr' ? 'Portefeuille' : 'Portfolio'}
+            Portefeuille
           </button>
           <input
             type="text"
-            placeholder={language === 'fr' ? 'Filtrer par ticker...' : 'Filter by ticker...'}
+            placeholder="Filtrer par ticker..."
             value={tickerFilter}
             onChange={(e) => setTickerFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
@@ -377,10 +377,10 @@ export default function GoldStocksPage() {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value="all">{language === 'fr' ? 'Toutes les catégories' : 'All Categories'}</option>
+            <option value="all">Toutes les catégories</option>
             <option value="top25">TOP25</option>
             <option value="mormons">Mormons</option>
-            <option value="top_picks">{language === 'fr' ? 'Choix Principaux' : 'Top Picks'}</option>
+            <option value="top_picks">Choix Principaux</option>
           </select>
           <input
             type="date"
@@ -395,7 +395,7 @@ export default function GoldStocksPage() {
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
           >
-            {t('refresh')}
+            Actualiser
           </button>
           <button
             onClick={() => {
@@ -405,7 +405,7 @@ export default function GoldStocksPage() {
             }}
             className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
           >
-            {language === 'fr' ? 'Date Récente' : 'Recent Date'}
+            Date Récente
           </button>
         </div>
       </div>
@@ -416,32 +416,32 @@ export default function GoldStocksPage() {
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <SortableHeader field="company_name">
-                  {language === 'fr' ? 'Entreprise' : 'Company'}
+                  Entreprise
                 </SortableHeader>
                 <SortableHeader field="full_symbol">
-                  {language === 'fr' ? 'Symbole' : 'Symbol'}
+                  Symbole
                 </SortableHeader>
                 <SortableHeader field="price">
-                  {language === 'fr' ? 'Prix' : 'Price'}
+                  Prix
                 </SortableHeader>
 
                 <SortableHeader field="downside">
-                  {language === 'fr' ? 'Baisse' : 'Downside'}
+                  Baisse
                 </SortableHeader>
                 <SortableHeader field="quality">
-                  {language === 'fr' ? 'Qualité' : 'Quality'}
+                  Qualité
                 </SortableHeader>
                 <SortableHeader field="risk">
-                  {language === 'fr' ? 'Risque' : 'Risk'}
+                  Risque
                 </SortableHeader>
                 <SortableHeader field="cash_flow_growth">
-                  {language === 'fr' ? 'Hausse' : 'Upside'}
+                  Hausse
                 </SortableHeader>
                 <SortableHeader field="signal_score">
-                  {language === 'fr' ? 'Signal' : 'Signal'}
+                  Signal
                 </SortableHeader>
                 <SortableHeader field="sentiment_score">
-                  {language === 'fr' ? 'Sentiment' : 'Sentiment'}
+                  Sentiment
                 </SortableHeader>
                 <SortableHeader field="top25">
                   TOP25
@@ -450,15 +450,15 @@ export default function GoldStocksPage() {
                   Mormons
                 </SortableHeader>
                 <SortableHeader field="top_picks">
-                  {language === 'fr' ? 'Choix Principaux' : 'Top Picks'}
+                  Choix Principaux
                 </SortableHeader>
 
 
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  {language === 'fr' ? 'Actions' : 'Actions'}
+                  Actions
                 </th>
                 <SortableHeader field="category">
-                  {language === 'fr' ? 'Catégorie' : 'Category'}
+                  Catégorie
                 </SortableHeader>
               </tr>
             </thead>
@@ -501,7 +501,7 @@ export default function GoldStocksPage() {
                         style={{ backgroundColor: companyColor === 'neutral' ? 'transparent' : companyColor || 'transparent' }}
                       />
                       {company.target && (
-                        <StarIconSolid className="w-4 h-4 text-yellow-500" title={language === 'fr' ? 'Cible' : 'Target'} />
+                        <StarIconSolid className="w-4 h-4 text-yellow-500" title="Cible" />
                       )}
                       {company.full_symbol}
                     </div>
@@ -585,7 +585,7 @@ export default function GoldStocksPage() {
                           setShowTickerViewModal(company.full_symbol.includes(':') ? company.full_symbol.split(':')[1] : company.full_symbol);
                         }}
                         className="p-1 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900 rounded transition-all duration-200"
-                        title={language === 'fr' ? 'Voir les informations du ticker' : 'View ticker information'}
+                        title="Voir les informations du ticker"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -628,8 +628,8 @@ export default function GoldStocksPage() {
         <div className="text-center py-8">
           <p className="text-gray-500 dark:text-gray-400">
             {selectedCategory === 'all' 
-              ? (language === 'fr' ? 'Aucune donnée disponible' : 'No data available')
-              : (language === 'fr' ? 'Aucune entreprise trouvée pour cette catégorie' : 'No companies found for this category')
+              ? 'Aucune donnée disponible'
+              : 'Aucune entreprise trouvée pour cette catégorie'
             }
           </p>
         </div>
@@ -650,7 +650,7 @@ export default function GoldStocksPage() {
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            {language === 'fr' ? 'Dernier commentaire' : 'Last Comment'}
+            Dernier commentaire
           </div>
           <div className="text-blue-100 italic">
             &quot;{commentTooltip.comment.length > 100 

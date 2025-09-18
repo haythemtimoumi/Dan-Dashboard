@@ -97,11 +97,13 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
   const [isEditingAction, setIsEditingAction] = useState<boolean>(false);
   const [editAction, setEditAction] = useState<string>('');
   const [editPortfolio, setEditPortfolio] = useState<string>('');
-  const [tickerViewData, setTickerViewData] = useState<{stock_ticker: string, ticker_view: string} | null>(null);
+  const [tickerViewData, setTickerViewData] = useState<{stock_ticker: string, ticker_view: string, rule1_ticker: string} | null>(null);
   const [editingStockTicker, setEditingStockTicker] = useState<boolean>(false);
   const [editingTickerView, setEditingTickerView] = useState<boolean>(false);
+  const [editingRule1Ticker, setEditingRule1Ticker] = useState<boolean>(false);
   const [tempStockTicker, setTempStockTicker] = useState<string>('');
   const [tempTickerView, setTempTickerView] = useState<string>('');
+  const [tempRule1Ticker, setTempRule1Ticker] = useState<string>('');
 
   // Color management using API
   const cycleColor = async () => {
@@ -445,7 +447,8 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
           const tickerInfo = data.find((item: any) => item.symbol === currentStock.ticker);
           setTickerViewData(tickerInfo ? {
             stock_ticker: tickerInfo.stock_ticker,
-            ticker_view: tickerInfo.ticker_view
+            ticker_view: tickerInfo.ticker_view,
+            rule1_ticker: tickerInfo.rule1_ticker
           } : null);
         }
       } catch (error) {
@@ -579,45 +582,54 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
           </div>
         </div>
         
-        {allStocks.length > 1 && (
-          <div className="flex items-center gap-3">
-            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1 rounded-lg">
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                #{currentIndex + 1} of {allStocks.length}
-              </span>
-            </div>
-            <div className="flex gap-1">
-              <button
-                onClick={handlePrevious}
-                disabled={currentIndex === 0}
-                className={clsx(
-                  "p-1.5 rounded-lg transition-all",
-                  currentIndex === 0
-                    ? "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                )}
-              >
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-                </svg>
-              </button>
-              <button
-                onClick={handleNext}
-                disabled={currentIndex === allStocks.length - 1}
-                className={clsx(
-                  "p-1.5 rounded-lg transition-all",
-                  currentIndex === allStocks.length - 1
-                    ? "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                )}
-              >
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.open(`https://www.stockscores.com/charts/charts/?ticker=${tickerSymbol}`, '_blank')}
+            className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition-colors"
+            title={language === 'fr' ? 'Ouvrir le graphique StockScores' : 'Open StockScores chart'}
+          >
+            📈
+          </button>
+          {allStocks.length > 1 && (
+            <>
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1 rounded-lg">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  #{currentIndex + 1} of {allStocks.length}
+                </span>
+              </div>
+              <div className="flex gap-1">
+                <button
+                  onClick={handlePrevious}
+                  disabled={currentIndex === 0}
+                  className={clsx(
+                    "p-1.5 rounded-lg transition-all",
+                    currentIndex === 0
+                      ? "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                  )}
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    disabled={currentIndex === allStocks.length - 1}
+                    className={clsx(
+                      "p-1.5 rounded-lg transition-all",
+                      currentIndex === allStocks.length - 1
+                        ? "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                    )}
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+            </>
+          )}
+        </div>
       </div>
       
       {/* Analysis Data Table */}
@@ -647,6 +659,9 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Ticker View
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Rule1 Ticker
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Signal
@@ -690,7 +705,7 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ stock_ticker: tempStockTicker })
                           });
-                          setTickerViewData(prev => prev ? { ...prev, stock_ticker: tempStockTicker } : { stock_ticker: tempStockTicker, ticker_view: '' });
+                          setTickerViewData(prev => prev ? { ...prev, stock_ticker: tempStockTicker } : { stock_ticker: tempStockTicker, ticker_view: '', rule1_ticker: '' });
                         } catch (error) {
                           console.error('Error updating stock ticker:', error);
                         }
@@ -732,7 +747,7 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ ticker_view: tempTickerView })
                           });
-                          setTickerViewData(prev => prev ? { ...prev, ticker_view: tempTickerView } : { stock_ticker: '', ticker_view: tempTickerView });
+                          setTickerViewData(prev => prev ? { ...prev, ticker_view: tempTickerView } : { stock_ticker: '', ticker_view: tempTickerView, rule1_ticker: '' });
                         } catch (error) {
                           console.error('Error updating ticker view:', error);
                         }
@@ -757,6 +772,48 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
                       title={language === 'fr' ? 'Double-cliquer pour modifier' : 'Double-click to edit'}
                     >
                       {tickerViewData?.ticker_view || '-'}
+                    </div>
+                  )}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {editingRule1Ticker ? (
+                    <input
+                      type="text"
+                      value={tempRule1Ticker}
+                      onChange={(e) => setTempRule1Ticker(e.target.value)}
+                      onBlur={async () => {
+                        setEditingRule1Ticker(false);
+                        try {
+                          await fetch(`/api/stocks/ticker/${currentStock.ticker}/rule1-ticker`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ rule1_ticker: tempRule1Ticker })
+                          });
+                          setTickerViewData(prev => prev ? { ...prev, rule1_ticker: tempRule1Ticker } : { stock_ticker: '', ticker_view: '', rule1_ticker: tempRule1Ticker });
+                        } catch (error) {
+                          console.error('Error updating rule1 ticker:', error);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') e.currentTarget.blur();
+                        if (e.key === 'Escape') {
+                          setEditingRule1Ticker(false);
+                          setTempRule1Ticker(tickerViewData?.rule1_ticker || '');
+                        }
+                      }}
+                      className="w-full px-2 py-1 border border-blue-500 rounded text-sm font-mono bg-white dark:bg-gray-700"
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onDoubleClick={() => {
+                        setEditingRule1Ticker(true);
+                        setTempRule1Ticker(tickerViewData?.rule1_ticker || '');
+                      }}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded font-mono text-sm"
+                      title={language === 'fr' ? 'Double-cliquer pour modifier' : 'Double-click to edit'}
+                    >
+                      {tickerViewData?.rule1_ticker || '-'}
                     </div>
                   )}
                 </td>
@@ -1076,6 +1133,12 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
       {/* External Links Bar */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700 mt-3">
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.open(`https://www.stockscores.com/charts/charts/?ticker=${currentStock.ticker}`, '_blank')}
+            className="bg-purple-100 dark:bg-purple-900 hover:bg-purple-200 dark:hover:bg-purple-800 text-purple-700 dark:text-purple-300 py-2 px-3 rounded-lg text-xs font-medium transition-colors"
+          >
+            📈 StockScores
+          </button>
           <button
             onClick={() => window.open(`https://finance.yahoo.com/quote/${currentStock.ticker}`, '_blank')}
             className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-3 rounded-lg text-xs font-medium transition-colors"

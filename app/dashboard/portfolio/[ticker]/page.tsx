@@ -126,11 +126,13 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
   const [copiedEmail, setCopiedEmail] = useState<boolean>(false);
   const [tickerChanges, setTickerChanges] = useState<{[key: string]: any}>({});
   const [sidebarTab, setSidebarTab] = useState<'news' | 'company' | 'portfolio' | 'comments'>('news');
-  const [tickerViewData, setTickerViewData] = useState<{stock_ticker: string, ticker_view: string} | null>(null);
+  const [tickerViewData, setTickerViewData] = useState<{stock_ticker: string, ticker_view: string, rule1_ticker: string} | null>(null);
   const [editingStockTicker, setEditingStockTicker] = useState<boolean>(false);
   const [editingTickerView, setEditingTickerView] = useState<boolean>(false);
+  const [editingRule1Ticker, setEditingRule1Ticker] = useState<boolean>(false);
   const [tempStockTicker, setTempStockTicker] = useState<string>('');
   const [tempTickerView, setTempTickerView] = useState<string>('');
+  const [tempRule1Ticker, setTempRule1Ticker] = useState<string>('');
 
   // Color management using API
   const cycleColor = async () => {
@@ -705,7 +707,8 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
           const tickerInfo = data.find((item: any) => item.symbol === currentStock.ticker);
           setTickerViewData(tickerInfo ? {
             stock_ticker: tickerInfo.stock_ticker,
-            ticker_view: tickerInfo.ticker_view
+            ticker_view: tickerInfo.ticker_view,
+            rule1_ticker: tickerInfo.rule1_ticker
           } : null);
         }
       } catch (error) {
@@ -1034,6 +1037,9 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                   Ticker View
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Rule1 Ticker
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Signal
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -1098,7 +1104,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ stock_ticker: tempStockTicker })
                           });
-                          setTickerViewData(prev => prev ? { ...prev, stock_ticker: tempStockTicker } : { stock_ticker: tempStockTicker, ticker_view: '' });
+                          setTickerViewData(prev => prev ? { ...prev, stock_ticker: tempStockTicker } : { stock_ticker: tempStockTicker, ticker_view: '', rule1_ticker: '' });
                         } catch (error) {
                           console.error('Error updating stock ticker:', error);
                         }
@@ -1140,7 +1146,7 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ ticker_view: tempTickerView })
                           });
-                          setTickerViewData(prev => prev ? { ...prev, ticker_view: tempTickerView } : { stock_ticker: '', ticker_view: tempTickerView });
+                          setTickerViewData(prev => prev ? { ...prev, ticker_view: tempTickerView } : { stock_ticker: '', ticker_view: tempTickerView, rule1_ticker: '' });
                         } catch (error) {
                           console.error('Error updating ticker view:', error);
                         }
@@ -1165,6 +1171,48 @@ export default function StockAnalysisPage({ params }: { params: { ticker: string
                       title={language === 'fr' ? 'Double-cliquer pour modifier' : 'Double-click to edit'}
                     >
                       {tickerViewData?.ticker_view || '-'}
+                    </div>
+                  )}
+                </td>
+                <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
+                  {editingRule1Ticker ? (
+                    <input
+                      type="text"
+                      value={tempRule1Ticker}
+                      onChange={(e) => setTempRule1Ticker(e.target.value)}
+                      onBlur={async () => {
+                        setEditingRule1Ticker(false);
+                        try {
+                          await fetch(`/api/stocks/ticker/${currentStock.ticker}/rule1-ticker`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ rule1_ticker: tempRule1Ticker })
+                          });
+                          setTickerViewData(prev => prev ? { ...prev, rule1_ticker: tempRule1Ticker } : { stock_ticker: '', ticker_view: '', rule1_ticker: tempRule1Ticker });
+                        } catch (error) {
+                          console.error('Error updating rule1 ticker:', error);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') e.currentTarget.blur();
+                        if (e.key === 'Escape') {
+                          setEditingRule1Ticker(false);
+                          setTempRule1Ticker(tickerViewData?.rule1_ticker || '');
+                        }
+                      }}
+                      className="w-full px-2 py-1 border border-blue-500 rounded text-sm font-mono bg-white dark:bg-gray-700"
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onDoubleClick={() => {
+                        setEditingRule1Ticker(true);
+                        setTempRule1Ticker(tickerViewData?.rule1_ticker || '');
+                      }}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded font-mono text-sm"
+                      title={language === 'fr' ? 'Double-cliquer pour modifier' : 'Double-click to edit'}
+                    >
+                      {tickerViewData?.rule1_ticker || '-'}
                     </div>
                   )}
                 </td>
