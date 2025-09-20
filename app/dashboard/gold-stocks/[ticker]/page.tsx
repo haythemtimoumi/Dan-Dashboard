@@ -764,13 +764,13 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Stock Ticker
+                  Stockscores
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Ticker View
+                  GoldStock Data
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Rule1 Ticker
+                  TradingView
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Signal
