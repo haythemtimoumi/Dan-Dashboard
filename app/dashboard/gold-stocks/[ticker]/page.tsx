@@ -642,13 +642,13 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
               </div>
             </div>
             
-            {companyInfo && (
+            {(companyInfo || currentStock?.full_name) && (
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 min-w-0 flex-1 max-w-md">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-xs text-gray-900 dark:text-white">
                     {language === 'fr' ? 'Informations Société' : 'Company Information'}
                   </h3>
-                  {companyInfo.business_description && (
+                  {companyInfo?.business_description && (
                     <button
                       onClick={() => setExpandedDescription(!expandedDescription)}
                       className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
@@ -659,19 +659,27 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
                     </button>
                   )}
                 </div>
-                {expandedDescription && companyInfo.business_description && (
+                
+                {/* Company Name Fallback */}
+                {!companyInfo?.business_description && !companyInfo?.ceo && !companyInfo?.number_of_employees && (
+                  <div className="text-gray-900 dark:text-white text-xs font-medium mb-2">
+                    {currentStock?.full_name || (currentStock as any)?.company_name || tickerSymbol}
+                  </div>
+                )}
+                
+                {expandedDescription && companyInfo?.business_description && (
                   <div className="text-gray-900 dark:text-white text-xs leading-relaxed mb-2 p-2 bg-white dark:bg-gray-800 rounded border">
                     {companyInfo.business_description}
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                  {companyInfo.ceo && (
+                  {companyInfo?.ceo && (
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">CEO</span>
                       <div className="font-medium text-gray-900 dark:text-white truncate">{companyInfo.ceo}</div>
                     </div>
                   )}
-                  {companyInfo.number_of_employees && (
+                  {companyInfo?.number_of_employees && (
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">{language === 'fr' ? 'Employés' : 'Employees'}</span>
                       <div className="font-medium text-gray-900 dark:text-white">{companyInfo.number_of_employees.toLocaleString()}</div>

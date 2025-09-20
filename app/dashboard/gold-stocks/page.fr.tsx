@@ -32,6 +32,7 @@ export default function GoldStocksPageFr() {
   const [showTickerViewModal, setShowTickerViewModal] = useState<string | null>(null);
   const [tickerFilter, setTickerFilter] = useState<string>('');
   const [targetFilter, setTargetFilter] = useState<boolean>(false);
+  const [companyNameCache, setCompanyNameCache] = useState<{[key: string]: string}>({});
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -106,6 +107,9 @@ export default function GoldStocksPageFr() {
       
       // Auto-load comments for all companies
       await checkCommentsForStocks(data);
+      
+      // Fetch company names for empty ones
+      await fetchMissingCompanyNames(data);
     } catch (err) {
       console.error('Error loading companies:', err);
       setError('Erreur lors du chargement des données');
@@ -113,6 +117,36 @@ export default function GoldStocksPageFr() {
       setLoading(false);
     }
   };
+
+  const fetchMissingCompanyNames = async (companiesList: CompanyAnalysis[]) => {
+    const emptyNameCompanies = companiesList.filter(company => 
+      !company.company_name || company.company_name.trim() === ''
+    );
+    
+    if (emptyNameCompanies.length === 0) return;
+    
+    try {
+      const response = await fetch(`/api/proxy/stocks/companies-with-analysis?date=${selectedDate}`);
+      if (response.ok) {
+        const fullData = await response.json();
+        const newCache = { ...companyNameCache };
+        
+        emptyNameCompanies.forEach(emptyCompany => {
+          const ticker = emptyCompany.full_symbol.includes(':') ? emptyCompany.full_symbol.split(':')[1] : emptyCompany.full_symbol;
+          const fullCompany = fullData.find((c: any) => c.full_symbol === emptyCompany.full_symbol);
+          if (fullCompany?.company_name) {
+            newCache[ticker] = fullCompany.company_name;
+          }
+        });
+        
+        setCompanyNameCache(newCache);
+      }
+    } catch (error) {
+      console.error('Error fetching company names:', error);
+    }
+  };
+
+
 
   // Comment functionality
   const handleCommentSave = (companyId: string, comment: string) => {
@@ -513,7 +547,7 @@ export default function GoldStocksPageFr() {
                     {index + 1}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {company.company_name}
+                    {company.company_name || companyNameCache[ticker] || ticker}
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                     <div className="flex items-center gap-2">
