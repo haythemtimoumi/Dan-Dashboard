@@ -34,6 +34,21 @@ export default function GoldStocksPageFr() {
   const [targetFilter, setTargetFilter] = useState<boolean>(false);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Initialize sorting state from URL parameters
+  useEffect(() => {
+    const urlSortBy = searchParams.get('sortBy');
+    const urlSortOrder = searchParams.get('sortOrder');
+    const urlCategory = searchParams.get('category');
+    const urlTickerFilter = searchParams.get('tickerFilter');
+    const urlTargetFilter = searchParams.get('targetFilter');
+    
+    if (urlSortBy) setSortField(urlSortBy as SortField);
+    if (urlSortOrder) setSortDirection(urlSortOrder as SortDirection);
+    if (urlCategory) setSelectedCategory(urlCategory);
+    if (urlTickerFilter) setTickerFilter(urlTickerFilter);
+    if (urlTargetFilter === 'true') setTargetFilter(true);
+  }, [searchParams]);
   const { t, language } = useSettings();
   const { user } = useAuth();
 
@@ -415,6 +430,9 @@ export default function GoldStocksPageFr() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  #
+                </th>
                 <SortableHeader field="company_name">
                   Entreprise
                 </SortableHeader>
@@ -463,7 +481,7 @@ export default function GoldStocksPageFr() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {sortedCompanies.map((company) => {
+              {sortedCompanies.map((company, index) => {
                 const companyColor = (company as any).color || '';
                 const ticker = company.full_symbol.includes(':') ? company.full_symbol.split(':')[1] : company.full_symbol;
                 const hasComment = stocksWithComments.has(ticker);
@@ -480,13 +498,20 @@ export default function GoldStocksPageFr() {
                     const params = new URLSearchParams({
                       date: selectedDate,
                       sortBy: sortField,
-                      sortOrder: sortDirection
+                      sortOrder: sortDirection,
+                      category: selectedCategory,
+                      tickerFilter: tickerFilter,
+                      targetFilter: targetFilter.toString(),
+                      position: (index + 1).toString()
                     });
                     // Extract ticker symbol from full_symbol (e.g., "A1G" from "ASX:A1G")
                     const tickerSymbol = company.full_symbol.includes(':') ? company.full_symbol.split(':')[1] : company.full_symbol;
                     window.location.href = `/dashboard/gold-stocks/${encodeURIComponent(tickerSymbol)}?${params.toString()}`;
                   }}
                 >
+                  <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {index + 1}
+                  </td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {company.company_name}
                   </td>

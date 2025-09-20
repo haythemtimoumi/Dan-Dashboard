@@ -83,6 +83,18 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
     rule1: parseInt(searchParams.get('rule1') || '85'),
     management: parseInt(searchParams.get('management') || '85')
   });
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    searchParams.get('category') || 'all'
+  );
+  const [tickerFilter, setTickerFilter] = useState<string>(
+    searchParams.get('tickerFilter') || ''
+  );
+  const [targetFilter, setTargetFilter] = useState<boolean>(
+    searchParams.get('targetFilter') === 'true'
+  );
+  const [currentPosition, setCurrentPosition] = useState<number>(
+    parseInt(searchParams.get('position') || '0')
+  );
 
   const [showComments, setShowComments] = useState<boolean>(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -206,33 +218,34 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
     try {
       setLoading(true);
       
-      const response = await fetch(`/api/stocks/grouped?startDate=${date}&endDate=${date}`);
+      const { fetchCompanyAnalysis } = await import('@/app/lib/gold-stocks-api');
+      const stocksData = await fetchCompanyAnalysis(date);
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch stocks: ${response.statusText}`);
-      }
-      
-      const stocksData = await response.json();
-      
-      const tickerStock = stocksData.find((stock: Stock) => stock.ticker === tickerSymbol);
+      const tickerStock = stocksData.find((stock: any) => {
+        const ticker = stock.full_symbol?.includes(':') ? stock.full_symbol.split(':')[1] : stock.full_symbol;
+        return ticker === tickerSymbol;
+      });
       
       if (tickerStock) {
-        // Fetch color from API if ticker_id exists
-        if (tickerStock.ticker_id) {
-          try {
-            const colorResponse = await fetch(`/api/proxy/stocks/${tickerStock.ticker}/color`);
-            if (colorResponse.ok) {
-              const colorData = await colorResponse.json();
-              tickerStock.color = colorData.color || 'neutral';
-            }
-          } catch (error) {
-            console.error('Error fetching color:', error);
+        // Convert to Stock format and fetch color
+        const convertedStock: any = {
+          ...tickerStock,
+          ticker: tickerStock.full_symbol?.includes(':') ? tickerStock.full_symbol.split(':')[1] : tickerStock.full_symbol
+        };
+        
+        try {
+          const colorResponse = await fetch(`/api/proxy/stocks/${convertedStock.ticker}/color`);
+          if (colorResponse.ok) {
+            const colorData = await colorResponse.json();
+            convertedStock.color = colorData.color || 'neutral';
           }
+        } catch (error) {
+          console.error('Error fetching color:', error);
         }
         
-        setCurrentStock(tickerStock);
+        setCurrentStock(convertedStock as Stock);
         setError(null);
-        fetchCompanyInfo(tickerStock.ticker);
+        fetchCompanyInfo(convertedStock.ticker);
       } else {
         setCurrentStock(null);
         setError(`No data found for ${tickerSymbol} on ${date}`);
@@ -251,35 +264,80 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
       try {
         setLoading(true);
         
-        const response = await fetch('/api/stocks/grouped');
+        const { fetchCompanyAnalysis } = await import('@/app/lib/gold-stocks-api');
+        const stocksData = await fetchCompanyAnalysis(selectedDate);
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch stocks: ${response.statusText}`);
-        }
+        // Apply same filtering logic as main page
+        const filteredStocks = stocksData.filter((stock: any) => {
+          const categoryMatch = selectedCategory === 'all' || 
+            (stock.categories && Array.isArray(stock.categories) && stock.categories.includes(selectedCategory));
+          
+          const ticker = stock.full_symbol?.includes(':') ? stock.full_symbol.split(':')[1] : stock.full_symbol;
+          const tickerMatch = !tickerFilter || ticker?.toLowerCase().includes(tickerFilter.toLowerCase());
+          
+          return categoryMatch && tickerMatch;
+        });
         
-        const stocksData = await response.json();
-        
-        const deduplicatedStocks = stocksData.reduce((acc: Stock[], stock: Stock) => {
-          const existingStock = acc.find(s => s.ticker === stock.ticker);
-          if (!existingStock) {
-            acc.push(stock);
-          } else {
-            const existingTime = new Date(existingStock.updated_at || existingStock.created_at).getTime();
-            const currentTime = new Date(stock.updated_at || stock.created_at).getTime();
-            if (currentTime > existingTime) {
-              const index = acc.findIndex(s => s.ticker === stock.ticker);
-              acc[index] = stock;
+        // Apply same sorting logic as main page
+        const sortedStocks = [...filteredStocks].sort((a: any, b: any) => {
+          if (targetFilter) {
+            const aTarget = a.target ? 1 : 0;
+            const bTarget = b.target ? 1 : 0;
+            if (aTarget !== bTarget) {
+              return bTarget - aTarget;
             }
           }
-          return acc;
-        }, []);
+          
+          let aVal, bVal;
+          
+          if (sortBy === 'top25' || sortBy === 'mormons' || sortBy === 'top_picks') {
+            aVal = a.categories && a.categories.includes(sortBy) ? 1 : 0;
+            bVal = b.categories && b.categories.includes(sortBy) ? 1 : 0;
+          } else {
+            aVal = a[sortBy];
+            bVal = b[sortBy];
+          }
+          
+          if (aVal === null || aVal === undefined || aVal === '') return 1;
+          if (bVal === null || bVal === undefined || bVal === '') return -1;
+          
+          let comparison = 0;
+          if (typeof aVal === 'string' && typeof bVal === 'string') {
+            if (sortBy === 'cash_flow_growth') {
+              const aNum = aVal === 'n/a' ? -Infinity : parseFloat(aVal.replace(/[,%]/g, '')) || 0;
+              const bNum = bVal === 'n/a' ? -Infinity : parseFloat(bVal.replace(/[,%]/g, '')) || 0;
+              comparison = aNum - bNum;
+            } else if (sortBy === 'upside' || sortBy === 'downside') {
+              const aNum = parseFloat(aVal) || 0;
+              const bNum = parseFloat(bVal) || 0;
+              comparison = aNum - bNum;
+            } else {
+              comparison = aVal.localeCompare(bVal);
+            }
+          } else {
+            comparison = Number(aVal) - Number(bVal);
+          }
+          
+          return sortOrder === 'asc' ? comparison : -comparison;
+        });
         
-        setAllStocks(deduplicatedStocks);
+
         
-        const tickerIndex = deduplicatedStocks.findIndex((stock: Stock) => stock.ticker === tickerSymbol);
+        const tickerIndex = sortedStocks.findIndex((stock: any) => {
+          const ticker = stock.full_symbol?.includes(':') ? stock.full_symbol.split(':')[1] : stock.full_symbol;
+          return ticker === tickerSymbol;
+        });
         if (tickerIndex !== -1) {
           setCurrentIndex(tickerIndex);
+          setCurrentPosition(tickerIndex + 1);
         }
+        
+        // Convert stocks to have ticker field for navigation
+        const convertedStocks = sortedStocks.map((stock: any) => ({
+          ...stock,
+          ticker: stock.full_symbol?.includes(':') ? stock.full_symbol.split(':')[1] : stock.full_symbol
+        }));
+        setAllStocks(convertedStocks as Stock[]);
       } catch (err) {
         console.error('Error fetching stocks:', err);
         setError('Failed to load stock analysis data. Please try again later.');
@@ -288,8 +346,10 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
       }
     };
 
-    fetchAllStocks();
-  }, [tickerSymbol]);
+    if (selectedDate) {
+      fetchAllStocks();
+    }
+  }, [tickerSymbol, selectedDate, sortBy, sortOrder, selectedCategory, tickerFilter, targetFilter]);
 
   useEffect(() => {
     fetchStocksForDate(selectedDate);
@@ -303,6 +363,10 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
         date: selectedDate,
         sortBy: sortBy,
         sortOrder: sortOrder,
+        category: selectedCategory,
+        tickerFilter: tickerFilter,
+        targetFilter: targetFilter.toString(),
+        position: (newIndex + 1).toString(),
         ...(selectedSource && { source: selectedSource }),
         ...(searchTicker && { search: searchTicker }),
         ...(isFiltered && {
@@ -315,7 +379,7 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
       });
       router.push(`/dashboard/gold-stocks/${encodeURIComponent(newStock.ticker)}?${params.toString()}`);
     }
-  }, [currentIndex, allStocks, router, selectedDate, sortBy, sortOrder, selectedSource, searchTicker, isFiltered, filters]);
+  }, [currentIndex, allStocks, router, selectedDate, sortBy, sortOrder, selectedCategory, tickerFilter, targetFilter, selectedSource, searchTicker, isFiltered, filters]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < allStocks.length - 1) {
@@ -325,6 +389,10 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
         date: selectedDate,
         sortBy: sortBy,
         sortOrder: sortOrder,
+        category: selectedCategory,
+        tickerFilter: tickerFilter,
+        targetFilter: targetFilter.toString(),
+        position: (newIndex + 1).toString(),
         ...(selectedSource && { source: selectedSource }),
         ...(searchTicker && { search: searchTicker }),
         ...(isFiltered && {
@@ -337,14 +405,22 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
       });
       router.push(`/dashboard/gold-stocks/${encodeURIComponent(newStock.ticker)}?${params.toString()}`);
     }
-  }, [currentIndex, allStocks, router, selectedDate, sortBy, sortOrder, selectedSource, searchTicker, isFiltered, filters]);
+  }, [currentIndex, allStocks, router, selectedDate, sortBy, sortOrder, selectedCategory, tickerFilter, targetFilter, selectedSource, searchTicker, isFiltered, filters]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') handlePrevious();
       if (e.key === 'ArrowRight') handleNext();
       if (e.key === 'Escape') {
-        router.push('/dashboard/gold-stocks');
+        const params = new URLSearchParams({
+          date: selectedDate,
+          sortBy: sortBy,
+          sortOrder: sortOrder,
+          category: selectedCategory,
+          tickerFilter: tickerFilter,
+          targetFilter: targetFilter.toString()
+        });
+        router.push(`/dashboard/gold-stocks?${params.toString()}`);
       }
     };
     window.addEventListener('keydown', handleKeyPress);
@@ -434,7 +510,7 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
 
   useEffect(() => {
     filterCommentsForTicker();
-  }, [currentStock, allUserComments, filterCommentsForTicker]);
+  }, [currentStock, allUserComments]);
 
   // Fetch ticker view data
   useEffect(() => {
@@ -478,7 +554,17 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => router.push('/dashboard/gold-stocks')}
+                onClick={() => {
+              const params = new URLSearchParams({
+                date: selectedDate,
+                sortBy: sortBy,
+                sortOrder: sortOrder,
+                category: selectedCategory,
+                tickerFilter: tickerFilter,
+                targetFilter: targetFilter.toString()
+              });
+              router.push(`/dashboard/gold-stocks?${params.toString()}`);
+            }}
                 className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300"
                 title={language === 'fr' ? 'Retour aux Actions Or' : 'Back to Gold Stocks'}
               >
@@ -516,7 +602,17 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push('/dashboard/gold-stocks')}
+            onClick={() => {
+              const params = new URLSearchParams({
+                date: selectedDate,
+                sortBy: sortBy,
+                sortOrder: sortOrder,
+                category: selectedCategory,
+                tickerFilter: tickerFilter,
+                targetFilter: targetFilter.toString()
+              });
+              router.push(`/dashboard/gold-stocks?${params.toString()}`);
+            }}
             className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <ArrowLeftIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -526,6 +622,11 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                 {tickerSymbol} ({language === 'fr' ? 'Cible' : 'Target'})
+                {currentPosition > 0 && (
+                  <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                    #{currentPosition}
+                  </span>
+                )}
               </h1>
               <div className="flex items-center gap-2">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -1107,6 +1208,10 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
                   date: selectedDate,
                   sortBy: sortBy,
                   sortOrder: sortOrder,
+                  category: selectedCategory,
+                  tickerFilter: tickerFilter,
+                  targetFilter: targetFilter.toString(),
+                  position: currentPosition.toString(),
                   ...(selectedSource && { source: selectedSource }),
                   ...(searchTicker && { search: searchTicker }),
                   ...(isFiltered && {
