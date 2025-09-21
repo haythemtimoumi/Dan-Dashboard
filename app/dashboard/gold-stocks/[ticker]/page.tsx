@@ -116,6 +116,9 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
   const [tempStockTicker, setTempStockTicker] = useState<string>('');
   const [tempTickerView, setTempTickerView] = useState<string>('');
   const [tempRule1Ticker, setTempRule1Ticker] = useState<string>('');
+  const [tickerData, setTickerData] = useState<any>(null);
+  const [loadingTickerData, setLoadingTickerData] = useState<boolean>(false);
+  const [newsTicker, setNewsTicker] = useState<string>('');
 
   // Color management using API
   const cycleColor = async () => {
@@ -535,6 +538,27 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
     fetchTickerViewData();
   }, [currentStock?.ticker]);
 
+  // Fetch ticker data from new API
+  useEffect(() => {
+    const fetchTickerData = async () => {
+      if (!currentStock?.ticker || !selectedDate) return;
+      try {
+        setLoadingTickerData(true);
+        const response = await fetch(`/api/proxy/stocks/ticker-data?ticker=${currentStock.ticker}&date=${selectedDate}`);
+        if (response.ok) {
+          const data = await response.json();
+          setTickerData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching ticker data:', error);
+      } finally {
+        setLoadingTickerData(false);
+      }
+    };
+    
+    fetchTickerData();
+  }, [currentStock?.ticker, selectedDate]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[600px]">
@@ -831,12 +855,17 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
                     />
                   ) : (
                     <div
+                      onClick={() => setNewsTicker(tickerViewData?.stock_ticker || '')}
                       onDoubleClick={() => {
                         setEditingStockTicker(true);
                         setTempStockTicker(tickerViewData?.stock_ticker || '');
                       }}
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded font-mono text-sm"
-                      title={language === 'fr' ? 'Double-cliquer pour modifier' : 'Double-click to edit'}
+                      className={`cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded font-mono text-sm ${
+                        tickerData?.stock_analysis?.ticker_used && tickerData.stock_analysis.ticker_used.trim() && tickerViewData?.stock_ticker && tickerData.stock_analysis.ticker_used === tickerViewData.stock_ticker ? 'bg-green-100 dark:bg-green-900/30' : ''
+                      } ${
+                        newsTicker === tickerViewData?.stock_ticker ? 'ring-2 ring-blue-500' : ''
+                      }`}
+                      title={language === 'fr' ? 'Cliquer pour les actualités, double-cliquer pour modifier' : 'Click for news, double-click to edit'}
                     >
                       {tickerViewData?.stock_ticker || '-'}
                     </div>
@@ -873,12 +902,15 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
                     />
                   ) : (
                     <div
+                      onClick={() => setNewsTicker(tickerViewData?.ticker_view || '')}
                       onDoubleClick={() => {
                         setEditingTickerView(true);
                         setTempTickerView(tickerViewData?.ticker_view || '');
                       }}
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded text-sm"
-                      title={language === 'fr' ? 'Double-cliquer pour modifier' : 'Double-click to edit'}
+                      className={`cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded text-sm ${
+                        newsTicker === tickerViewData?.ticker_view ? 'ring-2 ring-blue-500' : ''
+                      }`}
+                      title={language === 'fr' ? 'Cliquer pour les actualités, double-cliquer pour modifier' : 'Click for news, double-click to edit'}
                     >
                       {tickerViewData?.ticker_view || '-'}
                     </div>
@@ -915,22 +947,27 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
                     />
                   ) : (
                     <div
+                      onClick={() => setNewsTicker(tickerViewData?.rule1_ticker || '')}
                       onDoubleClick={() => {
                         setEditingRule1Ticker(true);
                         setTempRule1Ticker(tickerViewData?.rule1_ticker || '');
                       }}
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded font-mono text-sm"
-                      title={language === 'fr' ? 'Double-cliquer pour modifier' : 'Double-click to edit'}
+                      className={`cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded font-mono text-sm ${
+                        tickerData?.rule1_analysis?.ticker_used && tickerData.rule1_analysis.ticker_used.trim() && tickerViewData?.rule1_ticker && tickerData.rule1_analysis.ticker_used === tickerViewData.rule1_ticker ? 'bg-green-100 dark:bg-green-900/30' : ''
+                      } ${
+                        newsTicker === tickerViewData?.rule1_ticker ? 'ring-2 ring-blue-500' : ''
+                      }`}
+                      title={language === 'fr' ? 'Cliquer pour les actualités, double-cliquer pour modifier' : 'Click for news, double-click to edit'}
                     >
                       {tickerViewData?.rule1_ticker || '-'}
                     </div>
                   )}
                 </td>
                 <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
-                  {formatNumber(currentStock.signal_score)}
+                  {formatNumber(tickerData?.stock_analysis?.data?.signal_score || currentStock.signal_score)}
                 </td>
                 <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
-                  {formatNumber(currentStock.sentiment_score)}
+                  {formatNumber(tickerData?.stock_analysis?.data?.sentiment_score || currentStock.sentiment_score)}
                 </td>
                 <td className="py-3 px-3 text-sm text-gray-900 dark:text-white font-medium">
                   {formatNumber(currentStock.rule1_score)}
@@ -960,24 +997,25 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
         </div>
       </div>
       
+
       {/* Main Content Layout */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-3 min-h-0">
         {/* Chart Section */}
         <div className="lg:col-span-3">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 h-full flex flex-col">
-            {currentStock.screenshot ? (
+            {(tickerData?.stock_analysis?.data?.screenshot || currentStock.screenshot) ? (
               <div className="relative flex-1 bg-gray-50 dark:bg-gray-900 group rounded-xl overflow-hidden">
                 <Image 
-                  src={currentStock.screenshot} 
+                  src={tickerData?.stock_analysis?.data?.screenshot || currentStock.screenshot} 
                   alt={`${currentStock.ticker} chart`}
                   fill
                   className="object-contain cursor-pointer transition-all hover:scale-[1.02]"
                   priority
-                  onClick={() => window.open(currentStock.screenshot, '_blank')}
+                  onClick={() => window.open(tickerData?.stock_analysis?.data?.screenshot || currentStock.screenshot, '_blank')}
                 />
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={() => window.open(currentStock.screenshot, '_blank')}
+                    onClick={() => window.open(tickerData?.stock_analysis?.data?.screenshot || currentStock.screenshot, '_blank')}
                     className="bg-black/80 hover:bg-black text-white p-1.5 rounded-lg transition-colors backdrop-blur-sm"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1043,7 +1081,7 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
           {/* Tab Content */}
           <div className="flex-1 overflow-hidden">
             {sidebarTab === 'news' && (
-              <NewsSection ticker={currentStock.ticker} />
+              <NewsSection ticker={newsTicker || currentStock.ticker} />
             )}
             
             {sidebarTab === 'portfolio' && (

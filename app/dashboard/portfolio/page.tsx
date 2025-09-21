@@ -427,7 +427,7 @@ export default function NewPortfolioPage() {
     if (!startDate || !endDate) return;
     
     // Skip API call if we already have stocks data (from restored state)
-    if (stocks.length > 0 && !loading) {
+    if (isRestoredFromCache && stocks.length > 0 && !loading) {
       return;
     }
     
@@ -468,7 +468,7 @@ export default function NewPortfolioPage() {
     };
 
     fetchStocks();
-  }, [startDate, endDate, stocks.length, loading]);
+  }, [startDate, endDate]);
 
   // Function to fetch ticker changes
   const fetchTickerChanges = async () => {
@@ -859,58 +859,29 @@ export default function NewPortfolioPage() {
               />
             </div>
 
-            {/* Source Filter */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {language === 'fr' ? 'Source:' : 'Source:'}
-              </label>
-              <select
-                value={selectedSource}
-                onChange={(e) => setSelectedSource(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                <option value="">
-                  {language === 'fr' ? 'Toutes les sources' : 'All sources'}
-                </option>
-                {sources.map(source => (
-                  <option key={source} value={source}>
-                    {getSourceDisplayName(source)}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            {/* Date Filters */}
+
+            {/* Date Filter */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {language === 'fr' ? 'Du:' : 'From:'}
+                {language === 'fr' ? 'Date:' : 'Date:'}
               </label>
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {language === 'fr' ? 'Au:' : 'To:'}
-              </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setEndDate(e.target.value);
+                }}
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
 
             {/* Clear Filters */}
-            {(searchTicker || selectedSource) && (
+            {searchTicker && (
               <button
                 onClick={async () => {
                   setSearchTicker('');
-                  setSelectedSource('');
                   // Reset to last date from backend API
                   try {
                     const response = await fetch(`/api/proxy/stocks/last-date?t=${Date.now()}`);
