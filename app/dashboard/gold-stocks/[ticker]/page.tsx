@@ -644,17 +644,24 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
           
           <div className="flex items-start gap-6">
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                {tickerSymbol} ({language === 'fr' ? 'Cible' : 'Target'})
-                {currentPosition > 0 && (
-                  <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                    #{currentPosition}
-                  </span>
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {tickerSymbol}
+                  {currentPosition > 0 && (
+                    <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                      #{currentPosition}
+                    </span>
+                  )}
+                </h1>
+                {(currentStock?.full_name || (currentStock as any)?.company_name) && (
+                  <p className="text-lg text-gray-700 dark:text-gray-300">
+                    {currentStock?.full_name || (currentStock as any)?.company_name}
+                  </p>
                 )}
-              </h1>
+              </div>
               <div className="flex items-center gap-2">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {currentStock?.full_name || currentStock?.source}
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
+                  {currentStock?.source}
                 </p>
                 {currentStock?.per_upside && (
                   <span className={`text-xs font-medium ${
@@ -666,7 +673,7 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
               </div>
             </div>
             
-            {(companyInfo || currentStock?.full_name) && (
+            {companyInfo && (
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 min-w-0 flex-1 max-w-md">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-xs text-gray-900 dark:text-white">
@@ -684,12 +691,7 @@ export default function GoldStockAnalysisPage({ params }: { params: { ticker: st
                   )}
                 </div>
                 
-                {/* Company Name Fallback */}
-                {!companyInfo?.business_description && !companyInfo?.ceo && !companyInfo?.number_of_employees && (
-                  <div className="text-gray-900 dark:text-white text-xs font-medium mb-2">
-                    {currentStock?.full_name || (currentStock as any)?.company_name || tickerSymbol}
-                  </div>
-                )}
+
                 
                 {expandedDescription && companyInfo?.business_description && (
                   <div className="text-gray-900 dark:text-white text-xs leading-relaxed mb-2 p-2 bg-white dark:bg-gray-800 rounded border">

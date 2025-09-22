@@ -696,10 +696,10 @@ export default function PortfolioTargetStockAnalysisPage({ params }: { params: {
           <div className="flex items-start gap-6">
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                {params.ticker} <span className="text-yellow-600">({language === 'fr' ? 'Cible' : 'Target'})</span>
+                {params.ticker}
               </h1>
               <div className="flex items-center gap-2">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xl font-bold text-gray-900 dark:text-white">
                   {currentStock?.full_name || currentStock?.source}
                 </p>
                 {currentStock?.per_upside && (
