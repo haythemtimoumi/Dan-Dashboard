@@ -349,12 +349,8 @@ export default function TargetPortfolioPage() {
     
     if (confirm(confirmMessage)) {
       try {
-        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-        const response = await fetch(`/api/scraper-tasks/${stock.ticker_id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+        const response = await fetch(`/api/proxy/stocks/ticker/${stock.ticker}/target-false`, {
+          method: 'PUT'
         });
         
         if (response.ok) {
