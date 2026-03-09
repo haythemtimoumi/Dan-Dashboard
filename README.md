@@ -18,25 +18,25 @@ Full-stack investment platform that automatically scrapes multiple financial sou
 ## 📸 Screenshots
 
 ### Login Page
-![Login Page](./Dan-Dashboard/screenshots/login.png)
+![Login Page](screenshots/login.png)
 
 ### Portfolio Dashboard
-![Portfolio Dashboard](./Dan-Dashboard/screenshots/alllist.png)
+![Portfolio Dashboard](screenshots/alllist.png)
 
 ### Stock Details & Analysis
-![Stock Details](./Dan-Dashboard/screenshots/details.png)
+![Stock Details](screenshots/details.png)
 
 ### Light Mode Interface
-![Light Mode](./Dan-Dashboard/screenshots/lightmode.png)
+![Light Mode](screenshots/lightmode.png)
 
 ### Analytics & Tracking
-![Tracking Dashboard](./Dan-Dashboard/screenshots/trackinglast.png)
+![Tracking Dashboard](screenshots/trackinglast.png)
 
 ### Chart Integration
-![TradingView Charts](./Dan-Dashboard/screenshots/tradingviewchart.png)
+![TradingView Charts](screenshots/tradingviewchart.png)
 
 ### Scraper Management
-![Scraper Management](./Dan-Dashboard/screenshots/scrapermangment.png)
+![Scraper Management](screenshots/scrapermangment.png)
 
 ---
 
