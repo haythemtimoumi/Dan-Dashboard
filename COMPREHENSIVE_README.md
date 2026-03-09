@@ -26,26 +26,26 @@ The Dan Stock Dashboard is a modern, responsive web application built with Next.
 ## 📸 Screenshots
 
 ### Login Page
-![Login Page](screenshots/login.png)
+![Login Page](./screenshots/login.png)
 
 ### Portfolio Dashboard - All Stocks List
-![All Stocks List](screenshots/alllist.png)
+![All Stocks List](./screenshots/alllist.png)
 
 ### Stock Details View
-![Stock Details](screenshots/details.png)
+![Stock Details](./screenshots/details.png)
 
 ### Light Mode Interface
-![Light Mode](screenshots/lightmode.png)
-![Light Mode Alternative](screenshots/lightmode2.png)
+![Light Mode](./screenshots/lightmode.png)
+![Light Mode Alternative](./screenshots/lightmode2.png)
 
 ### Tracking & Analytics
-![Tracking Last](screenshots/trackinglast.png)
+![Tracking Last](./screenshots/trackinglast.png)
 
 ### TradingView Chart Integration
-![TradingView Chart](screenshots/tradingviewchart.png)
+![TradingView Chart](./screenshots/tradingviewchart.png)
 
 ### Scraper Management
-![Scraper Management](screenshots/scrapermangment.png)
+![Scraper Management](./screenshots/scrapermangment.png)
 
 ### Key Capabilities
 - **Real-time Stock Analysis**: View and analyze stocks with sentiment scores, technical signals, and Rule1 metrics
