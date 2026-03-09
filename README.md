@@ -1,74 +1,109 @@
-## 🚀 Next.js Admin Dashboard
 
-An admin dashboard built using Next.js framework and Tailwind CSS
+## Project Overview
 
-## 🛠️ How to Run This Project
+This Flutter application is designed with two distinct dashboards to cater to two different user roles: **Students** and **Parents**. Each dashboard is tailored to provide a unique and interactive experience while serving the specific needs of the users.
 
-### 📋 Prerequisites
+---
 
-- Ensure you have [Node.js](https://nodejs.org/) installed.
-- Ensure you have [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/) installed.
+## Key Features
 
-### 🌐 Environment Variables
+### Student Dashboard
+- ![Dashboard](imgs/studentdashboard.png)
+- **Interactive Free Resource Map**: Students can explore educational resources through an interactive map.
+-  ![Map](imgs/chat_weather_maps.png)
+- **Chatbot**: A friendly chatbot is integrated to assist students with queries and provide guidance.
+- ![chatbot](imgs/chatbotcap.png)
+- **Access to Grades**: Students can view their academic results and performance.
+- ![Results](imgs/resultcap.png)
+- **Teacher Details**: Students can access teacher contact information such as email addresses.
+- ![Data](imgs/displaydatacap.png)
 
-Create a `.env` file in the root of your project and add the following environment variables:
+### Parent Dashboard
+![Dashboard](imgs/parentdashborad.png)
+- **Child Absence Tracking**: Parents can monitor their child’s attendance records.
+- **Grade Viewing**: Parents can see their child’s academic results.
 
-```js
-// Postgress Database
-POSTGRES_URL=
-POSTGRES_PRISMA_URL=
-POSTGRES_URL_NON_POOLING=
-POSTGRES_USER=
-POSTGRES_HOST=
-POSTGRES_PASSWORD=
-POSTGRES_DATABASE=
+---
 
-// Auth
-AUTH_SECRET=
-AUTH_URL=https://www.mytickerlist.com/
+## Data Visualization
 
-```
+The app includes various types of charts to represent data effectively:
+- **Line Charts**
+- **Bar Charts**
+- **Pie Charts**
+- **Scatter Charts**
+![Stats](imgs/statscap.png)
+---
 
-### 🗄️ Setting up your vercel Postgres database
+## Installation
 
-1. Deploy your project to vercel or visit [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for step by step guide
-2. Navigate to the `Storage` tab once your project is deployed
-3. Select Create Database and choose Postgres and click Continue.
-4. Choose your region and storage plan, if required
-5. Once connected, navigate to the `.env.local` tab, click Show secret and Copy Snippet. Make sure you reveal the secrets before copying them.
-6. Navigate to your code editor and rename the `.env.example` file to `.env.` Paste in the copied contents from Vercel.
+Follow these steps to set up and run the application:
 
-### 🌱 Seeding the database
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/your-repo.git
+   ```
 
-Now that your database has been created, let's seed it with some initial data.
+2. Navigate to the project directory:
+   ```bash
+   cd your-repo
+   ```
 
-To seed your database, run the following command
+3. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
 
-```js
- npm run seed
-```
+4. Run the application:
+   ```bash
+   flutter run
+   ```
 
-### 🚀 Start your local server
+---
 
-To start your local server, run the following command:
+## Requirements
 
-```js
-npm run dev
-```
+- **Flutter SDK**: Version 3.x or later
+- **Dart SDK**: Version 2.x or later
+- **Supported platforms**: Android and iOS
 
-### 🔑 Default Account Credentials
+---
 
-Once you've seeded your database with the initial data, the default login creadentials are:
+## App Structure
 
-```js
-Email: user@nextmail.com
-Password: 123456
-```
+- `lib/`: Contains the main Flutter application code.
+- `screens/`: Holds the different screens for the student and parent dashboards.
+- `widgets/`: Reusable UI components.
+- `models/`: Data models used in the app.
+- `services/`: Handles API calls and backend integration.
 
-### 💡 Pro Tip
+---
 
-"Great dashboards are built with great attention to detail. Keep iterating and improving!"
+## Contributing
 
-### 🤝 Contributing
+We welcome contributions to enhance the application. To contribute:
 
-I welcome all kinds of contributions! Feel free to open issues or submit pull requests.
+1. Fork the repository.
+2. Create a new branch for your feature:
+   ```bash
+   git checkout -b feature-name
+   ```
+3. Commit your changes:
+   ```bash
+   git commit -m "Add new feature"
+   ```
+4. Push your branch:
+   ```bash
+   git push origin feature-name
+   ```
+5. Create a pull request on GitHub.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+Thank you for using and contributing to our app! Feel free to reach out if you have any questions or suggestions.
