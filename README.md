@@ -1,109 +1,343 @@
+# Dan Stock Analysis System
 
-## Project Overview
+[![Next.js](https://img.shields.io/badge/Next.js-14.0-black)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18.2-blue)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
+[![Express](https://img.shields.io/badge/Express-4.18-green)](https://expressjs.com/)
+[![Python](https://img.shields.io/badge/Python-3.6+-yellow)](https://www.python.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12+-blue)](https://www.postgresql.org/)
 
-This Flutter application is designed with two distinct dashboards to cater to two different user roles: **Students** and **Parents**. Each dashboard is tailored to provide a unique and interactive experience while serving the specific needs of the users.
+## 🎯 Overview
 
----
+**Automated multi-guru stock analysis and portfolio tracking platform**
 
-## Key Features
-
-### Student Dashboard
-- ![Dashboard](imgs/studentdashboard.png)
-- **Interactive Free Resource Map**: Students can explore educational resources through an interactive map.
--  ![Map](imgs/chat_weather_maps.png)
-- **Chatbot**: A friendly chatbot is integrated to assist students with queries and provide guidance.
-- ![chatbot](imgs/chatbotcap.png)
-- **Access to Grades**: Students can view their academic results and performance.
-- ![Results](imgs/resultcap.png)
-- **Teacher Details**: Students can access teacher contact information such as email addresses.
-- ![Data](imgs/displaydatacap.png)
-
-### Parent Dashboard
-![Dashboard](imgs/parentdashborad.png)
-- **Child Absence Tracking**: Parents can monitor their child’s attendance records.
-- **Grade Viewing**: Parents can see their child’s academic results.
+Full-stack investment platform that automatically scrapes multiple financial sources to identify high-potential stocks and track investment guru portfolios in real-time.
 
 ---
 
-## Data Visualization
+## 📸 Screenshots
 
-The app includes various types of charts to represent data effectively:
-- **Line Charts**
-- **Bar Charts**
-- **Pie Charts**
-- **Scatter Charts**
-![Stats](imgs/statscap.png)
----
+### Login Page
+![Login Page](./Dan-Dashboard/screenshots/login.png)
 
-## Installation
+### Portfolio Dashboard
+![Portfolio Dashboard](./Dan-Dashboard/screenshots/alllist.png)
 
-Follow these steps to set up and run the application:
+### Stock Details & Analysis
+![Stock Details](./Dan-Dashboard/screenshots/details.png)
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/your-repo.git
-   ```
+### Light Mode Interface
+![Light Mode](./Dan-Dashboard/screenshots/lightmode.png)
 
-2. Navigate to the project directory:
-   ```bash
-   cd your-repo
-   ```
+### Analytics & Tracking
+![Tracking Dashboard](./Dan-Dashboard/screenshots/trackinglast.png)
 
-3. Install dependencies:
-   ```bash
-   flutter pub get
-   ```
+### Chart Integration
+![TradingView Charts](./Dan-Dashboard/screenshots/tradingviewchart.png)
 
-4. Run the application:
-   ```bash
-   flutter run
-   ```
+### Scraper Management
+![Scraper Management](./Dan-Dashboard/screenshots/scrapermangment.png)
 
 ---
 
-## Requirements
+## ✨ Key Features
 
-- **Flutter SDK**: Version 3.x or later
-- **Dart SDK**: Version 2.x or later
-- **Supported platforms**: Android and iOS
-
----
-
-## App Structure
-
-- `lib/`: Contains the main Flutter application code.
-- `screens/`: Holds the different screens for the student and parent dashboards.
-- `widgets/`: Reusable UI components.
-- `models/`: Data models used in the app.
-- `services/`: Handles API calls and backend integration.
+- **Automated Multi-Source Scraping**: Collects data from Rule1Toolbox, StockScores, GuruFocus, and Yahoo Finance
+- **Smart Stock Scoring**: Combines sentiment scores (0-100), technical signals, and Rule1 investment metrics
+- **Multi-Guru Portfolio Tracking**: Tracks and compares portfolios from different investment experts
+- **Real-time Analytics**: Daily change tracking with automated highlighting of high-potential stocks
+- **Interactive Dashboard**: Responsive UI with advanced filtering, charts, and color-coded organization
+- **Automated Alerts**: Highlights stocks with sentiment > 60 & signal > 80
+- **Role-Based Access Control**: Admin and user permissions with JWT authentication
 
 ---
 
-## Contributing
+## 🏗️ System Architecture
 
-We welcome contributions to enhance the application. To contribute:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    COMPLETE SYSTEM                          │
+│                                                             │
+│  ┌──────────────┐      ┌──────────────┐      ┌──────────┐ │
+│  │   Frontend   │◄────►│   Backend    │◄────►│ Scraper  │ │
+│  │  Dashboard   │      │     API      │      │  Engine  │ │
+│  │  (Next.js)   │      │  (Express)   │      │ (Python) │ │
+│  └──────────────┘      └──────────────┘      └──────────┘ │
+│         │                      │                     │      │
+│         └──────────────────────┴─────────────────────┘      │
+│                                │                            │
+│                                ▼                            │
+│                      ┌──────────────────┐                   │
+│                      │   PostgreSQL     │                   │
+│                      │    Database      │                   │
+│                      └──────────────────┘                   │
+│                                │                            │
+│                                ▼                            │
+│                      ┌──────────────────┐                   │
+│                      │    AWS S3        │                   │
+│                      │   (Backups)      │                   │
+│                      └──────────────────┘                   │
+└─────────────────────────────────────────────────────────────┘
+```
 
-1. Fork the repository.
-2. Create a new branch for your feature:
-   ```bash
-   git checkout -b feature-name
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Add new feature"
-   ```
-4. Push your branch:
-   ```bash
-   git push origin feature-name
-   ```
-5. Create a pull request on GitHub.
+**Data Flow**: Multi-Source Scraping → Data Processing → PostgreSQL → REST API → Dashboard
 
 ---
 
-## License
+## 💻 Tech Stack
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+### Frontend (Dan-Dashboard)
+- **Framework**: Next.js 14 with App Router
+- **UI Library**: React 18, TypeScript
+- **Styling**: Tailwind CSS, Headless UI, Heroicons
+- **State Management**: React Query (TanStack Query)
+- **Charts**: Chart.js, react-chartjs-2
+- **Authentication**: NextAuth.js with JWT
+
+### Backend (Dan-API)
+- **Framework**: Express.js, TypeScript
+- **Database**: PostgreSQL with pg driver
+- **Authentication**: JWT, bcryptjs
+- **Validation**: express-validator, Zod
+- **Security**: CORS, RBAC middleware
+
+### Scraper (dan_scraper)
+- **Language**: Python 3.6+
+- **Automation**: Selenium, undetected-chromedriver
+- **Database**: psycopg2-binary
+- **Data Processing**: pandas
+- **Cloud Storage**: AWS S3 (boto3)
+- **Notifications**: Firebase Admin SDK
 
 ---
 
-Thank you for using and contributing to our app! Feel free to reach out if you have any questions or suggestions.
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js ≥18.17.0
+- Python 3.6+
+- PostgreSQL ≥12.0
+- Chrome/Chromium browser
+
+### 1. Database Setup
+```bash
+createdb stocklist
+createuser -P haystockuser
+```
+
+### 2. Backend API
+```bash
+cd Dan-API
+npm install
+cp .env.example .env
+# Edit .env with your database credentials
+npm run build
+npm start
+# API runs on http://localhost:3000
+```
+
+### 3. Frontend Dashboard
+```bash
+cd Dan-Dashboard
+npm install
+cp .env.example .env.local
+# Edit .env.local with API URL
+npm run dev
+# Dashboard runs on http://localhost:3001
+```
+
+### 4. Scraper
+```bash
+cd dan_scraper
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with credentials
+python run_all_in_one.py
+```
+
+---
+
+## 📊 Data Sources
+
+### 1. Rule1Toolbox
+- Investment scoring (Rule1, Moat, Management scores)
+- Valuation metrics (Sticker Price, Buy Price)
+- Ticker discovery from filtered scans
+
+### 2. StockScores
+- Technical analysis (Signal Score, Sentiment Score)
+- Chart screenshots for visual analysis
+- Real-time technical indicators
+
+### 3. GuruFocus
+- Portfolio tracking for multiple gurus
+- Per-portfolio percentages
+- Last action tracking (buy/sell/hold)
+
+### 4. Yahoo Finance
+- Real-time stock prices
+- Price updates for all tracked tickers
+
+---
+
+## 🎯 Key Metrics Tracked
+
+- **Sentiment Score** (0-100): Market sentiment analysis
+- **Signal Score** (0-100): Technical trading signals
+- **Rule1 Score** (0-100): Investment quality score
+- **Moat Score** (0-100): Competitive advantage rating
+- **Management Score** (0-100): Management quality rating
+- **Sticker Price**: Calculated fair value
+- **Percentage Upside**: Potential gain percentage
+
+---
+
+## 🔒 Security Features
+
+- **JWT Authentication**: Secure token-based authentication
+- **Role-Based Access Control**: Admin and user permissions
+- **Password Hashing**: Bcrypt for secure password storage
+- **Input Validation**: express-validator and Zod schemas
+- **SQL Injection Prevention**: Parameterized queries
+- **Anti-Bot Detection**: undetected-chromedriver for scraping
+- **2FA Support**: Automated email verification handling
+
+---
+
+## 🔄 Automated Features
+
+- **Daily Scraping**: Automated data collection via systemd services
+- **Hourly Updates**: Real-time price updates for active stocks
+- **Smart Resume**: Continues from interruption point
+- **Email 2FA**: Automatic verification code handling
+- **S3 Backups**: Daily CSV backups to AWS S3
+- **Firebase Notifications**: Push alerts on completion
+
+---
+
+## � Project Structure
+
+```
+dan-dashboard/
+├── Dan-Dashboard/          # Frontend (Next.js)
+│   ├── app/               # Next.js App Router
+│   │   ├── api/          # API routes (proxy layer)
+│   │   ├── dashboard/    # Dashboard pages
+│   │   ├── contexts/     # React contexts
+│   │   └── ui/           # UI components
+│   ├── screenshots/       # UI Screenshots
+│   └── package.json
+├── Dan-API/               # Backend (Express.js)
+│   ├── src/
+│   │   ├── controllers/  # Business logic
+│   │   ├── models/       # Database models
+│   │   ├── routes/       # API routes
+│   │   └── middleware/   # Auth, RBAC, logging
+│   └── package.json
+├── dan_scraper/           # Scraper (Python)
+│   ├── scrapers/         # Scraping modules
+│   ├── utils/            # Database, S3, email utils
+│   ├── core/             # Browser automation
+│   └── requirements.txt
+└── README.md              # This file
+```
+
+---
+
+## �️ Development
+
+### Run Tests
+```bash
+# Backend
+cd Dan-API && npm test
+
+# Frontend
+cd Dan-Dashboard && npm test
+
+# Scraper
+cd dan_scraper && python test_*.py
+```
+
+### Build for Production
+```bash
+# Backend
+cd Dan-API && npm run build
+
+# Frontend
+cd Dan-Dashboard && npm run build
+```
+
+---
+
+## 📈 Performance
+
+- **React Query Caching**: Optimized data fetching with 1-minute stale time
+- **Database Indexing**: Indexed queries on ticker, date, and scores
+- **Connection Pooling**: PostgreSQL connection pool for efficiency
+- **Code Splitting**: Automatic route-based splitting in Next.js
+- **Image Optimization**: Next.js automatic image optimization
+
+---
+
+## 🐛 Troubleshooting
+
+### Dashboard can't connect to API
+```bash
+# Check API is running
+curl http://localhost:3000/health
+
+# Verify environment variables
+cat Dan-Dashboard/.env.local | grep API_URL
+```
+
+### Scraper fails to save data
+```bash
+# Test database connection
+cd dan_scraper && python test_db_connection.py
+
+# Check credentials
+cat .env | grep DB_
+```
+
+### Authentication fails
+```bash
+# Verify user exists
+psql -d stocklist -c "SELECT * FROM users;"
+
+# Test login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admindan","password":"Stockscreener99#"}'
+```
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature-name`)
+3. Make your changes
+4. Add tests
+5. Update documentation
+6. Submit a pull request
+
+---
+
+## 📄 License
+
+ISC License
+
+---
+
+## 👥 Support
+
+For issues and questions:
+- Check component-specific README files
+- Review system architecture
+- Test each component independently
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: 2024  
+**Components**: Dan-Dashboard v1.0.0 · Dan-API v1.0.0 · dan_scraper v1.0.0
